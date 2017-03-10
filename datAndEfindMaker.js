@@ -15,7 +15,7 @@ const
 
 
 //program flow
-mockSystems(function(systems){
+makeSystems(function(systems){
 
   R.pipe(
 
@@ -37,7 +37,7 @@ function mockSystems(callback){
   callback(systems, callback)
 }
 
-
+//Parse the mame xml pulling out the fields we need but only from systems which actually work
 function makeSystems(callback){
   const systems = []
 
@@ -61,7 +61,10 @@ function makeSystems(callback){
 
 }
 
-
+/* we have multiple needs for company name:
+ *  1) we'll track what mame calls it - Sinclair Research Systems Ltd
+ *  2) to display something as part of the name for each system - Sinclair ZX Spectrum 48k plus
+ *  3) to inlcude (or not) in the system type - MSX */
 function mungeCompanyAndSytemsNames(systems){
 
   const systemsAugmented = R.pipe(

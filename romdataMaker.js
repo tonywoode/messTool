@@ -42,7 +42,7 @@ function makeSystems(callback){
   xml.on(`updateElement: machine`, function(machine) {
     if (machine.softwarelist 
        && machine.driver.$.emulation === `good`
-         && !machine.$.cloneof //with this one, we don't want any clones....
+         && !machine.$.cloneof //with this one, we don't want any clones...(umm are you sure: there's no atri 2600 pal now shouldn't we do each systems' softlist as step 1?).
     ) {
       const node = {}
       node.system = machine.description 
@@ -54,6 +54,8 @@ function makeSystems(callback){
   })
 
   xml.on(`end`, function(){
+console.log(JSON.stringify(systems, null, '\t'))
+process.exit()
     callback(systems)
   })
 
