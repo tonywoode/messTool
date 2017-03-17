@@ -66,6 +66,7 @@ function makeSystems(callback){
 function mungeCompanyAndSytemsNames(systems){
 
   const systemsAugmented = R.pipe(
+
       //create+populate 2 new properties for munging
       R.map(obj => R.assoc(`mungedCompany`, obj.company, obj))
    ,  R.map(obj => R.assoc(`mungedSystem`,  obj.system,  obj))
@@ -78,16 +79,16 @@ function mungeCompanyAndSytemsNames(systems){
   )(systems)
 
   //These are the main replacement functions to munge MESS' company name and system name
-  const 
-      compRep = (oldCompany, newCompany)            => R.map( ({company, system, call, cloneof, mungedCompany, mungedSystem }) => 
-        ({company, system, call, cloneof, mungedCompany: mungedCompany.replace(oldCompany, newCompany), mungedSystem})
-      )
+  const compRep = (oldCompany, newCompany) => R.map( 
+    obj => R.assoc(`mungedCompany`, obj.mungedCompany.replace(oldCompany, newCompany), obj)
+  )
 
-    , systRep = (thisCompany, oldsystem, newsystem) => R.map( ( {company, system, call, cloneof, mungedCompany, mungedSystem }) => 
-        ({company, system, call, cloneof, mungedCompany, mungedSystem: 
-          (mungedCompany.match(thisCompany) && mungedSystem.match(oldsystem))? newsystem : mungedSystem
-        })
-      )
+  //we match the company too when replacing the systeem name
+  const systRep = (thisCompany, oldsystem, newsystem) => R.map( 
+    obj => R.assoc(`mungedSystem`, (obj.mungedCompany.match(thisCompany) && obj.mungedSystem.match(oldsystem))? 
+      newsystem : obj.mungedSystem, obj
+    )
+  )
 
   //transforms  
   const mungedSystems = R.pipe(
@@ -173,6 +174,8 @@ function mungeCompanyForType(systems){
 
       //we need a new field to capture the name to display rather than munge to system type
       R.map(obj => R.assoc(`displayCompany`, obj.mungedCompany, obj))
+    
+      //get rid of company name for msx and call it msx
     , R.map( ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem }) => 
         ({company, system, call, cloneof, mungedCompany: 
           mungedSystem.match(/MSX1/)? `` : mungedCompany, displayCompany, mungedSystem: mungedSystem.match(/MSX1/)? `MSX` : mungedSystem
