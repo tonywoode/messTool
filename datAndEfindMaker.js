@@ -15,15 +15,13 @@ const
 
 
 //program flow
-makeSystems(function(systems){
+mockSystems(function(systems){
 
   R.pipe(
-
      mungeCompanyAndSytemsNames
   ,  mungeCompanyForType
   ,  makeFinalSystemTypes
   ,  print
-
   )(systems)
 
 })
@@ -69,17 +67,14 @@ function mungeCompanyAndSytemsNames(systems){
 
   const systemsAugmented = R.pipe(
       //create+populate 2 new properties for munging
-      R.map( ({company, system, call, cloneof }) => 
-        ({company, system, call, cloneof, mungedCompany: company, mungedSystem: system }) 
-      )
+      R.map(obj => R.assoc(`mungedCompany`, obj.company, obj))
+   ,  R.map(obj => R.assoc(`mungedSystem`,  obj.system,  obj))
 
       //take company from system name if they repeat
-    , R.map( ({company, system, call, cloneof, mungedCompany, mungedSystem }) => 
-        ({company, system, call, cloneof, mungedCompany, mungedSystem: mungedSystem.replace(
-          new RegExp(mungedCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``
-        ) 
-      }) 
-    )
+    , R.map(obj => R.assoc('mungedSystem', obj.mungedSystem.replace(
+          new RegExp(obj.mungedCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``
+        ), obj 
+    )) 
   )(systems)
 
   //These are the main replacement functions to munge MESS' company name and system name
@@ -177,10 +172,7 @@ function mungeCompanyForType(systems){
   const systemsWithDisplayComp = R.pipe(
 
       //we need a new field to capture the name to display rather than munge to system type
-      R.map( ( {company, system, call, cloneof, mungedCompany, mungedSystem } ) => 
-        ({company, system, call, cloneof, mungedCompany, displayCompany: mungedCompany, mungedSystem})
-      ) 
-
+      R.map(obj => R.assoc(`displayCompany`, obj.mungedCompany, obj))
     , R.map( ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem }) => 
         ({company, system, call, cloneof, mungedCompany: 
           mungedSystem.match(/MSX1/)? `` : mungedCompany, displayCompany, mungedSystem: mungedSystem.match(/MSX1/)? `MSX` : mungedSystem
