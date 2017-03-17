@@ -176,22 +176,16 @@ function mungeCompanyForType(systems){
       R.map(obj => R.assoc(`displayCompany`, obj.mungedCompany, obj))
     
       //get rid of company name for msx and call it msx
-    , R.map( ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem }) => 
-        ({company, system, call, cloneof, mungedCompany: 
-          mungedSystem.match(/MSX1/)? `` : mungedCompany, displayCompany, mungedSystem: mungedSystem.match(/MSX1/)? `MSX` : mungedSystem
-        })
-      )
+    , R.map(obj => R.assoc(`mungedCompany`, obj.mungedSystem.match(/MSX1/)? `` : obj.mungedCompany, obj))
+    , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.match(/MSX1/)? `MSX` : obj.mungedSystem, obj))
 
-    , R.map( ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem }) => 
-        ({company, system, call, cloneof, mungedCompany: 
-          mungedSystem.match(/MSX2/)? `` : mungedCompany, displayCompany, mungedSystem: mungedSystem.match(/MSX2/)? `MSX2` : mungedSystem
-        })
-      )   
+      //MSX2 is similar but we want to keep its name
 
+    , R.map(obj => R.assoc(`mungedCompany`, obj.mungedSystem.match(/MSX2/)? `` : obj.mungedCompany, obj))
+    , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.match(/MSX2/)? `MSX2` : obj.mungedSystem, obj))
+    
     //now MSX has gone, every bracketed item is unnecessary
-    , R.map( ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem }) => 
-        ({company, system, call, cloneof, mungedCompany, mungedSystem: mungedSystem.replace(/\W\(.*\)/, ``), displayCompany})
-      )
+    , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.replace(/\W\(.*\)/, ``), obj))
 
   )(systems)
 
