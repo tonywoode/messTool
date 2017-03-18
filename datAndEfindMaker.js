@@ -74,13 +74,13 @@ function mungeCompanyAndSytemsNames(systems){
       //take company from system name if they repeat
     , R.map(obj => R.assoc('mungedSystem', obj.mungedSystem.replace(
           new RegExp(obj.mungedCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``
-        ), obj 
+      ), obj 
     )) 
   )(systems)
 
   //These are the main replacement functions to munge MESS' company name and system name
   const compRep = (oldCompany, newCompany) => R.map( 
-    obj => R.assoc(`mungedCompany`, obj.mungedCompany.replace(oldCompany, newCompany), obj)
+    obj => R.assoc(`mungedCompany`, obj.mungedCompany.replace(oldCompany, newCompany), obj) 
   )
 
   //we match the company too when replacing the systeem name
@@ -180,13 +180,11 @@ function mungeCompanyForType(systems){
     , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.match(/MSX1/)? `MSX` : obj.mungedSystem, obj))
 
       //MSX2 is similar but we want to keep its name
-
     , R.map(obj => R.assoc(`mungedCompany`, obj.mungedSystem.match(/MSX2/)? `` : obj.mungedCompany, obj))
     , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.match(/MSX2/)? `MSX2` : obj.mungedSystem, obj))
     
-    //now MSX has gone, every bracketed item is unnecessary
+      //now MSX has gone, every bracketed item is unnecessary
     , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.replace(/\W\(.*\)/, ``), obj))
-
   )(systems)
 
   return systemsWithDisplayComp
@@ -196,25 +194,23 @@ function mungeCompanyForType(systems){
 
 function makeFinalSystemTypes(systems){
 
-  const
-      lookupCall = (cloneof, call) =>  {
-        const referredSystem = R.find( R.propEq(`call`, cloneof) )(systemsWithType)
-        return referredSystem === undefined ? console.log(`PROBLEM: ${call} says its a (working) cloneof ${cloneof} but ${cloneof} is emulated badly?`) : referredSystem.systemType
-      }
+  //a function we'll pass in later that calls the clone system or reports a problem
+  const lookupCall = (cloneof, call) =>  {
+    const referredSystem = R.find( R.propEq(`call`, cloneof) )(systemsWithType)
+    return referredSystem === undefined ? 
+      console.log(`PROBLEM: ${call} says its a (working) cloneof ${cloneof} but ${cloneof} is emulated badly?`) : referredSystem.systemType
+  }
 
-      //before we replace the clone systems with the system type they are cloned from, we need to get our type property together
-    , systemsWithType = R.map( ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem }) => 
-        ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem, systemType: 
-          (mungedCompany ===`` || mungedSystem ===``)? `${mungedSystem}`:`${mungedCompany} ${mungedSystem}`
-        }), systems 
-      )
+  //before we replace the clone systems with the system type they are cloned from, we need to get our type property together
+  const systemsWithType = R.map(obj => R.assoc(`systemType`, (obj.mungedCompany ===`` || obj.mungedSystem ===``)? 
+    `${obj.mungedSystem}`:`${obj.mungedCompany} ${obj.mungedSystem}`, obj), systems 
+  )
 
-      //change the munged system of every machine that has a cloneof property to be the system that points to: should come at the end of munging system names
-    , systemsDeCloned = R.map( ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem, systemType }) => 
-        ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem, systemType: 
-          cloneof? lookupCall(cloneof, call) : systemType 
-        }), systemsWithType
-      )
+  // now our objects have the following keys  ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem, systemType})
+
+  //change the munged system of every machine that has a cloneof property to be the system that points to: should come at the end of munging system names
+  const systemsDeCloned = R.map(obj => R.assoc(`systemType`, obj.cloneof? 
+    lookupCall(obj.cloneof, obj.call) : obj.systemType, obj), systemsWithType)
   
   return systemsDeCloned
 
@@ -249,7 +245,6 @@ function print(systems){
 
   const efinderToPrint = R.map ( ({call, displayMachine, systemType}) => 
     (
-
 `[Retroarch MESS ${displayMachine}]
 Exe Name=retroarch.exe
 Config Name=retroarch
@@ -265,7 +260,6 @@ DisWinKey=1
 DisScrSvr=1
 Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
 `
-      
    ), efinder)
 
   fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
