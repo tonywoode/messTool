@@ -15,7 +15,7 @@ const
 
 
 //program flow
-mockSystems(function(systems){
+makeSystems(function(systems){
 
   R.pipe(
      mungeCompanyAndSytemsNames
@@ -38,10 +38,17 @@ function mockSystems(callback){
 //Parse the mame xml pulling out the fields we need but only from systems which actually work
 function makeSystems(callback){
   const systems = []
-
+xml.collect('device')
   xml.on(`updateElement: machine`, function(machine) {
-    if (machine.softwarelist 
-       && machine.driver.$.emulation === `good`
+    if (
+         machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
+      && machine.$.isdevice === "no" //see the DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no">
+      && machine.$.isbios === "no" 
+      && machine.$.ismechanical === "no"
+      && machine.$.runnable === "yes"
+      && !machine.input.$.coins
+      && machine.driver.$.status === `good`
+      && machine.driver.$.emulation === `good`
     ) {
       const node = {}
       //make an array of objects like this: { company, system, call, cloneof }
@@ -49,7 +56,9 @@ function makeSystems(callback){
       node.system = machine.description 
       node.call = machine.$.name
       node.cloneof = machine.$.cloneof
+      node.softlist = machine.softwarelist
       systems.push(node)
+      //console.log(node.company + " " + node.system)
     }
   })
 
@@ -70,7 +79,6 @@ function mungeCompanyAndSytemsNames(systems){
       //create+populate 2 new properties for munging
       R.map(obj => R.assoc(`mungedCompany`, obj.company, obj))
    ,  R.map(obj => R.assoc(`mungedSystem`,  obj.system,  obj))
-
       //take company from system name if they repeat
     , R.map(obj => R.assoc('mungedSystem', obj.mungedSystem.replace(
           new RegExp(obj.mungedCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``
@@ -174,17 +182,14 @@ function mungeCompanyForType(systems){
 
       //we need a new field to capture the name to display rather than munge to system type
       R.map(obj => R.assoc(`displayCompany`, obj.mungedCompany, obj))
-    
       //get rid of company name for msx and call it msx
-    , R.map(obj => R.assoc(`mungedCompany`, obj.mungedSystem.match(/MSX1/)? `` : obj.mungedCompany, obj))
-    , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.match(/MSX1/)? `MSX` : obj.mungedSystem, obj))
-
+    , R.map(obj => R.assoc(`mungedCompany`, obj.mungedSystem.match(/MSX1/)? ``     : obj.mungedCompany, obj))
+    , R.map(obj => R.assoc(`mungedSystem`,  obj.mungedSystem.match(/MSX1/)? `MSX`  : obj.mungedSystem,  obj))
       //MSX2 is similar but we want to keep its name
-    , R.map(obj => R.assoc(`mungedCompany`, obj.mungedSystem.match(/MSX2/)? `` : obj.mungedCompany, obj))
-    , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.match(/MSX2/)? `MSX2` : obj.mungedSystem, obj))
-    
+    , R.map(obj => R.assoc(`mungedCompany`, obj.mungedSystem.match(/MSX2/)? ``     : obj.mungedCompany, obj))
+    , R.map(obj => R.assoc(`mungedSystem`,  obj.mungedSystem.match(/MSX2/)? `MSX2` : obj.mungedSystem,  obj))
       //now MSX has gone, every bracketed item is unnecessary
-    , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.replace(/\W\(.*\)/, ``), obj))
+    , R.map(obj => R.assoc(`mungedSystem`,  obj.mungedSystem.replace(/\W\(.*\)/, ``), obj))
   )(systems)
 
   return systemsWithDisplayComp
@@ -223,7 +228,7 @@ function makeFinalSystemTypes(systems){
  *   that need re-application, along with some new concerns regarding the output format
  */
 function print(systems){
-
+//TODO: you took out the test for whether a system has a softlist, this originally printed out (for better or worse) all the retroarch softlist systems, you need to filter by softlist at the very least
   const efinder = R.pipe(
     
       //take company from system name if they repeat
