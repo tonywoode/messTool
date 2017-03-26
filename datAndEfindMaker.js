@@ -15,10 +15,11 @@ const
 
 
 //program flow
-mockSystems(function(systems){
+makeSystems(function(systems){
 
   R.pipe(
      cleanSoftlists
+  //,  cleanDevices
   ,  mungeCompanyAndSytemsNames
   ,  mungeCompanyForType
   ,  makeFinalSystemTypes
@@ -30,7 +31,7 @@ mockSystems(function(systems){
 
 function mockSystems(callback){
   const 
-      input   = fs.readFileSync(`inputs/newsystems.dat`)
+      input   = fs.readFileSync(`inputs/systems.json`)
    ,  systems = JSON.parse(input)
   
   callback(systems, callback)
@@ -39,12 +40,16 @@ function mockSystems(callback){
 //Parse the mame xml pulling out the fields we need but only from systems which actually work
 function makeSystems(callback){
   const systems = []
-xml.collect('device')
-xml.collect('softwarelist')
+  
+  //xml stream 'collects' these meaning it deals with repeating xml keys rather than overwriting each time
+  xml.collect('device')
+  xml.collect('softwarelist')
+  xml.collect(`extension`) //turns out xml stream is just regexing these keys, so this is deeply-nested
+  
   xml.on(`updateElement: machine`, function(machine) {
-    if ( //machine.softwarelist &&
+    if ( //machine.softwarelist // we used to do this when doing retroarch, but it turned out life wasn't that simple after all....
          machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
-      && machine.$.isdevice === "no" //see the DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no">
+      && machine.$.isdevice === "no" //see the mame.exe (internal)  DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no">
       && machine.$.isbios === "no" 
       && machine.$.ismechanical === "no"
       && machine.$.runnable === "yes"
@@ -63,13 +68,13 @@ xml.collect('softwarelist')
       node.call = machine.$.name
       node.cloneof = machine.$.cloneof
       node.softlist = machine.softwarelist
+      node.device = machine.device
       systems.push(node)
-      //console.log(node.company + " " + node.system)
     }
   })
 
   xml.on(`end`, function(){
-    //fs.writeFileSync(`inputs/newsystems.dat`, JSON.stringify(systems, null, `\t`)) && process.exit()
+    //fs.writeFileSync(`inputs/systems.json`, JSON.stringify(systems, null, `\t`)) && process.exit()
     callback(systems)
   })
 
@@ -88,10 +93,26 @@ function cleanSoftlists(systems){
 
   const replaceIfSoftlist = R.map(obj => obj.softlist? obj.softlist = replaceSoftlist(obj) : obj, systems )
 
-  //console.log(JSON.stringify(replaceIfSoftlist, null, '\t')) && process.exit()
+  //console.log(JSON.stringify(replaceIfSoftlist, null, '\t')); process.exit() //you can't && the exit, does that signal a problem?
 
   return replaceIfSoftlist
 }
+
+function cleanDevices(systems){
+
+  const flattenDevice = device =>
+    R.map( ({ $ }) =>
+      ( ({ type:$.type, tag:$.tag, name:$.instance.$.name, briefname:$.instance.$.briefname, extensions:[$.extension.name] }) ), systems)
+
+
+  const replaceDevice = obj => R.assoc(`device`, flattenDevice(obj.device), obj)
+  
+  //i don't need this as it HAS a device
+  const replaceIfDevice = R.map(obj => obj.device? obj.device = replaceDevice(obj) : obj, systems )
+
+  console.log(JSON.stringify(replaceIfDevice, null, '\t')); process.exit() //you can't && the exit, does that signal a problem?
+}
+
 
 //here, for now is just a straight list of systems that aren't of interest to our endevour
 //(because they are never going to have enjoyable games for them
