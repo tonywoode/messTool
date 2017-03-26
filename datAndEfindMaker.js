@@ -18,7 +18,8 @@ const
 mockSystems(function(systems){
 
   R.pipe(
-     mungeCompanyAndSytemsNames
+     cleanSoftlists
+  ,  mungeCompanyAndSytemsNames
   ,  mungeCompanyForType
   ,  makeFinalSystemTypes
   ,  print
@@ -74,6 +75,24 @@ xml.collect('softwarelist')
 
 }
 
+
+//I don't like working with a messy tree, lots of $ and needless repetition...
+function cleanSoftlists(systems){
+
+  //I removed the destructuring elsewhere but here the object isn't going to grow
+  const flattenSoftlist = softlist  => 
+    R.map( ({ $ }) => 
+     ( ({ name:$.name, status:$.status, filter:$.filter }) ), softlist )
+   
+  const replaceSoftlist = obj => R.assoc(`softlist`, flattenSoftlist(obj.softlist), obj)
+
+  const replaceIfSoftlist = R.map(obj => obj.softlist? obj.softlist = replaceSoftlist(obj) : obj, systems )
+
+  //console.log(JSON.stringify(replaceIfSoftlist, null, '\t')) && process.exit()
+
+  return replaceIfSoftlist
+}
+
 //here, for now is just a straight list of systems that aren't of interest to our endevour
 //(because they are never going to have enjoyable games for them
 //thesee (for better or worse) are the fully munged system types, so may have to convert them back into their original systems
@@ -86,17 +105,6 @@ xml.collect('softwarelist')
  *  3) to inlcude (or not) in the system type - MSX */
 function mungeCompanyAndSytemsNames(systems){
 
- const flattenSoftlist = softlist  => 
-    R.map( ({ $ }) => 
-     ( ({ name:$.name, status:$.status, filter:$.filter }) ), softlist )
-   
-const replaceSoftlist = obj => R.assoc(`softlist`, flattenSoftlist(obj.softlist), obj)
-
-const replaceIfSoftlist = R.map(obj => obj.softlist? obj.softlist = replaceSoftlist(obj) : obj, systems )
-
-
-console.log(JSON.stringify(replaceIfSoftlist, null, '\t'))
-process.exit()
 
   const systemsAugmented = R.pipe(
 
