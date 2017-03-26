@@ -41,7 +41,7 @@ function makeSystems(callback){
 xml.collect('device')
 xml.collect('softwarelist')
   xml.on(`updateElement: machine`, function(machine) {
-    if ( machine.softwarelist &&
+    if ( //machine.softwarelist &&
          machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
       && machine.$.isdevice === "no" //see the DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no">
       && machine.$.isbios === "no" 
@@ -86,13 +86,16 @@ xml.collect('softwarelist')
  *  3) to inlcude (or not) in the system type - MSX */
 function mungeCompanyAndSytemsNames(systems){
 
- const flattenSoftlist = ({ company, system, call, cloneof, softlist })  => 
+ const flattenSoftlist = softlist  => 
     R.map( ({ $ }) => 
      ( ({ name:$.name, status:$.status, filter:$.filter }) ), softlist )
    
+const replaceSoftlist = obj => R.assoc(`softlist`, flattenSoftlist(obj.softlist), obj)
 
-const replaceSoftlist = R.map(obj => R.assoc(`softlist`, flattenSoftlist(obj), obj), systems)
-console.log(JSON.stringify(replaceSoftlist, null, '\t'))
+const replaceIfSoftlist = R.map(obj => obj.softlist? obj.softlist = replaceSoftlist(obj) : obj, systems )
+
+
+console.log(JSON.stringify(replaceIfSoftlist, null, '\t'))
 process.exit()
 
   const systemsAugmented = R.pipe(
