@@ -54,8 +54,8 @@ function makeSystems(callback){
   })
 
   xml.on(`end`, function(){
-console.log(JSON.stringify(systems, null, '\t'))
-process.exit()
+//console.log(JSON.stringify(systems, null, '\t'))
+//process.exit()
     callback(systems)
   })
 

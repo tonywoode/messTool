@@ -15,7 +15,7 @@ const
 
 
 //program flow
-makeSystems(function(systems){
+mockSystems(function(systems){
 
   R.pipe(
      mungeCompanyAndSytemsNames
@@ -39,8 +39,9 @@ function mockSystems(callback){
 function makeSystems(callback){
   const systems = []
 xml.collect('device')
+xml.collect('softwarelist')
   xml.on(`updateElement: machine`, function(machine) {
-    if (
+    if ( machine.softwarelist &&
          machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
       && machine.$.isdevice === "no" //see the DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no">
       && machine.$.isbios === "no" 
@@ -49,6 +50,10 @@ xml.collect('device')
       && !machine.input.$.coins
       && machine.driver.$.status === `good`
       && machine.driver.$.emulation === `good`
+      //these last three make very little difference, but just to demonstrate that all the found systems prove good in these catagories
+      && machine.driver.$.color === `good`
+      && machine.driver.$.sound === `good`
+      && machine.driver.$.graphic === `good`
     ) {
       const node = {}
       //make an array of objects like this: { company, system, call, cloneof }
@@ -63,16 +68,32 @@ xml.collect('device')
   })
 
   xml.on(`end`, function(){
+    //fs.writeFileSync(`inputs/newsystems.dat`, JSON.stringify(systems, null, `\t`)) && process.exit()
     callback(systems)
   })
 
 }
+
+//here, for now is just a straight list of systems that aren't of interest to our endevour
+//(because they are never going to have enjoyable games for them
+//thesee (for better or worse) are the fully munged system types, so may have to convert them back into their original systems
+//(i made them just from reading a finished systems.dat
+//const rejectSystems =[`Acorn System 1`, `Acorn System 3`, `Ampro Litte Z80 Board`, `Andrew Donald Booth All Purpose Electronic X-ray Computer`,`Apollo DN3500`, `Apple III`,`Applix Pty Ltd 1616`, `BBC Bridge Companion`, `BBN BitGraph rev A`, `BGR Computers Excalibur 64`, `Bit Corporation Chuang Zao Zhe 50`, `BNPO Bashkiria-2M`, `BP EVM PK8000 Vesta`, `Canon X-07`, `Corvus Systems Concept`, `Digital Research Computers Big Board`, `Elwro 800 Junior`, `Frank Heyder Amateurcomputer AC1 Berlin`, `Intel Intellec MDS-II`, `Joachim Czepa C-80`, ]
 
 /* we have multiple needs for company name:
  *  1) we'll track what mame calls it - Sinclair Research Systems Ltd
  *  2) to display something as part of the name for each system - Sinclair ZX Spectrum 48k plus
  *  3) to inlcude (or not) in the system type - MSX */
 function mungeCompanyAndSytemsNames(systems){
+
+ const flattenSoftlist = ({ company, system, call, cloneof, softlist })  => 
+    R.map( ({ $ }) => 
+     ( ({ name:$.name, status:$.status, filter:$.filter }) ), softlist )
+   
+
+const replaceSoftlist = R.map(obj => R.assoc(`softlist`, flattenSoftlist(obj), obj), systems)
+console.log(JSON.stringify(replaceSoftlist, null, '\t'))
+process.exit()
 
   const systemsAugmented = R.pipe(
 
@@ -114,12 +135,15 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Bandai`,`Super Vision 8000`, `Super Vision`) 
     , systRep(`Bondwell Holding`, /.*/, `Bondwell`), compRep(`Bondwell Holding`, ``) //change company after
     , systRep(`Casio`, `PV-1000`, `PV`)
-    , compRep(`Commodore Business Machines`, `Commodore`), systRep(`Commodore`, /(B500|P500)/, `500/600/700`) 
+    , compRep(`Commodore Business Machines`, `Commodore`), systRep(`Commodore`, /(B500|P500|B128-80HP)/, `500/600/700`) 
     , systRep(`Commodore`, /PET .*|CBM .*/, `PET/CBM`), systRep(`Commodore`, /\b(64|128)/, `64/128`)
     , systRep(`Commodore`, `VIC-10 / Max Machine / UltiMax`, `Max/Ultimax`), systRep(`Commodore`, `VIC-1001`, `VIC-20`)
       , systRep(`Commodore`, `264`, `+4/C16`) 
     , compRep(`Comx World Operations Ltd`, `COMX`)
+    , compRep(`Dick Smith Electronics`, `Dick Smith`)
+    , compRep(`Digital Equipment Corporation`, `DEC`)
     , systRep(`EACA`,`Colour Genie EG2000`, `Colour Genie`)
+    , systRep(`Ei Nis`, `Pecom 32`, `Pecom`) 
     , systRep(`Elektronika`,`BK 0010`, `BK`)
     , systRep(`Emerson`, `Arcadia 2001`, `Arcadia`)
     , systRep(`Epson`, `PX-4`, `PX`)
@@ -128,6 +152,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Fujitsu`, `FM-7`, `Micro 7`)
     , compRep(`Franklin Computer`, `Franklin`)
     , compRep(`General Consumer Electronics`, `GCE`)
+      , systRep(`Hewlett Packard`, /HP48*/, `HP`) 
     , compRep(`Interton Electronic`, `Interton`)
     , compRep(`Jupiter Cantab`, `Jupiter`)
       , systRep(`Kyosei`, `Kyotronic 85`, `Kyotronic`)
@@ -135,7 +160,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Matra & Hachette`, `Alice 32`, `MC-10`), compRep(`Matra & Hachette`, `Tandy Radio Shack`) //change company after
     , compRep(`Memotech Ltd`, `Memotech`), systRep(`Memotech`, `MTX .*`, `MTX`) 
     , systRep(`Mikroelektronika`, `Pyldin-601`, `Pyldin`)
-    , systRep(`Nascom Microcomputers`, `2`, `Nascom`), compRep(`Nascom Microcomputers`, ``) //change company after
+    , systRep(`Nascom Microcomputers`, `1|2`, `Nascom`), compRep(`Nascom Microcomputers`, ``) //change company after
     , systRep(`Nintendo`, `Entertainment System / Famicom`, `NES`)
     , systRep(`Nintendo`, `Game Boy Color`, `Game Boy`)
     , systRep(`Nintendo`, `Super Entertainment System / Super Famicom `, `SNES`)
@@ -201,14 +226,17 @@ function makeFinalSystemTypes(systems){
 
   //a function we'll pass in later that calls the clone system or reports a problem
   const lookupCall = (cloneof, call) =>  {
-    const referredSystem = R.find( R.propEq(`call`, cloneof) )(systemsWithType)
+    const referredSystem = R.find( R.propEq(`call`, cloneof) 
+    )(systemsWithType)
     return referredSystem === undefined ? 
       console.log(`PROBLEM: ${call} says its a (working) cloneof ${cloneof} but ${cloneof} is emulated badly?`) : referredSystem.systemType
   }
 
   //before we replace the clone systems with the system type they are cloned from, we need to get our type property together
-  const systemsWithType = R.map(obj => R.assoc(`systemType`, (obj.mungedCompany ===`` || obj.mungedSystem ===``)? 
-    `${obj.mungedSystem}`:`${obj.mungedCompany} ${obj.mungedSystem}`, obj), systems 
+  const systemsWithType = R.map(obj => 
+    R.assoc(`systemType`, (obj.mungedCompany ===`` || obj.mungedSystem ===``)? 
+      `${obj.mungedSystem}`:`${obj.mungedCompany} ${obj.mungedSystem}`, obj
+    ), systems 
   )
 
   // now our objects have the following keys  ({company, system, call, cloneof, mungedCompany, displayCompany, mungedSystem, systemType})
@@ -233,8 +261,8 @@ function print(systems){
     
       //take company from system name if they repeat
       R.map( ( {system, call, displayCompany, systemType } ) => 
-        ({call, displayCompany, displaySystem: displayCompany == ``? system : 
-          system.replace(new RegExp(displayCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``), systemType
+        ({call, displayCompany, displaySystem: displayCompany == ``? 
+          system : system.replace(new RegExp(displayCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``), systemType
         })
       ) 
  
@@ -243,7 +271,8 @@ function print(systems){
       )
 
     , R.map( ( {call, displayCompany, displaySystem, systemType } ) => 
-        ({call, displayMachine: displayCompany == `` ? `${displaySystem}` : `${displayCompany} ${displaySystem}`, systemType })
+        ({call, displayMachine: displayCompany == `` ? 
+          `${displaySystem}` : `${displayCompany} ${displaySystem}`, systemType })
       )
 
   )(systems)
