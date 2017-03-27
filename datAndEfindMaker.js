@@ -15,11 +15,11 @@ const
 
 
 //program flow
-makeSystems(function(systems){
+mockSystems(function(systems){
 
   R.pipe(
      cleanSoftlists
-  //,  cleanDevices
+  ,  cleanDevices
   ,  mungeCompanyAndSytemsNames
   ,  mungeCompanyForType
   ,  makeFinalSystemTypes
@@ -74,7 +74,7 @@ function makeSystems(callback){
   })
 
   xml.on(`end`, function(){
-    //fs.writeFileSync(`inputs/systems.json`, JSON.stringify(systems, null, `\t`)) && process.exit()
+    //fs.writeFileSync(`inputs/systems.json`, JSON.stringify(systems, null, `\t`)); process.exit()
     callback(systems)
   })
 
@@ -100,17 +100,31 @@ function cleanSoftlists(systems){
 
 function cleanDevices(systems){
 
-  const flattenDevice = device =>
-    R.map( ({ $ }) =>
-      ( ({ type:$.type, tag:$.tag, name:$.instance.$.name, briefname:$.instance.$.briefname, extensions:[$.extension.name] }) ), systems)
+//const sortExtension = devices => console.log(JSON.stringify(devices,null,'\t' ))
+const template = R.applySpec({
+  name: R.prop('instance'),
+  type: R.prop('$.type')
+})
 
-
-  const replaceDevice = obj => R.assoc(`device`, flattenDevice(obj.device), obj)
   
-  //i don't need this as it HAS a device
-  const replaceIfDevice = R.map(obj => obj.device? obj.device = replaceDevice(obj) : obj, systems )
-
-  console.log(JSON.stringify(replaceIfDevice, null, '\t')); process.exit() //you can't && the exit, does that signal a problem?
+const sortExtension = devices => R.map(device => template(device), devices)
+  
+  const sorted = R.map(obj => sortExtension(obj.device), systems)
+console.log(JSON.stringify(sorted, null, '\t'))
+process.exit()
+//
+//  const flattenDevice = devices => {
+//   console.log(devices)//We've lots the extension list here - why? its been flattened to the last entry only....oh and the below isn't working because we have an array not a single device.
+//    R.map( ({ $ }) =>
+//      ( ({ type:$.type, tag:$.tag, name:$.instance.$.name, briefname:$.instance.$.briefname, extensions:[$.extension.name] }) ), devices)
+//
+//  }
+//  const replaceDevice = obj => R.assoc(`device`, flattenDevice(obj.device), obj)
+//  
+//  //i don't need this as it HAS a device
+//  const replaceIfDevice = R.map(obj => obj.device? obj.device = replaceDevice(obj) : obj, systems )
+//
+//  console.log(JSON.stringify(replaceIfDevice, null, '\t')); process.exit() //you can't && the exit, does that signal a problem?
 }
 
 
