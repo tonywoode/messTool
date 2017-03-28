@@ -134,8 +134,6 @@ function cleanDevices(systems){
     , obj)
   , replaceDevice)
   
-  console.log(JSON.stringify(removeUninterestingDevices, null,'\t'))
-  process.exit()
   return replaceDevice 
 
 }
@@ -310,7 +308,7 @@ function makeFinalSystemTypes(systems){
 
 
 /*
- * A subtlty here is that we want to print the munged COMPANY name (to avoid xx Computer Electronics Holding Ltd AB etc), but we want to largely keep 
+ * A subtltey here is that we want to print the munged COMPANY name (to avoid xx Computer Electronics Holding Ltd AB etc), but we want to largely keep 
  *   MESS' original system name to capture what makes each system different. However there are some considerations that also apply to system munging 
  *   that need re-application, along with some new concerns regarding the output format
  */
@@ -319,20 +317,15 @@ function print(systems){
   const efinder = R.pipe(
     
       //take company from system name if they repeat
-      R.map( ( {system, call, displayCompany, systemType } ) => 
-        ({call, displayCompany, displaySystem: displayCompany == ``? 
-          system : system.replace(new RegExp(displayCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``), systemType
-        })
+      R.map( obj => R.assoc(`displaySystem`, obj.displayCompany == ``? 
+          obj.system : obj.system.replace(new RegExp(obj.displayCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``), obj)
       ) 
- 
-    , R.map( ({call, displayCompany, displaySystem, systemType }) => 
-        ({call, displayCompany, displaySystem: displaySystem.replace(/\]\[/, `II`), systemType})
-      )
 
-    , R.map( ( {call, displayCompany, displaySystem, systemType } ) => 
-        ({call, displayMachine: displayCompany == `` ? 
-          `${displaySystem}` : `${displayCompany} ${displaySystem}`, systemType })
-      )
+      //it wasn't very forward thinking to call it the Apple ][ 
+    , R.map( obj => R.assoc(`displaySystem`, obj.displaySystem.replace(/\]\[/, `II`), obj) )
+
+    , R.map( obj => R.assoc(`displayMachine`, obj.displayCompany == `` ? 
+          `${obj.displaySystem}` : `${obj.displayCompany} ${obj.displaySystem}`, obj) )
 
   )(systems)
 
