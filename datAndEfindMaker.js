@@ -91,6 +91,7 @@ function cleanSoftlists(systems){
    
   const replaceSoftlist = obj => R.assoc(`softlist`, flattenSoftlist(obj.softlist), obj)
 
+  //start here, read up
   const replaceIfSoftlist = R.map(obj => obj.softlist? obj.softlist = replaceSoftlist(obj) : obj, systems )
 
   //console.log(JSON.stringify(replaceIfSoftlist, null, '\t')); process.exit() 
@@ -99,25 +100,27 @@ function cleanSoftlists(systems){
 }
 
 function cleanDevices(systems){
-  //not all devices have media, so we must check for null, needs a maybe
-  const getExtensions = extensions => {
+  //not all devices have media, so we must check for null. Time to introduce maybe
+  const flattenExtensions = extensions => {
    var fixed = null
    if (extensions){ fixed = R.map(extension => extension.$.name, extensions)}
    if (fixed) return fixed 
   }
 
+  //note applySpec is currying in the device object without. You might want to key these by 'name' - see applySpec doc
   const template = R.applySpec({
     type: R.path(['$', 'type']),
     tag: R.path(['$', 'tag']),
     name: R.path(['instance', '$', 'name']),
     briefname: R.path(['instance', '$', 'briefname']),
-    extensions: R.pipe(R.prop('extension'), getExtensions )
+    extensions: R.pipe(R.prop('extension'), flattenExtensions )
   })
 
-  const sortExtension = devices => R.map(device => template(device), devices)
-  
-  const sorted = R.map(obj => sortExtension(obj.device), systems)
-  console.log(JSON.stringify(sorted, null,'\t'))
+  const passToDeviceTemplate = devices => R.map(device => template(device), devices)
+  const replaceDevice = obj => R.assoc(`device`, passToDeviceTemplate(obj.device), obj) 
+  //start here. Note that we fundamentally scrape the MAME xml for things that have devices so we don't need to check if they have a device element again
+  const inspectDevice = R.map(obj => replaceDevice(obj), systems)
+  console.log(JSON.stringify(inspectDevice, null,'\t'))
   process.exit()
 }
 
