@@ -122,9 +122,22 @@ function cleanDevices(systems){
       device => template(device), obj.device)
     , obj)
   , systems)
+
+  const removeUninterestingDevices = R.map(
+    obj => R.assoc(`device`, R.filter(
+      device => 
+           device.type !== "printer" 
+        && device.type !== "midiout" 
+        && device.type !== "midiin" 
+        && device.type !== "serial"
+      , obj.device)
+    , obj)
+  , replaceDevice)
   
-  console.log(JSON.stringify(replaceDevice, null,'\t'))
+  console.log(JSON.stringify(removeUninterestingDevices, null,'\t'))
   process.exit()
+  return replaceDevice 
+
 }
 
 
@@ -147,7 +160,7 @@ function mungeCompanyAndSytemsNames(systems){
       R.map(obj => R.assoc(`mungedCompany`, obj.company, obj))
    ,  R.map(obj => R.assoc(`mungedSystem`,  obj.system,  obj))
       //take company from system name if they repeat
-    , R.map(obj => R.assoc('mungedSystem', obj.mungedSystem.replace(
+    , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.replace(
           new RegExp(obj.mungedCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``
       ), obj 
     )) 
