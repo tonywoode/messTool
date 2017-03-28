@@ -115,12 +115,15 @@ function cleanDevices(systems){
     extensions: R.pipe(R.prop('extension'), flattenExtensions )
   })
 
-  const passToDeviceTemplate = devices => R.map(device => template(device), devices)
-  const replaceDevice = obj => R.assoc(`device`, passToDeviceTemplate(obj.device), obj) 
-  //start here. Note that we fundamentally scrape the MAME xml for things that have devices so we don't need to check if they have a device element again
-  //TODO: this should all be a pipe, not read from the bottom up!
-  const inspectDevice = R.map(obj => replaceDevice(obj), systems)
-  console.log(JSON.stringify(inspectDevice, null,'\t'))
+  //Note that we fundamentally scrape the MAME xml for things that have devices so we don't need to check if they have a device element again
+  //systems list -> system object -> device in object - nested looping into the devices key of one of the system objects
+  const replaceDevice = R.map(
+    obj => R.assoc(`device`, R.map(
+      device => template(device), obj.device)
+    , obj)
+  , systems)
+  
+  console.log(JSON.stringify(replaceDevice, null,'\t'))
   process.exit()
 }
 
