@@ -93,38 +93,32 @@ function cleanSoftlists(systems){
 
   const replaceIfSoftlist = R.map(obj => obj.softlist? obj.softlist = replaceSoftlist(obj) : obj, systems )
 
-  //console.log(JSON.stringify(replaceIfSoftlist, null, '\t')); process.exit() //you can't && the exit, does that signal a problem?
+  //console.log(JSON.stringify(replaceIfSoftlist, null, '\t')); process.exit() 
 
   return replaceIfSoftlist
 }
 
 function cleanDevices(systems){
+  //not all devices have media, so we must check for null, needs a maybe
+  const getExtensions = extensions => {
+   var fixed = null
+   if (extensions){ fixed = R.map(extension => extension.$.name, extensions)}
+   if (fixed) return fixed 
+  }
 
-//const sortExtension = devices => console.log(JSON.stringify(devices,null,'\t' ))
-const template = R.applySpec({
-  name: R.prop('instance'),
-  type: R.prop('$.type')
-})
+  const template = R.applySpec({
+    type: R.path(['$', 'type']),
+    tag: R.path(['$', 'tag']),
+    name: R.path(['instance', '$', 'name']),
+    briefname: R.path(['instance', '$', 'briefname']),
+    extensions: R.pipe(R.prop('extension'), getExtensions )
+  })
 
-  
-const sortExtension = devices => R.map(device => template(device), devices)
+  const sortExtension = devices => R.map(device => template(device), devices)
   
   const sorted = R.map(obj => sortExtension(obj.device), systems)
-console.log(JSON.stringify(sorted, null, '\t'))
-process.exit()
-//
-//  const flattenDevice = devices => {
-//   console.log(devices)//We've lots the extension list here - why? its been flattened to the last entry only....oh and the below isn't working because we have an array not a single device.
-//    R.map( ({ $ }) =>
-//      ( ({ type:$.type, tag:$.tag, name:$.instance.$.name, briefname:$.instance.$.briefname, extensions:[$.extension.name] }) ), devices)
-//
-//  }
-//  const replaceDevice = obj => R.assoc(`device`, flattenDevice(obj.device), obj)
-//  
-//  //i don't need this as it HAS a device
-//  const replaceIfDevice = R.map(obj => obj.device? obj.device = replaceDevice(obj) : obj, systems )
-//
-//  console.log(JSON.stringify(replaceIfDevice, null, '\t')); process.exit() //you can't && the exit, does that signal a problem?
+  console.log(JSON.stringify(sorted, null,'\t'))
+  process.exit()
 }
 
 
