@@ -87,14 +87,13 @@ function cleanSoftlists(systems){
   //I removed the destructuring elsewhere but here the object isn't going to grow
   const flattenSoftlist = softlist  => 
     R.map( ({ $ }) => 
-     ( ({ name:$.name, status:$.status, filter:$.filter }) ), softlist )
-   
-  const replaceSoftlist = obj => R.assoc(`softlist`, flattenSoftlist(obj.softlist), obj)
+     ( ({ name:$.name, status:$.status, filter:$.filter }) )
+    , softlist )
 
-  //start here, read up
-  const replaceIfSoftlist = R.map(obj => obj.softlist? obj.softlist = replaceSoftlist(obj) : obj, systems )
-
-  //console.log(JSON.stringify(replaceIfSoftlist, null, '\t')); process.exit() 
+  //if the system has a softlist, clear up its object as the thing we scraped wasn't nice
+  const replaceIfSoftlist = R.map(obj => obj.softlist? 
+    obj.softlist = R.assoc(`softlist`, flattenSoftlist(obj.softlist), obj) : obj
+  , systems )
 
   return replaceIfSoftlist
 }
@@ -119,6 +118,7 @@ function cleanDevices(systems){
   const passToDeviceTemplate = devices => R.map(device => template(device), devices)
   const replaceDevice = obj => R.assoc(`device`, passToDeviceTemplate(obj.device), obj) 
   //start here. Note that we fundamentally scrape the MAME xml for things that have devices so we don't need to check if they have a device element again
+  //TODO: this should all be a pipe, not read from the bottom up!
   const inspectDevice = R.map(obj => replaceDevice(obj), systems)
   console.log(JSON.stringify(inspectDevice, null,'\t'))
   process.exit()
