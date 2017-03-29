@@ -313,6 +313,28 @@ function makeFinalSystemTypes(systems){
  *   that need re-application, along with some new concerns regarding the output format
  */
 function print(systems){
+
+  //I SEE HOW TO DO THIS NOW. THE TOP LINE CHANGES, THE OTHER LINES STAY THE SAME. SO MAKE A VAR AND INJECT IT FOR TOP LINE
+  //APART FROM HOME PAGE WHICH YOU COULD ALSO MAKE A VAR FOR
+  const efindTemplate = ( topLine, systemType, callToMake, info ) =>
+    (
+`[Retroarch MESS ${topLine}]
+Exe Name=retroarch.exe
+Config Name=retroarch
+System=${systemType} 
+HomePage=${info}
+param=${callToMake}
+isWin32=1
+CmdLine=1
+ShellEx=0
+Verify=0
+ShortExe=0
+DisWinKey=1
+DisScrSvr=1
+Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
+`
+   )
+
   const efinder = R.pipe(
     
       //take company from system name if they repeat
@@ -344,7 +366,8 @@ function print(systems){
         , callToMake = obj.call
       )
     , obj.softlist) : '' //TODO: noop
-    //console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: {info}`)//this all looks fine
+    obj.softlist? console.log(efindTemplate( topLine, systemType, callToMake, info )) : ''
+    //obj.softlist? console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: {info}`) : ''//this all looks fine
   } , efinder)
    
   //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
@@ -352,7 +375,7 @@ function print(systems){
     var topLine, systemType, callToMake, info
   
      R.map(device => (
-         topLine    = obj.displayMachine 
+         topLine    = obj.displayMachine //TODO: would this be better as an object, you could destructure it in the callsite 
                        + " - " 
                        + device.name
        , systemType = obj.systemType
@@ -360,30 +383,8 @@ function print(systems){
        , info       = `Supports: ${device.extensions}`
       )
     , obj.device)
-    console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: ${info}`)//this all looks fine
+    //console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: ${info}`)//this all looks fine
   } , efinder)//remember we aren't piping here, both this and the above function can take the same efinder list as input
-process.exit()
-
-  //I SEE HOW TO DO THIS NOW. THE TOP LINE CHANGES, THE OTHER LINES STAY THE SAME. SO MAKE A VAR AND INJECT IT FOR TOP LINE
-  //APART FROM HOME PAGE WHICH YOU COULD ALSO MAKE A VAR FOR
-  const efindTemplate = ({ topLine, systemType, callToMake, info }) =>
-    (
-`[Retroarch MESS ${displayMachine} - ${softlist}]
-Exe Name=retroarch.exe
-Config Name=retroarch
-System=${systemType} 
-HomePage=http://wiki.libretro.com/index.php
-param=${call}
-isWin32=1
-CmdLine=1
-ShellEx=0
-Verify=0
-ShortExe=0
-DisWinKey=1
-DisScrSvr=1
-Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
-`
-   )
 
   fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
   madeDat(efinder)
