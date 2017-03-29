@@ -134,7 +134,7 @@ function cleanDevices(systems){
     , obj)
   , replaceDevice)
   
-  return replaceDevice 
+  return removeUninterestingDevices 
 
 }
 
@@ -346,18 +346,20 @@ function print(systems){
     , obj.softlist) : '' //TODO: noop
   } , efinder)
 
+   //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
    const devicesEfinderToPrint = R.map ( obj => { 
-    var softlistFilter = ''
-    obj.softlist? R.map(softlist => (
-        softlist.filter? softlistFilter = ` (${softlist.filter} only)` : ''
-      , console.log(
+    R.map(device => (
+        console.log(
           obj.displayMachine 
-          + " - SOFTLIST " 
-          + softlist.name
-          + softlistFilter
+          + " - " 
+          + device.name
+          + " - " 
+          + device.briefname
+          + " - " 
+          + device.extensions
         )
       )
-    , obj.softlist) : '' //TODO: noop
+    , obj.device)
   } , efinder)
 
  
