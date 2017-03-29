@@ -318,9 +318,9 @@ function print(systems){
   //APART FROM HOME PAGE WHICH YOU COULD ALSO MAKE A VAR FOR
   const efindTemplate = ( topLine, systemType, callToMake, info ) =>
     (
-`[Retroarch MESS ${topLine}]
-Exe Name=retroarch.exe
-Config Name=retroarch
+`[MESS ${topLine}]
+Exe Name=mame64.exe
+Config Name=mame
 System=${systemType} 
 HomePage=${info}
 param=${callToMake}
@@ -359,11 +359,12 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
         softlist.filter? softlistFilter = ` (${softlist.filter} only)` : ''
 
         , topLine    = obj.displayMachine 
-                       + " - SOFTLIST " 
+                       + ` -SOFTLIST `
                        + softlist.name
                        + softlistFilter
         , systemType = obj.systemType
-        , callToMake = obj.call
+        , callToMake = `${obj.call} %ROMMAME%` //for we are running from a generated soflist romdata.dat
+        , info       = `http://mameworld.info` //we don't have anything but a url to tell you about with softlists
       )
     , obj.softlist) : '' //TODO: noop
     obj.softlist? console.log(efindTemplate( topLine, systemType, callToMake, info )) : ''
@@ -379,13 +380,16 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
                        + " - " 
                        + device.name
        , systemType = obj.systemType
-       , callToMake = `${obj.call} ${device.briefname}`
+       , callToMake = `${obj.call} -${device.briefname} "%ROM%"` //this is not about softlists
        , info       = `Supports: ${device.extensions}`
       )
     , obj.device)
+    //console.log(efindTemplate( topLine, systemType, callToMake, info ))
     //console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: ${info}`)//this all looks fine
   } , efinder)//remember we aren't piping here, both this and the above function can take the same efinder list as input
 
+
+  //WHAT WE NEED TO DO NOW IS TAKE THE TOP LEVEL OFF BOTH OF THE ABOVE FUNCTIONS AND CALL EACH OF THEM AS WE LOOP THROUGH EACH SYSTEM IN A NEW FUNCTION
   fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
   madeDat(efinder)
   
