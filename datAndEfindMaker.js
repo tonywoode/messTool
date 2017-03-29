@@ -368,7 +368,8 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
         , info       = `http://mameworld.info` //we don't have anything but a url to tell you about with softlists
       )
     , obj.softlist) : '' //TODO: noop
-    obj.softlist? console.log(efindTemplate( topLine, systemType, callToMake, info )) : ''
+    if (obj.softlist) return efindTemplate( topLine, systemType, callToMake, info )
+    //obj.softlist? console.log(efindTemplate( topLine, systemType, callToMake, info )) : ''
     //obj.softlist? console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: {info}`) : ''//this all looks fine
   }
 
@@ -386,16 +387,16 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
        , info       = `Supports: ${device.extensions}`
       )
     , obj.device)
-    console.log(efindTemplate( topLine, systemType, callToMake, info ))
+    //console.log(efindTemplate( topLine, systemType, callToMake, info ))
+    return efindTemplate( topLine, systemType, callToMake, info )
     //console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: ${info}`)//this all looks fine
   } //remember we aren't piping here, both this and the above function can take the same efinder list as input
 
-const printTheEfind = R.map ( obj => {
-  softlistEfinderToPrint(obj)
-  devicesEfinderToPrint(obj)
-  } , efinder)
+  const efinderToPrint = R.map ( obj   => (
+    softlistEfinderToPrint(obj)
+   , devicesEfinderToPrint(obj)
+  ) , efinder)
 
-  //WHAT WE NEED TO DO NOW IS TAKE THE TOP LEVEL OFF BOTH OF THE ABOVE FUNCTIONS AND CALL EACH OF THEM AS WE LOOP THROUGH EACH SYSTEM IN A NEW FUNCTION
   fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
   madeDat(efinder)
   
@@ -404,11 +405,10 @@ const printTheEfind = R.map ( obj => {
 
 
 function madeDat(systems){
-  const lister =  R.pipe(
 
+  const lister =  R.pipe(
       R.map( ({call, displayMachine, systemType }) => (`${systemType}`) )
     , R.uniq
-
   )(systems)
 
   const ordered = lister.sort( (a, b) => a.localeCompare(b) )
