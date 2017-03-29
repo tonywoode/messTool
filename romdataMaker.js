@@ -6,67 +6,70 @@ const
   , R          = require(`Ramda`)
 
 const 
-    stream     = fs.createReadStream(`inputs/mame.xml`)
+    stream     = fs.createReadStream(`inputs/hash/gamegear.xml`)
   , xml        = new XmlStream(stream)
-  , iniOutPath = (`outputs/mess.ini`)
-  , datOutPath = (`outputs/systems.dat`)
-  , spaceIsSeparator  = ` `
-  , oneWord = 1
-
+  , romdataOutPath = (`outputs/romdata.dat`)
 
 //program flow
-mockSystems(function(systems){
-
+makeSoftlists(function(softlist){
   R.pipe(
-
      print
-
-  )(systems)
+  )(softlist)
 
 })
 
 
-function mockSystems(callback){
-  const 
-      input   = fs.readFileSync(`inputs/mockSoftlistScrape.json`)
-   ,  systems = JSON.parse(input)
-  
-  callback(systems, callback)
-}
+//function mockSoftlists(callback){
+//  const 
+//      input   = fs.readFileSync(`inputs/mockGamegearHashScrape.json`)
+//   ,  systems = JSON.parse(input)
+//  
+//  callback(softlist, callback)
+//}
+//
 
+function makeSoftlists(callback){
+  const softlist = []
 
-function makeSystems(callback){
-  const systems = []
-
-  xml.collect('softwarelist')
-  xml.on(`updateElement: machine`, function(machine) {
-    if (machine.softwarelist 
-       && machine.driver.$.emulation === `good`
-         && !machine.$.cloneof //with this one, we don't want any clones...(umm are you sure: there's no atri 2600 pal now shouldn't we do each systems' softlist as step 1?).
+  xml.collect(`info`)
+  xml.collect(`sharedfeat`)
+  xml.collect(`feature`)
+  xml.on(`updateElement: software`, function(software) {
+    if (
+        software.$.supported !== `no` 
+      //these crap the list out after the dollar. perhaps path length + key may not exist...
+//    &&  software.part.dataarea.rom.$.status  !== `baddump`
+//    &&  software.part.dataarea.rom.$.status  !== `nodump`
+ //   &&  software.part.diskarea.disk.$.status !== `baddump`
+  //  &&  software.part.diskarea.disk.$.status !== `nodump`
     ) {
       const node = {}
-      node.system = machine.description 
-      node.call = machine.$.name
-      node.cloneof = machine.$.cloneof
-      node.softlist = machine.softwarelist
-      systems.push(node)
-    }
+      node.call = software.$.name
+      node.cloneof = software.$.cloneof
+      node.name = software.description
+      node.year = software.year
+      node.company = software.publisher
+      node.info = software.info
+      node.sharedfeature = software.sharedfeat
+      node.feature = software.part.feature
+      node.interface = software.part.$.interface
+      softlist.push(node)
+  }
   })
-
   xml.on(`end`, function(){
-//console.log(JSON.stringify(systems, null, '\t'))
-//process.exit()
-    callback(systems)
+    console.log(JSON.stringify(softlist, null, '\t'))
+process.exit()
+    callback(softlist)
   })
 
 }
 
 
-function print(systems){
-// there doesn't seem to be a way to get multiple softlists in the output for a single system, and print their properties nicely against the object. So we'll do it oursleves...
-const printMe = R.map( ({ system, call, cloneof, softlist }) => ({ softlist: 
-  R.map( ({ $ }) => ( ({ name:$.name, status:$.status, filter:$.filter }) ), softlist )
-}),  systems)
-console.log(JSON.stringify(printMe, null, '\t'))
-process.exit()
-}
+//function print(systems){
+//// there doesn't seem to be a way to get multiple softlists in the output for a single system, and print their properties nicely against the object. So we'll do it oursleves...
+//const printMe = R.map( ({ system, call, cloneof, softlist }) => ({ softlist: 
+//  R.map( ({ $ }) => ( ({ name:$.name, status:$.status, filter:$.filter }) ), softlist )
+//}),  systems)
+//console.log(JSON.stringify(printMe, null, '\t'))
+//process.exit()
+//}

@@ -62,7 +62,6 @@ function makeSystems(callback){
       && machine.driver.$.graphic === `good`
     ) {
       const node = {}
-      //make an array of objects like this: { company, system, call, cloneof }
       node.company = machine.manufacturer
       node.system = machine.description 
       node.call = machine.$.name
