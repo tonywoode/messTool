@@ -332,22 +332,40 @@ function print(systems){
   //so here we need to change this so that we're calling it for each softlist AND for each device......
 // it prob makes sense to have two separate maps for this
   // atm we have one, we map over the main list, so we need to do that but then for each system we find, map again...
-  const efinderToPrint = R.map ( obj => { 
-      //console.log(obj)
-  var softlistFilter = ''
-      //R.map(  devices => obj.device ? console.log(devices): console.log("no softlist"), obj.device)
-      obj.softlist? R.map(softlist => (
-        softlist.filter? softlistFilter = softlist.filter : ''
-       , console.log(
-             obj.displayMachine 
-          + "has the softlists " 
-          + JSON.stringify(softlist)
+  const softlistEfinderToPrint = R.map ( obj => { 
+    var softlistFilter = ''
+    obj.softlist? R.map(softlist => (
+        softlist.filter? softlistFilter = ` (${softlist.filter} only)` : ''
+    //  , console.log(
+    //      obj.displayMachine 
+    //      + " - SOFTLIST " 
+    //      + softlist.name
+     //     + softlistFilter
+    //    )
+      )
+    , obj.softlist) : '' //TODO: noop
+  } , efinder)
+
+   const devicesEfinderToPrint = R.map ( obj => { 
+    var softlistFilter = ''
+    obj.softlist? R.map(softlist => (
+        softlist.filter? softlistFilter = ` (${softlist.filter} only)` : ''
+      , console.log(
+          obj.displayMachine 
+          + " - SOFTLIST " 
+          + softlist.name
           + softlistFilter
         )
       )
-      , obj.softlist) : '' //TODO: noop
+    , obj.softlist) : '' //TODO: noop
   } , efinder)
-//`[Retroarch MESS ${displayMachine} - ${softlist}]
+
+ 
+//R.map(  devices => obj.device ? console.log(devices): console.log("no softlist"), obj.device
+
+  //I SEE HOW TO DO THIS NOW. THE TOP LINE CHANGES, THE OTHER LINES STAY THE SAME. SO MAKE A VAR AND INJECT IT FOR TOP LINE
+  //APART FROM HOME PAGE WHICH YOU COULD ALSO MAKE A VAR FOR
+  //`[Retroarch MESS ${displayMachine} - ${softlist}]
 //Exe Name=retroarch.exe
 //Config Name=retroarch
 //System=${systemType} 
