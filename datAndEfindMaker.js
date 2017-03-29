@@ -349,9 +349,10 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
           `${obj.displaySystem}` : `${obj.displayCompany} ${obj.displaySystem}`, obj) )
 
   )(systems)
-//console.log(JSON.stringify(efinder, null, '\t')); process.exit()
-  
-  const softlistEfinderToPrint = R.map ( obj => { 
+  //console.log(JSON.stringify(efinder, null, '\t')); process.exit()
+ 
+
+  const softlistEfinderToPrint = obj => { 
     var softlistFilter = ''
       , topLine, systemType, callToMake, info
 
@@ -369,10 +370,11 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
     , obj.softlist) : '' //TODO: noop
     obj.softlist? console.log(efindTemplate( topLine, systemType, callToMake, info )) : ''
     //obj.softlist? console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: {info}`) : ''//this all looks fine
-  } , efinder)
-   
+  }
+
+
   //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
-   const devicesEfinderToPrint = R.map ( obj => { 
+   const devicesEfinderToPrint = obj => { 
     var topLine, systemType, callToMake, info
   
      R.map(device => (
@@ -384,16 +386,22 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
        , info       = `Supports: ${device.extensions}`
       )
     , obj.device)
-    //console.log(efindTemplate( topLine, systemType, callToMake, info ))
+    console.log(efindTemplate( topLine, systemType, callToMake, info ))
     //console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: ${info}`)//this all looks fine
-  } , efinder)//remember we aren't piping here, both this and the above function can take the same efinder list as input
+  } //remember we aren't piping here, both this and the above function can take the same efinder list as input
 
+const printTheEfind = R.map ( obj => {
+  softlistEfinderToPrint(obj)
+  devicesEfinderToPrint(obj)
+  } , efinder)
 
   //WHAT WE NEED TO DO NOW IS TAKE THE TOP LEVEL OFF BOTH OF THE ABOVE FUNCTIONS AND CALL EACH OF THEM AS WE LOOP THROUGH EACH SYSTEM IN A NEW FUNCTION
   fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
   madeDat(efinder)
   
 }
+
+
 
 function madeDat(systems){
   const lister =  R.pipe(
