@@ -328,28 +328,44 @@ function print(systems){
           `${obj.displaySystem}` : `${obj.displayCompany} ${obj.displaySystem}`, obj) )
 
   )(systems)
-
-  const efinderToPrint = R.map ( ({call, displayMachine, systemType}) => 
-    (
-`[Retroarch MESS ${displayMachine}]
-Exe Name=retroarch.exe
-Config Name=retroarch
-System=${systemType} 
-HomePage=http://wiki.libretro.com/index.php
-param=${call}
-isWin32=1
-CmdLine=1
-ShellEx=0
-Verify=0
-ShortExe=0
-DisWinKey=1
-DisScrSvr=1
-Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
-`
-   ), efinder)
-
-  fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
-  madeDat(efinder)
+//console.log(JSON.stringify(efinder, null, '\t')); process.exit()
+  //so here we need to change this so that we're calling it for each softlist AND for each device......
+// it prob makes sense to have two separate maps for this
+  // atm we have one, we map over the main list, so we need to do that but then for each system we find, map again...
+  const efinderToPrint = R.map ( obj => { 
+      //console.log(obj)
+  var softlistFilter = ''
+      //R.map(  devices => obj.device ? console.log(devices): console.log("no softlist"), obj.device)
+      obj.softlist? R.map(softlist => (
+        softlist.filter? softlistFilter = softlist.filter : ''
+       , console.log(
+             obj.displayMachine 
+          + "has the softlists " 
+          + JSON.stringify(softlist)
+          + softlistFilter
+        )
+      )
+      , obj.softlist) : '' //TODO: noop
+  } , efinder)
+//`[Retroarch MESS ${displayMachine} - ${softlist}]
+//Exe Name=retroarch.exe
+//Config Name=retroarch
+//System=${systemType} 
+//HomePage=http://wiki.libretro.com/index.php
+//param=${call}
+//isWin32=1
+//CmdLine=1
+//ShellEx=0
+//Verify=0
+//ShortExe=0
+//DisWinKey=1
+//DisScrSvr=1
+//Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
+//`
+//   ), efinder)
+//
+//  fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
+//  madeDat(efinder)
   
 }
 
