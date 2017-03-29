@@ -49,10 +49,10 @@ function makeSystems(callback){
   xml.on(`updateElement: machine`, function(machine) {
     if ( //machine.softwarelist // we used to do this when doing retroarch, but it turned out life wasn't that simple after all....
          machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
-      && machine.$.isdevice === "no" //see the mame.exe (internal)  DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no">
-      && machine.$.isbios === "no" 
-      && machine.$.ismechanical === "no"
-      && machine.$.runnable === "yes"
+      && machine.$.isdevice === `no` //see the mame.exe (internal)  DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no">
+      && machine.$.isbios === `no` 
+      && machine.$.ismechanical === `no`
+      && machine.$.runnable === `yes`
       && !machine.input.$.coins
       && machine.driver.$.status === `good`
       && machine.driver.$.emulation === `good`
@@ -313,7 +313,6 @@ function makeFinalSystemTypes(systems){
  *   that need re-application, along with some new concerns regarding the output format
  */
 function print(systems){
-//TODO: you took out the test for whether a system has a softlist, this originally printed out (for better or worse) all the retroarch softlist systems, you need to filter by softlist at the very least
   const efinder = R.pipe(
     
       //take company from system name if they repeat
@@ -329,24 +328,26 @@ function print(systems){
 
   )(systems)
 //console.log(JSON.stringify(efinder, null, '\t')); process.exit()
-  //so here we need to change this so that we're calling it for each softlist AND for each device......
-// it prob makes sense to have two separate maps for this
-  // atm we have one, we map over the main list, so we need to do that but then for each system we find, map again...
+  
   const softlistEfinderToPrint = R.map ( obj => { 
     var softlistFilter = ''
+      , topLine, systemType, callToMake, info
+
     obj.softlist? R.map(softlist => (
         softlist.filter? softlistFilter = ` (${softlist.filter} only)` : ''
-    //  , console.log(
-    //      obj.displayMachine 
-    //      + " - SOFTLIST " 
-    //      + softlist.name
-     //     + softlistFilter
-    //    )
+
+        ,  topLine = obj.displayMachine 
+          + " - SOFTLIST " 
+          + softlist.name
+          + softlistFilter
+        , systemType = obj.systemType
+        , callToMake = obj.call
       )
     , obj.softlist) : '' //TODO: noop
+    console.log(topLine, systemType, callToMake, info)//this all looks fine
   } , efinder)
-
-   //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
+   
+  //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
    const devicesEfinderToPrint = R.map ( obj => { 
     R.map(device => (
         console.log(
@@ -362,30 +363,30 @@ function print(systems){
     , obj.device)
   } , efinder)
 
- 
-//R.map(  devices => obj.device ? console.log(devices): console.log("no softlist"), obj.device
 
   //I SEE HOW TO DO THIS NOW. THE TOP LINE CHANGES, THE OTHER LINES STAY THE SAME. SO MAKE A VAR AND INJECT IT FOR TOP LINE
   //APART FROM HOME PAGE WHICH YOU COULD ALSO MAKE A VAR FOR
-  //`[Retroarch MESS ${displayMachine} - ${softlist}]
-//Exe Name=retroarch.exe
-//Config Name=retroarch
-//System=${systemType} 
-//HomePage=http://wiki.libretro.com/index.php
-//param=${call}
-//isWin32=1
-//CmdLine=1
-//ShellEx=0
-//Verify=0
-//ShortExe=0
-//DisWinKey=1
-//DisScrSvr=1
-//Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
-//`
-//   ), efinder)
-//
-//  fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
-//  madeDat(efinder)
+  const efindTemplate = ({ topLine, systemType, callToMake, info }) =>
+    (
+`[Retroarch MESS ${displayMachine} - ${softlist}]
+Exe Name=retroarch.exe
+Config Name=retroarch
+System=${systemType} 
+HomePage=http://wiki.libretro.com/index.php
+param=${call}
+isWin32=1
+CmdLine=1
+ShellEx=0
+Verify=0
+ShortExe=0
+DisWinKey=1
+DisScrSvr=1
+Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
+`
+   )
+
+  fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
+  madeDat(efinder)
   
 }
 
