@@ -336,33 +336,33 @@ function print(systems){
     obj.softlist? R.map(softlist => (
         softlist.filter? softlistFilter = ` (${softlist.filter} only)` : ''
 
-        ,  topLine = obj.displayMachine 
-          + " - SOFTLIST " 
-          + softlist.name
-          + softlistFilter
+        , topLine    = obj.displayMachine 
+                       + " - SOFTLIST " 
+                       + softlist.name
+                       + softlistFilter
         , systemType = obj.systemType
         , callToMake = obj.call
       )
     , obj.softlist) : '' //TODO: noop
-    console.log(topLine, systemType, callToMake, info)//this all looks fine
+    //console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: {info}`)//this all looks fine
   } , efinder)
    
   //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
    const devicesEfinderToPrint = R.map ( obj => { 
-    R.map(device => (
-        console.log(
-          obj.displayMachine 
-          + " - " 
-          + device.name
-          + " - " 
-          + device.briefname
-          + " - " 
-          + device.extensions
-        )
+    var topLine, systemType, callToMake, info
+  
+     R.map(device => (
+         topLine    = obj.displayMachine 
+                       + " - " 
+                       + device.name
+       , systemType = obj.systemType
+       , callToMake = `${obj.call} ${device.briefname}`
+       , info       = `Supports: ${device.extensions}`
       )
     , obj.device)
-  } , efinder)
-
+    console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: ${info}`)//this all looks fine
+  } , efinder)//remember we aren't piping here, both this and the above function can take the same efinder list as input
+process.exit()
 
   //I SEE HOW TO DO THIS NOW. THE TOP LINE CHANGES, THE OTHER LINES STAY THE SAME. SO MAKE A VAR AND INJECT IT FOR TOP LINE
   //APART FROM HOME PAGE WHICH YOU COULD ALSO MAKE A VAR FOR
