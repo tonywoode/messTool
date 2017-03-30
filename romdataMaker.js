@@ -66,24 +66,28 @@ function makeSoftlists(callback){
 }
 
 
-
-
 //I don't like working with a messy tree, lots of $ and needless repetition...
+// With softlists it tuned out that we have three identically keyed objects, so a generic
+// function will clean them all up
+
 function cleanSoftlist(softlist){
-  //I removed the destructuring elsewhere but here the object isn't going to grow
- 
-  //I removed the destructuring elsewhere but here the object isn't going to grow
+  //I removed destructuring elsewhere but here the object isn't going to grow
   const cleanPairs = key  => 
     R.map( ({ $ }) => 
      ( ({ name:$.name, value:$.value }) )
     , key )
   
-  //if the system has a softlist, clear up its object as the thing we scraped wasn't nice
-  const replaceIfFeature = R.map(obj => obj.feature? 
-    obj.feature = R.assoc(`feature`, cleanPairs(obj.feature), obj) : obj
-  , softlist )
+  //if the softlist contains some subobject named 'key', clear up that subobject, as the thing we scraped wasn't nice
+  const replaceIfKey = (key, list) => R.map(obj => obj[key]? 
+    obj[key] = R.assoc(key, cleanPairs(obj[key]), obj) : obj
+  , list )
 
-  return replaceIfFeature
+  //TODO: good case for pipe, but the function takes the whole softlist
+  const replacedFeature = replaceIfKey(`feature`, softlist)
+  const replacedInfo    = replaceIfKey(`info`, replacedFeature)
+  const replacedSharedFeat = replaceIfKey(`sharedFeat`, replacedInfo)
+
+  return replacedSharedFeat
 }
 
 function print(softlist){
