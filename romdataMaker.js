@@ -13,7 +13,8 @@ const
 //program flow
 makeSoftlists(function(softlist){
   R.pipe(
-     print
+    cleanSoftlist
+    , print
   )(softlist)
 
 })
@@ -57,13 +58,40 @@ function makeSoftlists(callback){
   }
   })
   xml.on(`end`, function(){
-    console.log(JSON.stringify(softlist, null, '\t'))
-process.exit()
+ //   console.log(JSON.stringify(softlist, null, '\t'))
+//process.exit()
     callback(softlist)
   })
 
 }
+
+
+
+
+//I don't like working with a messy tree, lots of $ and needless repetition...
+function cleanSoftlist(softlist){
+  //I removed the destructuring elsewhere but here the object isn't going to grow
+ 
+  //I removed the destructuring elsewhere but here the object isn't going to grow
+  const cleanPairs = key  => 
+    R.map( ({ $ }) => 
+     ( ({ name:$.name, value:$.value }) )
+    , key )
+  
+  //if the system has a softlist, clear up its object as the thing we scraped wasn't nice
+  const replaceIfFeature = R.map(obj => obj.feature? 
+    obj.feature = R.assoc(`feature`, cleanPairs(obj.feature), obj) : obj
+  , softlist )
+
+  return replaceIfFeature
+}
+
 function print(softlist){
+
+
+    console.log(JSON.stringify(softlist, null, '\t'))
+process.exit()
+
 const tidyinfo = R.map( ({ call, cloneof, name, year, company, info, sharedfeature, feature, interfacer }) => ({ info:
   R.map( ({$}) => ( ({name:$.name, value:$.value  }) ),info)
 }), softlist)
