@@ -8,8 +8,9 @@ const
 const 
     stream     = fs.createReadStream(`inputs/mame.xml`)
   , xml        = new XmlStream(stream)
-  , iniOutPath = (`outputs/mess.ini`)
-  , datOutPath = (`outputs/systems.dat`)
+  , iniOutPath = `outputs/mess.ini`
+  , datOutPath = `outputs/systems.dat`
+  , jsonPath   = `outputs/systems.json`
   , spaceIsSeparator  = ` `
   , oneWord = 1
 
@@ -312,9 +313,6 @@ function makeFinalSystemTypes(systems){
  *   that need re-application, along with some new concerns regarding the output format
  */
 function print(systems){
-
-  //I SEE HOW TO DO THIS NOW. THE TOP LINE CHANGES, THE OTHER LINES STAY THE SAME. SO MAKE A VAR AND INJECT IT FOR TOP LINE
-  //APART FROM HOME PAGE WHICH YOU COULD ALSO MAKE A VAR FOR
   const efindTemplate = ( topLine, systemType, callToMake, info ) =>
     (
 `[MESS ${topLine}]
@@ -413,9 +411,12 @@ function madeDat(systems){
   const ordered = lister.sort( (a, b) => a.localeCompare(b) )
 
   fs.writeFileSync(datOutPath, ordered.join('\n'))
-  process.exit()
   //output.on('error', function(err) { console.log(`couldn't write the file`) });
   //systems.forEach(function(v) { output.write(v + '\n'); });
 
+  //print out the json we made
+  console.log(JSON.stringify(systems,null, '\t'))
+  fs.writeFileSync(jsonPath, JSON.stringify(systems,null, '\t'))
+  process.exit()
 }
 
