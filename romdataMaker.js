@@ -92,19 +92,35 @@ function cleanSoftlist(softlist){
 
 function print(softlist){
 
+//console.log(JSON.stringify(softlist, null, '\t'))
+//process.exit()
+  const romdataHeader = `ROM DataFile Version : 1.1
+  `
+  const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
-    console.log(JSON.stringify(softlist, null, '\t'))
+  const romdataLine = (name, MAMEName, parentName, path, emu, company, year, comment) =>
+  ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬${emu}¬${company}¬${year}¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+  
+  var name, MAMEName, parentName, emu, company, year, comment
+  
+  const romdata = obj => R.map ( obj => {
+  var name, MAMEName, parentName, emu, company, year, comment
+        name = obj.name
+      , MAMEName = obj.call
+      , obj.cloneof?  parentName = obj.cloneof : parentName = ``
+      , company = obj.company
+      , year = obj.year
+    //we'll need to loop through all three of feaures, info and shared feat to make comments, prob better as a separate function, or even bake into the object
+     
+   return romdataLine( name, MAMEName, parentName, path, `fake`, company, year, `fake`) 
+  
+  }, softlist)
+  const romdataToPrint = romdata(softlist)
+  
+  console.log(romdataToPrint)
 process.exit()
 
-const tidyinfo = R.map( ({ call, cloneof, name, year, company, info, sharedfeature, feature, interfacer }) => ({ info:
-  R.map( ({$}) => ( ({name:$.name, value:$.value  }) ),info)
-}), softlist)
 }
-//function print(systems){
-//// there doesn't seem to be a way to get multiple softlists in the output for a single system, and print their properties nicely against the object. So we'll do it oursleves...
-//const printMe = R.map( ({ system, call, cloneof, softlist }) => ({ softlist: 
-//  R.map( ({ $ }) => ( ({ name:$.name, status:$.status, filter:$.filter }) ), softlist )
-//}),  systems)
 //console.log(JSON.stringify(printMe, null, '\t'))
 //process.exit()
 //}
@@ -126,7 +142,6 @@ const tidyinfo = R.map( ({ call, cloneof, name, year, company, info, sharedfeatu
 //  _NumPlay : integer;   //The amount of times this rom has been played
 //  _DefaultGoodMerge : String; //The user selected default GoodMerge ROM
 //
-  const romdataHeader = `ROM DataFile Version : 1.1`
 
 //and a few random lines of a real romdata:
 //CD-Rom System Card (v2.1)¬cdsys¬¬¬F:\MESS\Mess\roms\pce\cdsys.zip¬MESS PC Engine -CART¬Hudson¬19??¬¬¬English¬pce -cart "%ROMMAME%" -now¬¬0¬1¬<IPS>¬</IPS>¬¬¬
