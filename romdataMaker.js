@@ -1,14 +1,14 @@
 "use strict"
 
 const 
-    fs         = require(`fs`)
-  , XmlStream  = require(`xml-stream`)
-  , R          = require(`Ramda`)
+    fs             = require(`fs`)
+  , XmlStream      = require(`xml-stream`)
+  , R              = require(`Ramda`)
 
 const 
-    stream     = fs.createReadStream(`inputs/hash/gamegear.xml`)
-  , xml        = new XmlStream(stream)
-  , romdataOutPath = (`outputs/romdata.dat`)
+    stream         = fs.createReadStream(`inputs/hash/gamegear.xml`)
+  , xml            = new XmlStream(stream)
+  , romdataOutPath = `outputs/romdata.dat`
 
 //program flow
 makeSoftlists(function(softlist){
@@ -37,12 +37,13 @@ function makeSoftlists(callback){
   xml.collect(`feature`)
   xml.on(`updateElement: software`, function(software) {
     if (
-        software.$.supported !== `no` 
+          software.$.supported !== `no` 
       //these crap the list out after the dollar. perhaps path length + key may not exist...
-//    &&  software.part.dataarea.rom.$.status  !== `baddump`
-//    &&  software.part.dataarea.rom.$.status  !== `nodump`
- //   &&  software.part.diskarea.disk.$.status !== `baddump`
-  //  &&  software.part.diskarea.disk.$.status !== `nodump`
+      //the sfotlist i'm testing with atm doesn't use these
+   // &&  software.part.dataarea.rom.$.status  !== `baddump`
+   // &&  software.part.dataarea.rom.$.status  !== `nodump`
+   // &&  software.part.diskarea.disk.$.status !== `baddump`
+   // &&  software.part.diskarea.disk.$.status !== `nodump`
     ) {
       const node = {}
       node.call = software.$.name
@@ -53,13 +54,12 @@ function makeSoftlists(callback){
       node.info = software.info
       node.sharedfeature = software.sharedfeat
       node.feature = software.part.feature
-      node.interfacer = software.part.$.interface
+      node.loadsWith = software.part.$.interface //reserved js word
       softlist.push(node)
-  }
+    }
   })
   xml.on(`end`, function(){
- //   console.log(JSON.stringify(softlist, null, '\t'))
-//process.exit()
+    // console.log(JSON.stringify(softlist, null, '\t')); process.exit()
     callback(softlist)
   })
 
@@ -92,19 +92,37 @@ function cleanSoftlist(softlist){
 
 function print(softlist){
 
-//console.log(JSON.stringify(softlist, null, '\t'))
-//process.exit()
-  const romdataHeader = `ROM DataFile Version : 1.1
-  `
+  const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
   const romdataLine = (name, MAMEName, parentName, path, emu, company, year, comment) =>
   ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬${emu}¬${company}¬${year}¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
-  
-  var name, MAMEName, parentName, emu, company, year, comment
-  
-  const romdata = obj => R.map ( obj => {
-  var name, MAMEName, parentName, emu, company, year, comment
+
+  /*  
+   *  1) _name, //this is the name used for display purposes
+   *  2) _MAMEName, //Used Internally mainly for managing MAME clones.
+   *  3) _ParentName, //Used Internally for storing the Parent of a Clone.
+   *  4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
+   *  5) _path, //the path to the rom.
+   *  5) _emulator, //the Emulator this rom is linked to
+   *  6) _Company, //The company who made the game.
+   *  7) _Year,     //the year this ROM first came out
+   *  8) _GameType, //The type of game
+   *  9) _MultiPlayer,  //The type of Multiplayer game.
+   * 10)  _Language, //The language of this ROM
+   * 11)  _Parameters : String; //Any additional paramters to be used when running
+   * 12)  _Comment, //Any miscellaneous comments you might want to store.
+   * 13)  _ParamMode : TROMParametersMode; //type of parameter mode
+   * 14)  _Rating,   //A user rating.
+   * 15)  _NumPlay : integer;   //The amount of times this rom has been played
+   * 16)  IPS start
+   * 17)  IPS end
+   * 18)  ?
+   * 19)  _DefaultGoodMerge : String; //The user selected default GoodMerge ROM
+   */
+
+  const applyRomdata = obj => R.map ( obj => {
+    var name, MAMEName, parentName, emu, company, year, comment
         name = obj.name
       , MAMEName = obj.call
       , obj.cloneof?  parentName = obj.cloneof : parentName = ``
@@ -115,38 +133,14 @@ function print(softlist){
    return romdataLine( name, MAMEName, parentName, path, `fake`, company, year, `fake`) 
   
   }, softlist)
-  const romdataToPrint = romdata(softlist)
+
+  const romdata = applyRomdata(softlist)
+  const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
-  console.log(romdataToPrint)
-process.exit()
+  console.log(JSON.stringify(softlist, null, '\t'))
+  
+  //console.log(romdataToPrint)
+  fs.writeFileSync(romdataOutPath, romdataToPrint.join(`\n`))
+  process.exit()
 
 }
-//console.log(JSON.stringify(printMe, null, '\t'))
-//process.exit()
-//}
-//    _name, //this is the name used for display purposes
-//  _MAMEName, //Used Internally mainly for managing MAME clones.
-//  _ParentName, //Used Internally for storing the Parent of a Clone.
-//  _ZipName, //Used Internally to store which file inside a zip file is the ROM
-//  _path, //the path to the rom.
-//  _emulator, //the Emulator this rom is linked to
-//  _Company, //The company who made the game.
-//  _Year,     //the year this ROM first came out
-//  _GameType, //The type of game
-//  _MultiPlayer,  //The type of Multiplayer game.
-//  _Rating,   //A user rating.
-//  _Language, //The language of this ROM
-//  _Comment, //Any miscellaneous comments you might want to store.
-//  _Parameters : String; //Any additional paramters to be used when running
-//  _ParamMode : TROMParametersMode; //type of parameter mode
-//  _NumPlay : integer;   //The amount of times this rom has been played
-//  _DefaultGoodMerge : String; //The user selected default GoodMerge ROM
-//
-
-//and a few random lines of a real romdata:
-//CD-Rom System Card (v2.1)¬cdsys¬¬¬F:\MESS\Mess\roms\pce\cdsys.zip¬MESS PC Engine -CART¬Hudson¬19??¬¬¬English¬pce -cart "%ROMMAME%" -now¬¬0¬1¬<IPS>¬</IPS>¬¬¬
-//CD-Rom System Card (v2.0)¬cdsysa¬cdsys¬¬F:\MESS\Mess\roms\pce\cdsysa.zip¬MESS PC Engine -CART¬Hudson¬19??¬¬¬English¬pce -cart "%ROMMAME%" -now¬¬0¬1¬<IPS>¬</IPS>¬¬¬
-//CD-Rom System Card (v1.0)¬cdsysb¬cdsys¬¬F:\MESS\Mess\roms\pce\cdsysb.zip¬MESS PC Engine -CART¬Hudson¬19??¬¬¬English¬pce -cart "%ROMMAME%" -now¬¬0¬1¬<IPS>¬</IPS>¬¬¬
-//Champion Wrestler¬champwrs¬¬¬F:\MESS\Mess\roms\pce\champwrs.zip¬MESS PC Engine -CART¬Taito¬1990¬¬¬English¬pce -cart "%ROMMAME%" -now¬¬0¬1¬<IPS>¬</IPS>¬¬¬
-//Taito Chase H.Q.¬chasehq¬¬¬F:\MESS\Mess\roms\pce\chasehq.zip¬MESS PC Engine -CART¬Taito¬1990¬¬¬English¬pce -cart "%ROMMAME%" -now¬¬0¬1¬<IPS>¬</IPS>¬¬¬
-
