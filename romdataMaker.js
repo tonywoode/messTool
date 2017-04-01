@@ -95,7 +95,7 @@ function print(softlist){
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
-  const romdataLine = (name, MAMEName, parentName, path, emu, company, year, comment) =>
+  const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
   ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬${emu}¬${company}¬${year}¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
   /*  
@@ -122,15 +122,18 @@ function print(softlist){
    */
 
   const applyRomdata = obj => R.map ( obj => {
-    var name, MAMEName, parentName, emu, company, year, comment
-        name = obj.name
-      , MAMEName = obj.call
-      , obj.cloneof?  parentName = obj.cloneof : parentName = ``
-      , company = obj.company
-      , year = obj.year
+    const romParams = {
+        name : obj.name
+      , MAMEName : obj.call
+      , parentName : obj.cloneof?  obj.cloneof : ``
+      , path : path
+      , emu : `fake`
+      , company : obj.company
+      , year : obj.year
+      , comment : `fake`
     //we'll need to loop through all three of feaures, info and shared feat to make comments, prob better as a separate function, or even bake into the object
-     
-   return romdataLine( name, MAMEName, parentName, path, `fake`, company, year, `fake`) 
+    }
+   return romdataLine(romParams) 
   
   }, softlist)
 
