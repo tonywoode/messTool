@@ -344,7 +344,6 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
           `${obj.displaySystem}` : `${obj.displayCompany} ${obj.displaySystem}`, obj) )
 
   )(systems)
-  //console.log(JSON.stringify(efinder, null, '\t')); process.exit()
  
 
   const softlistEfinderToPrint = obj => R.map(softlist => {
@@ -355,11 +354,11 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
       , callToMake : `${obj.call} %ROMMAME%` //for we are running from a generated soflist romdata.dat
       , info       : `http://mameworld.info` //we don't have anything but a url to tell you about with softlists
     }
-    return efindTemplate(params)
+    devices.push(efindTemplate(params))
   }, obj.softlist)
     //obj.softlist? console.log(efindTemplate( topLine, systemType, callToMake, info )) : ''
     //obj.softlist? console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: {info}`) : ''//this all looks fine
-  
+ 
 
 
   //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
@@ -370,21 +369,20 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
        , callToMake : `${obj.call} -${device.briefname} "%ROM%"` //this is not about softlists
        , info       : `Supports: ${device.extensions}`
      }
-     console.log(efindTemplate(params))
-     //return efindTemplate(params)
+    devices.push(efindTemplate(params))
    }, obj.device)
-    //console.log(efindTemplate( topLine, systemType, callToMake, info ))
-    //console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: ${info}`)//this all looks fine
    //remember we aren't piping here, both this and the above function can take the same efinder list as input
 
-  //console.log(devicesEfinderToPrint)
-  //process.exit()
+  
+  const devices = [] //this is like an accumlator, we need to reduce....
+  
   const efinderToPrint = R.map ( obj   => (
-   //obj.softlist?  softlistEfinderToPrint(obj) : undefined
-    devicesEfinderToPrint(obj)
+      obj.softlist?  softlistEfinderToPrint(obj) : undefined
+    , devicesEfinderToPrint(obj)
   ) , efinder)
-
-  fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
+  
+  fs.writeFileSync(iniOutPath, devices.join(`\n`))
+  
   madeDat(efinder)
   
 }
