@@ -313,9 +313,8 @@ function makeFinalSystemTypes(systems){
  *   that need re-application, along with some new concerns regarding the output format
  */
 function print(systems){
-  const efindTemplate = ( topLine, systemType, callToMake, info ) =>
-    (
-`[MESS ${topLine}]
+  const efindTemplate = ({topLine, systemType, callToMake, info}) =>
+    (`[MESS ${topLine}]
 Exe Name=mame64.exe
 Config Name=mame
 System=${systemType} 
@@ -329,8 +328,7 @@ ShortExe=0
 DisWinKey=1
 DisScrSvr=1
 Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
-`
-   )
+`)
 
   const efinder = R.pipe(
     
@@ -349,49 +347,41 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   //console.log(JSON.stringify(efinder, null, '\t')); process.exit()
  
 
-  const softlistEfinderToPrint = obj => { 
-    var softlistFilter = ''
-      , topLine, systemType, callToMake, info
-
-    obj.softlist? R.map(softlist => (
-        softlist.filter? softlistFilter = ` (${softlist.filter} only)` : ''
-
-        , topLine    = obj.displayMachine 
-                       + ` -SOFTLIST `
-                       + softlist.name
-                       + softlistFilter
-        , systemType = obj.systemType
-        , callToMake = `${obj.call} %ROMMAME%` //for we are running from a generated soflist romdata.dat
-        , info       = `http://mameworld.info` //we don't have anything but a url to tell you about with softlists
-      )
-    , obj.softlist) : '' //TODO: noop
-    if (obj.softlist) return efindTemplate( topLine, systemType, callToMake, info )
+  const softlistEfinderToPrint = obj => R.map(softlist => {
+    const params = {
+           topLine : `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
+             + (softlist.filter? ` ${softlist.filter} only` : ``) 
+      , systemType : obj.systemType
+      , callToMake : `${obj.call} %ROMMAME%` //for we are running from a generated soflist romdata.dat
+      , info       : `http://mameworld.info` //we don't have anything but a url to tell you about with softlists
+    }
+    return efindTemplate(params)
+  }, obj.softlist)
     //obj.softlist? console.log(efindTemplate( topLine, systemType, callToMake, info )) : ''
     //obj.softlist? console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: {info}`) : ''//this all looks fine
-  }
+  
 
 
   //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
-   const devicesEfinderToPrint = obj => { 
-    var topLine, systemType, callToMake, info
-  
-     R.map(device => (
-         topLine    = obj.displayMachine //TODO: would this be better as an object, you could destructure it in the callsite 
-                       + " - " 
-                       + device.name
-       , systemType = obj.systemType
-       , callToMake = `${obj.call} -${device.briefname} "%ROM%"` //this is not about softlists
-       , info       = `Supports: ${device.extensions}`
-      )
-    , obj.device)
+   const devicesEfinderToPrint = obj => R.map(device => {
+     const params = {
+         topLine    : `${obj.displayMachine} -${device.name}`
+       , systemType : obj.systemType
+       , callToMake : `${obj.call} -${device.briefname} "%ROM%"` //this is not about softlists
+       , info       : `Supports: ${device.extensions}`
+     }
+     console.log(efindTemplate(params))
+     //return efindTemplate(params)
+   }, obj.device)
     //console.log(efindTemplate( topLine, systemType, callToMake, info ))
-    return efindTemplate( topLine, systemType, callToMake, info )
     //console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: ${info}`)//this all looks fine
-  } //remember we aren't piping here, both this and the above function can take the same efinder list as input
+   //remember we aren't piping here, both this and the above function can take the same efinder list as input
 
+  //console.log(devicesEfinderToPrint)
+  //process.exit()
   const efinderToPrint = R.map ( obj   => (
-    softlistEfinderToPrint(obj)
-   , devicesEfinderToPrint(obj)
+   //obj.softlist?  softlistEfinderToPrint(obj) : undefined
+    devicesEfinderToPrint(obj)
   ) , efinder)
 
   fs.writeFileSync(iniOutPath, efinderToPrint.join(`\n`))
