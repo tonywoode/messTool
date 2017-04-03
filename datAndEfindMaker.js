@@ -348,7 +348,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
 
   const softlistEfinderToPrint = obj => R.map(softlist => {
     const params = {
-           topLine : `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
+        topLine    : `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
              + (softlist.filter? ` ${softlist.filter} only` : ``) 
       , systemType : obj.systemType
       , callToMake : `${obj.call} %ROMMAME%` //for we are running from a generated soflist romdata.dat
@@ -356,34 +356,31 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
     }
     devices.push(efindTemplate(params))
   }, obj.softlist)
-    //obj.softlist? console.log(efindTemplate( topLine, systemType, callToMake, info )) : ''
-    //obj.softlist? console.log(`TOPLINE: ${topLine}, TYPE: ${systemType}, CALL: ${callToMake}, INFO: {info}`) : ''//this all looks fine
  
 
-
-  //again we don't need to check if devices exist like we did with softlists because it wouldn't be a mess game system without >0
+   
    const devicesEfinderToPrint = obj => R.map(device => {
+   
      const params = {
          topLine    : `${obj.displayMachine} -${device.name}`
        , systemType : obj.systemType
        , callToMake : `${obj.call} -${device.briefname} "%ROM%"` //this is not about softlists
        , info       : `Supports: ${device.extensions}`
-     }
+    }
+     
     devices.push(efindTemplate(params))
-   }, obj.device)
-   //remember we aren't piping here, both this and the above function can take the same efinder list as input
-
+  }, obj.device)
+   
+  const devices = [] //this is an accumlator, we need to reduce....
   
-  const devices = [] //this is like an accumlator, we need to reduce....
-  
-  const efinderToPrint = R.map ( obj   => (
-      obj.softlist?  softlistEfinderToPrint(obj) : undefined
-    , devicesEfinderToPrint(obj)
+  const efinderToPrint = R.map (obj => (
+      obj.softlist?  softlistEfinderToPrint(obj) : ``
+    , devicesEfinderToPrint(obj) //don't check if devices exist, wouldn't be a mess game system without >0
   ) , efinder)
   
   fs.writeFileSync(iniOutPath, devices.join(`\n`))
   
-  madeDat(efinder)
+  madeDat(efinder) 
   
 }
 
