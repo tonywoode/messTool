@@ -2,13 +2,27 @@
 
 const 
     fs             = require(`fs`)
+  , path           = require(`path`)
   , XmlStream      = require(`xml-stream`)
   , R              = require(`Ramda`)
 
-const 
-    stream         = fs.createReadStream(`inputs/hash/gamegear.xml`)
+const
+    rootDir        = `inputs/hash/`
+  , filesInRoot    = fs.readdirSync(rootDir, 'utf8')
+  , stream         = fs.createReadStream(`inputs/hash/gamegear.xml`)
   , xml            = new XmlStream(stream)
   , romdataOutPath = `outputs/romdata.dat`
+
+
+//TODO - you can append the DTD at the top of the file if it isn't being read correctly
+
+const 
+    getExtension = file => path.extname(file)
+  , isXml = file => getExtension(file) === `.xml`? true : false
+  , hashFiles = R.filter(isXml, filesInRoot)
+
+console.log(hashFiles)
+
 
 //program flow
 makeSoftlists(function(softlist){
@@ -156,7 +170,8 @@ function print(softlist){
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
-  console.log(JSON.stringify(softlist, null, '\t'))
+  //console.log(JSON.stringify(softlist, null, '\t'))
+
   
   fs.writeFileSync(romdataOutPath, romdataToPrint.join(`\n`))
   process.exit()
