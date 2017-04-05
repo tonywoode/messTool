@@ -128,7 +128,7 @@ function print(softlist){
       commentCandidate? R.map(item => 
       comments.push(item.name + ":" + item.value)  , commentCandidate) : ''
     }, commentCandidates)
-      if (comments[0]) { console.log(comments)}
+      //if (comments[0]) { console.log(comments)}
       return comments
   }
 
@@ -156,8 +156,7 @@ function print(softlist){
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
-  //console.log(comments)
-  //console.log(JSON.stringify(softlist, null, '\t'))
+  console.log(JSON.stringify(softlist, null, '\t'))
   
   fs.writeFileSync(romdataOutPath, romdataToPrint.join(`\n`))
   process.exit()
