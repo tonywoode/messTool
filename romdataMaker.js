@@ -11,7 +11,8 @@ const
   , filesInRoot    = fs.readdirSync(rootDir, 'utf8')
   , stream         = fs.createReadStream(`inputs/hash/gamegear.xml`)
   , xml            = new XmlStream(stream)
-  , romdataOutPath = `outputs/romdata.dat`
+  , romdataOutDir  = `outputs/`
+  , romdataOutPath = `${romdataOutDir}/romdata.dat`
 
 
 //TODO - you can append the DTD at the top of the file if it isn't being read correctly
@@ -20,8 +21,10 @@ const
     getExtension = file => path.extname(file)
   , isXml = file => getExtension(file) === `.xml`? true : false
   , hashFiles = R.filter(isXml, filesInRoot)
-
-console.log(hashFiles)
+  , getSystem = file => file.split(`_`)
+  , hashesSplit = R.map(getSystem, hashFiles)
+  , eachSystem = R.map(R.head, hashesSplit)//note for systems without a _ we are getting the whole filename still, need to drop after the dot
+console.log(eachSystem)
 
 
 //program flow
