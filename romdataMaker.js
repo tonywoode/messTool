@@ -121,6 +121,18 @@ function print(softlist){
    * 19)  _DefaultGoodMerge : String; //The user selected default GoodMerge ROM
    */
 
+  //for a system, takes the simple and homomorphic arrays of feature, info and sharedFeat and turns them into an array of comments to be printed
+  const createComment = (commentCandidates) => {
+    const comments = []  
+    R.map(commentCandidate => {
+      commentCandidate? R.map(item => 
+      comments.push(item.name + ":" + item.value)  , commentCandidate) : ''
+    }, commentCandidates)
+      if (comments[0]) { console.log(comments)}
+      return comments
+  }
+
+  //sets the variables for a line of romdata entry for later injection into a romdata printer
   const applyRomdata = obj => R.map ( obj => {
     const romParams = {
         name : obj.name
@@ -130,8 +142,12 @@ function print(softlist){
       , emu : `fake`
       , company : obj.company
       , year : obj.year
-      , comment : `fake`
-    //we'll need to loop through all three of feaures, info and shared feat to make comments, prob better as a separate function, or even bake into the object
+      , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
+            feature : obj.feature
+          , info : obj.info
+          , sharedFeat: obj.sharedFeat
+        })
+      
     }
    return romdataLine(romParams) 
   
@@ -140,9 +156,9 @@ function print(softlist){
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
-  console.log(JSON.stringify(softlist, null, '\t'))
+  //console.log(comments)
+  //console.log(JSON.stringify(softlist, null, '\t'))
   
-  //console.log(romdataToPrint)
   fs.writeFileSync(romdataOutPath, romdataToPrint.join(`\n`))
   process.exit()
 
