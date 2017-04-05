@@ -119,7 +119,7 @@ function cleanDevices(systems){
   //systems list -> system object -> device in object - nested looping into the devices key of one of the system objects
   const replaceDevice = R.map(
     obj => R.assoc(`device`, R.map(
-      device => template(device), obj.device)
+      template, obj.device) //(you can always replace device => template(device) with just template)
     , obj)
   , systems)
 
