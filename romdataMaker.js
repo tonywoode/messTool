@@ -22,10 +22,27 @@ const
 function makeWishList(systems) {
 //console.log(JSON.stringify(systems, null, '\t'))
  const isSoftlist = obj => !!obj.softlist
- const softlistSystems = R.filter(isSoftlist, systems)
+ const filtered = R.pipe (
+  R.filter(isSoftlist)
+ //the only props that we need are the softlists obj, devices, systemType and emulatorName
+  , R.map(obj => ({ 
+        emulatorName  : obj.emulatorName
+      , systemType    : obj.systemType
+      , softlist      : obj.softlist
+      , device        : obj.device
+  }) )
+ )(systems) 
 
-console.log(JSON.stringify(softlistSystems, null, '\t'))
-process.exit()
+
+  //we only need the device shortnames from device
+  const replaceDevice = R.map(
+    obj => R.assoc(`device`, R.map(
+      (obj) => obj.briefname, obj.device) 
+    , obj)
+  , filtered)
+
+  console.log(JSON.stringify(replaceDevice, null,`\t`))
+  process.exit()
 }
 
 //program flow
