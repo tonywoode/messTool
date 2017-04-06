@@ -340,16 +340,21 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
       //it wasn't very forward thinking to call it the Apple ][ 
     , R.map( obj => R.assoc(`displaySystem`, obj.displaySystem.replace(/\]\[/, `II`), obj) )
 
+    //create the display name for this machine
     , R.map( obj => R.assoc(`displayMachine`, obj.displayCompany == `` ? 
           `${obj.displaySystem}` : `${obj.displayCompany} ${obj.displaySystem}`, obj) )
 
   )(systems)
  
-
+  //create the vars which will populate each instance of the efindTemplate, first for each machine's softlist (if they exist)
+  //topLine here becomes the Emulator name, so is very important for the softlist generation. We need to save 
+  //it back into the object while we have it
   const softlistEfinderToPrint = obj => R.map(softlist => {
+    const emulatorName = `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
+             + (softlist.filter? ` ${softlist.filter} only` : ``)
+    obj.emulatorName = emulatorName
     const params = {
-        topLine    : `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
-             + (softlist.filter? ` ${softlist.filter} only` : ``) 
+        topLine    : emulatorName
       , systemType : obj.systemType
       , callToMake : `${obj.call} %ROMMAME%` //for we are running from a generated soflist romdata.dat
       , info       : `http://mameworld.info` //we don't have anything but a url to tell you about with softlists
@@ -358,14 +363,15 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   }, obj.softlist)
  
 
-   
-   const devicesEfinderToPrint = obj => R.map(device => {
-   
-     const params = {
-         topLine    : `${obj.displayMachine} -${device.name}`
-       , systemType : obj.systemType
-       , callToMake : `${obj.call} -${device.briefname} "%ROM%"` //this is not about softlists
-       , info       : `Supports: ${device.extensions}`
+   //then for each machine's devices
+  const devicesEfinderToPrint = obj => R.map(device => {
+    const emulatorName = `${obj.displayMachine} -${device.name}`
+    obj.emulatorName = emulatorName
+    const params = {
+        topLine    : emulatorName
+      , systemType : obj.systemType
+      , callToMake : `${obj.call} -${device.briefname} "%ROM%"` //this is not about softlists
+      , info       : `Supports: ${device.extensions}`
     }
      
     devices.push(efindTemplate(params))

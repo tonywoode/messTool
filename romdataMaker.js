@@ -56,7 +56,7 @@ function makeSoftlists(callback){
     if (
           software.$.supported !== `no` 
       //these crap the list out after the dollar. perhaps path length + key may not exist...
-      //the sfotlist i'm testing with atm doesn't use these
+      //the softlist i'm testing with atm doesn't use these
    // &&  software.part.dataarea.rom.$.status  !== `baddump`
    // &&  software.part.dataarea.rom.$.status  !== `nodump`
    // &&  software.part.diskarea.disk.$.status !== `baddump`
