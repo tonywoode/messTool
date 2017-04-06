@@ -347,8 +347,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   )(systems)
  
   //create the vars which will populate each instance of the efindTemplate, first for each machine's softlist (if they exist)
-  //topLine here becomes the Emulator name, so is very important for the softlist generation. We need to save 
-  //it back into the object while we have it
+  //topLine here becomes the Emulator name, v.important for softlist generation. Save it back into the object while we have it
   const softlistEfinderToPrint = obj => R.map(softlist => {
     const emulatorName = `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
              + (softlist.filter? ` ${softlist.filter} only` : ``)
@@ -363,7 +362,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   }, obj.softlist)
  
 
-   //then for each machine's devices
+   //then for each machine's devices (as with softlists, save the emulator name (don't really need it for anything atm)
   const devicesEfinderToPrint = obj => R.map(device => {
     const emulatorName = `${obj.displayMachine} -${device.name}`
     obj.emulatorName = emulatorName

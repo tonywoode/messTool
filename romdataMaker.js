@@ -13,21 +13,23 @@ const
   , xml            = new XmlStream(stream)
   , romdataOutDir  = `outputs/`
   , romdataOutPath = `${romdataOutDir}/romdata.dat`
-
-
+  , systemsJsonFile= fs.readFileSync(`outputs/systems.json`)
+  , systems        = JSON.parse(systemsJsonFile)
 //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
-const 
-    getExtension = file => path.extname(file)
-  , isXml = file => getExtension(file) === `.xml`? true : false
-  , hashFiles = R.filter(isXml, filesInRoot)
-  , getSystem = file => file.split(`_`)
-  , hashesSplit = R.map(getSystem, hashFiles)
-  , eachSystem = R.map(R.head, hashesSplit)//note for systems without a _ we are getting the whole filename still, need to drop after the dot
-console.log(eachSystem)
+//First task is to read the json for softlists and make ourselves a list of those xmls to find. We need to grab
+//the emulator name at this point too and pass it all the way down our pipeline
+function makeWishList(systems) {
+//console.log(JSON.stringify(systems, null, '\t'))
+ const isSoftlist = obj => !!obj.softlist
+ const softlistSystems = R.filter(isSoftlist, systems)
 
+console.log(JSON.stringify(softlistSystems, null, '\t'))
+process.exit()
+}
 
 //program flow
+makeWishList(systems)
 makeSoftlists(function(softlist){
   R.pipe(
     cleanSoftlist
@@ -45,6 +47,20 @@ makeSoftlists(function(softlist){
 //  callback(softlist, callback)
 //}
 //
+
+//File operations on the hash folder
+function doFileOps(system) {
+
+const 
+    getExtension = file => path.extname(file)
+  , isXml = file => !!getExtension(file) === `.xml`
+  , hashFiles = R.filter(isXml, filesInRoot)
+  , getSystem = file => file.split(`_`)
+  , hashesSplit = R.map(getSystem, hashFiles)
+  , eachSystem = R.map(R.head, hashesSplit)//note for systems without a _ we are getting the whole filename still, need to drop after the dot
+console.log(eachSystem)
+
+}
 
 function makeSoftlists(callback){
   const softlist = []
@@ -173,7 +189,7 @@ function print(softlist){
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
-  //console.log(JSON.stringify(softlist, null, '\t'))
+  console.log(JSON.stringify(softlist, null, '\t'))
 
   
   fs.writeFileSync(romdataOutPath, romdataToPrint.join(`\n`))
