@@ -351,7 +351,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   const softlistEfinderToPrint = obj => R.map(softlist => {
     const emulatorName = `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
              + (softlist.filter? ` ${softlist.filter} only` : ``)
-    obj.emulatorNames = R.append(emulatorName, obj.emulatorNames)
+    obj.softlistEmulatorNames = R.append(emulatorName, obj.softlistEmulatorNames)
     const params = {
         topLine    : emulatorName
       , systemType : obj.systemType
@@ -365,7 +365,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
    //then for each machine's devices (as with softlists, save the emulator name (don't really need it for anything atm)
   const devicesEfinderToPrint = obj => R.map(device => {
     const emulatorName = `${obj.displayMachine} -${device.name}`
-    obj.emulatorNames = R.append(emulatorName, obj.emulatorNames)
+    obj.deviceEmulatorNames = R.append(emulatorName, obj.deviceEmulatorNames)
     const params = {
         topLine    : emulatorName
       , systemType : obj.systemType

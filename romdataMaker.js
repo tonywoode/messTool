@@ -26,7 +26,7 @@ function makeWishList(systems) {
   R.filter(isSoftlist)
  //the only props that we need are the softlists obj, devices, systemType and emulatorName
   , R.map(obj => ({ 
-        emulatorName  : obj.emulatorName
+        emulatorNames : obj.softlistEmulatorNames
       , systemType    : obj.systemType
       , softlist      : obj.softlist
       , device        : obj.device
