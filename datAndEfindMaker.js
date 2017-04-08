@@ -16,7 +16,7 @@ const
 
 
 //program flow
-mockSystems(function(systems){
+makeSystems(function(systems){
 
   R.pipe(
      cleanSoftlists
@@ -55,12 +55,11 @@ function makeSystems(callback){
       && machine.$.ismechanical === `no`
       && machine.$.runnable === `yes`
       && !machine.input.$.coins
-      && machine.driver.$.status === `good`
+      //&& machine.driver.$.status === `good` //I think this is some kind of intersection of the some or all of the below
       && machine.driver.$.emulation === `good`
-      //these last three make very little difference, but just to demonstrate that all the found systems prove good in these catagories
-      && machine.driver.$.color === `good`
-      && machine.driver.$.sound === `good`
-      && machine.driver.$.graphic === `good`
+      //&& machine.driver.$.color === `good`
+      //&& machine.driver.$.sound === `good`
+      //&& machine.driver.$.graphic === `good` //you want nes, don't turn this on....
     ) {
       const node = {}
       node.company = machine.manufacturer

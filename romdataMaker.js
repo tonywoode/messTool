@@ -41,7 +41,14 @@ function makeWishList(systems) {
     , obj)
   , filtered)
 
-  console.log(JSON.stringify(replaceDevice, null,`\t`))
+  //convert that structure into one keyed by soflist (atm the machine is the organisational unit
+  const soflistKeyed = R.map(
+    obj => R.map(
+      emulatorName => console.log(emulatorName)
+    , obj.emulatorNames)
+    , replaceDevice)
+
+  //console.log(JSON.stringify(soflistKeyed, null,`\t`))
   process.exit()
 }
 
