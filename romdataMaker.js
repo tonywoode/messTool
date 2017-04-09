@@ -26,8 +26,7 @@ function makeWishList(systems) {
   R.filter(isSoftlist)
  //the only props that we need are the softlists obj, devices, systemType and emulatorName
   , R.map(obj => ({ 
-        emulatorNames : obj.softlistEmulatorNames
-      , systemType    : obj.systemType
+        systemType    : obj.systemType
       , softlist      : obj.softlist
       , device        : obj.device
   }) )
@@ -37,18 +36,31 @@ function makeWishList(systems) {
   //we only need the device shortnames from device
   const replaceDevice = R.map(
     obj => R.assoc(`device`, R.map(
-      (obj) => obj.briefname, obj.device) 
+      obj => obj.briefname, obj.device) 
     , obj)
   , filtered)
 
-  //convert that structure into one keyed by soflist (atm the machine is the organisational unit
-  const soflistKeyed = R.map(
-    obj => R.map(
-      emulatorName => console.log(emulatorName)
-    , obj.emulatorNames)
-    , replaceDevice)
+//  //merge the emu name into the softlist that it is representing
+//  const mergeSoftlist = R.map(
+//    obj => R.assoc(`emulatorName`, obj.emulatorNames, obj)
+//    , replaceDevice)
 
-  //console.log(JSON.stringify(soflistKeyed, null,`\t`))
+  
+  
+  //convert that structure into one keyed by soflist (atm the machine is the organisational unit
+  //const soflistKeyed = R.map(
+  //  obj => R.map(
+   //   emulatorName => ({
+    ////    emulatorName  : obj.softlist.emulatorName
+      //, systemType    : obj.systemType
+     // , softlist      : obj.softlist
+     // , device        : obj.device
+
+    //  })
+   // , obj.emulatorNames)
+   // , replaceDevice)
+
+  console.log(JSON.stringify(replaceDevice, null,`\t`))
   process.exit()
 }
 

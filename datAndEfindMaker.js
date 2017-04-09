@@ -16,7 +16,7 @@ const
 
 
 //program flow
-makeSystems(function(systems){
+mockSystems(function(systems){
 
   R.pipe(
      cleanSoftlists
@@ -350,7 +350,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   const softlistEfinderToPrint = obj => R.map(softlist => {
     const emulatorName = `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
              + (softlist.filter? ` ${softlist.filter} only` : ``)
-    obj.softlistEmulatorNames = R.append(emulatorName, obj.softlistEmulatorNames)
+    softlist.emulatorName = emulatorName
     const params = {
         topLine    : emulatorName
       , systemType : obj.systemType
@@ -364,7 +364,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
    //then for each machine's devices (as with softlists, save the emulator name (don't really need it for anything atm)
   const devicesEfinderToPrint = obj => R.map(device => {
     const emulatorName = `${obj.displayMachine} -${device.name}`
-    obj.deviceEmulatorNames = R.append(emulatorName, obj.deviceEmulatorNames)
+    device.emulatorName = emulatorName
     const params = {
         topLine    : emulatorName
       , systemType : obj.systemType
