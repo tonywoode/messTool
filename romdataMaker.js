@@ -78,10 +78,7 @@ function callSheet(systems) {
 
   const addDeviceType = R.map(
     obj => (
-      R.assoc(`deviceTypeFromName`, R.last(obj.name.split('_')), obj)
-//name.split(`_`)[1]? const deviceType = name.split(`_`)[1] : deviceType = "probablyCart"
-      //ooh no use R.contains and R.last R.intersection might be handy too
-      
+       R.assoc(`deviceTypeFromName`,obj.name.split('_')[1]? obj.name.split('_')[1] : `cart`, obj)
     )
     ,flattenedSoftlist)
 
@@ -96,17 +93,20 @@ function callSheet(systems) {
   //make a k-v in the object to tell us if the softlist we've made can actually run
   const deviceExists = R.map(
     obj => (
-       R.assoc(`doesSoflistExist`, R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)) , obj)
+       R.assoc(`doesSoftlistExist`, R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)) , obj)
     )
-    ,addDeviceType)
+    , addDeviceType)
 
 
   // next job is to make an exception or remove those softlists that say that the softlist device deosn't actually exist
   //maybe we should name those which don't have a device at this point?
+  const problemDevices = R.map(
+    obj =>
+      obj.doesSoftlistExist? '' :  `PROBLEM: ${obj.displayMachine} has a softlist for ${obj.deviceTypeFromName} but doesn't have a ${obj.deviceTypeFromName}`
+    , deviceExists)
+  //TODO: lost of these are HDD - how does HDD load, perhaps it isn't a mess 'device'?
 
-
-
-  console.log(JSON.stringify(deviceExists, null,`\t`))
+  console.log(JSON.stringify(problemDevices, null,`\t`))
   process.exit()
 }
 
