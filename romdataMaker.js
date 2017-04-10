@@ -24,11 +24,12 @@ function makeWishList(systems) {
  const isSoftlist = obj => !!obj.softlist
  const filtered = R.pipe (
   R.filter(isSoftlist)
- //the only props that we need are the softlists obj, devices, systemType and emulatorName
+ //the only props that we need are the softlists obj, devices, systemType and emulatorName, call might be useful later
   , R.map(obj => ({ 
         systemType    : obj.systemType
       , softlist      : obj.softlist
       , device        : obj.device
+      , call          : obj.call
   }) )
  )(systems) 
 
@@ -48,19 +49,22 @@ function makeWishList(systems) {
   
   
   //convert that structure into one keyed by soflist (atm the machine is the organisational unit
-  //const soflistKeyed = R.map(
-  //  obj => R.map(
-   //   emulatorName => ({
-    ////    emulatorName  : obj.softlist.emulatorName
-      //, systemType    : obj.systemType
-     // , softlist      : obj.softlist
-     // , device        : obj.device
+  const softlistKeyed = R.map(
+    obj => R.map(
+      softlist => ({
+         emulatorName  : softlist.emulatorName
+       , systemType    : obj.systemType
+       , name          : softlist.name
+       , status        : softlist.status
+       , filter        : softlist.filter
+       , device        : obj.device
+       , call          : obj.call
 
-    //  })
-   // , obj.emulatorNames)
-   // , replaceDevice)
+      })
+    , obj.softlist)
+    , replaceDevice)
 
-  console.log(JSON.stringify(replaceDevice, null,`\t`))
+  console.log(JSON.stringify(softlistKeyed, null,`\t`))
   process.exit()
 }
 
