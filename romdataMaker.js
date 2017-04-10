@@ -19,14 +19,15 @@ const
 
 //First task is to read the json for softlists and make ourselves a list of those xmls to find. We need to grab
 //the emulator name at this point too and pass it all the way down our pipeline
-function makeWishList(systems) {
-//console.log(JSON.stringify(systems, null, '\t'))
+function callSheet(systems) {
  const isSoftlist = obj => !!obj.softlist
  const filtered = R.pipe (
   R.filter(isSoftlist)
- //the only props that we need are the softlists obj, devices, systemType and emulatorName, call might be useful later
-  , R.map(obj => ({ 
-        systemType    : obj.systemType
+ //the only props that we need are the softlists obj, devices, systemType and emulatorName, call might be useful later, display machine
+   //I took because when we split the softlists up to individual it won't be clear that a2500_cass and a2600_cart are both a2600
+  , R.map(obj => ({
+        displayMachine: obj.displayMachine
+      , systemType    : obj.systemType
       , softlist      : obj.softlist
       , device        : obj.device
       , call          : obj.call
@@ -41,18 +42,13 @@ function makeWishList(systems) {
     , obj)
   , filtered)
 
-//  //merge the emu name into the softlist that it is representing
-//  const mergeSoftlist = R.map(
-//    obj => R.assoc(`emulatorName`, obj.emulatorNames, obj)
-//    , replaceDevice)
-
   
-  
-  //convert that structure into one keyed by soflist (atm the machine is the organisational unit
+  //convert that structure into one keyed by softlist (atm the machine is the organisational unit)
   const softlistKeyed = R.map(
     obj => R.map(
       softlist => ({
          emulatorName  : softlist.emulatorName
+       , displayMachine: obj.displayMachine
        , systemType    : obj.systemType
        , name          : softlist.name
        , status        : softlist.status
@@ -62,14 +58,60 @@ function makeWishList(systems) {
 
       })
     , obj.softlist)
-    , replaceDevice)
+  , replaceDevice)
 
-  console.log(JSON.stringify(softlistKeyed, null,`\t`))
+  //problem: softlist params are still array-ed to each machine
+  //let's flatten the lot, but introduce 'displayMachine' back to the object should we still need to tell what's affiliated
+  const flattenedSoftlist = R.unnest(softlistKeyed)
+  
+
+  /*
+   * A problem we now have is that sometimes a softlist exists for a device that isn't supported in the version of mess
+   * For instance in mess 0.163, a2600 doesn't have a cass, but there exists a cass softlist, which will silently fail
+   * if called. That's why we carried devices down to here: try and get the device from the softlist name and check
+   * Issues here are
+   *   1) There's no point in lookiing in a softlist xml for devices it's about, unless you want to try and parse the free text 'name' field
+   *   2) Some softlist names don't have a postfix, we can assume cart I think
+   *   3) some postfixes are not about the device - we've got _a1000, _workbench, _hardware, with a bit of luck most of these are unsupported
+   *   or not games anyway, we'll need to make a list
+   */ 
+
+  const addDeviceType = R.map(
+    obj => (
+      R.assoc(`deviceTypeFromName`, R.last(obj.name.split('_')), obj)
+//name.split(`_`)[1]? const deviceType = name.split(`_`)[1] : deviceType = "probablyCart"
+      //ooh no use R.contains and R.last R.intersection might be handy too
+      
+    )
+    ,flattenedSoftlist)
+
+  //return a list of devices without the number in their briefname, so that we can tell if the machine
+  //  for a 'cart' softlist actually has a working 'cart' device§
+  const supportedDevices = (deviceList) => R.map(
+   device => (
+    R.head(device.split(/[0-9].*/))
+   )
+  , deviceList)
+
+  //make a k-v in the object to tell us if the softlist we've made can actually run
+  const deviceExists = R.map(
+    obj => (
+       R.assoc(`doesSoflistExist`, R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)) , obj)
+    )
+    ,addDeviceType)
+
+
+  // next job is to make an exception or remove those softlists that say that the softlist device deosn't actually exist
+  //maybe we should name those which don't have a device at this point?
+
+
+
+  console.log(JSON.stringify(deviceExists, null,`\t`))
   process.exit()
 }
 
 //program flow
-makeWishList(systems)
+callSheet(systems)
 makeSoftlists(function(softlist){
   R.pipe(
     cleanSoftlist
