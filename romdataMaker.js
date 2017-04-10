@@ -102,12 +102,14 @@ function callSheet(systems) {
   //maybe we should name those which don't have a device at this point?
   const problemDevices = R.map(
     obj =>
-      obj.doesSoftlistExist? '' :  `PROBLEM: ${obj.displayMachine} has a softlist for ${obj.deviceTypeFromName} but doesn't have a ${obj.deviceTypeFromName}`
+      obj.doesSoftlistExist? null : console.log( `PROBLEM: ${obj.displayMachine} has a softlist for ${obj.deviceTypeFromName} but doesn't have a ${obj.deviceTypeFromName}`)
     , deviceExists)
   //TODO: lost of these are HDD - how does HDD load, perhaps it isn't a mess 'device'?
-
-  console.log(JSON.stringify(problemDevices, null,`\t`))
-  process.exit()
+  //for now return the unfiltered list
+  //
+  return deviceExists
+ // console.log(JSON.stringify(deviceExists, null,`\t`))
+ // process.exit()
 }
 
 //program flow
