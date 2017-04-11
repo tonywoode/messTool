@@ -78,22 +78,23 @@ function callSheet(systems) {
 
   const addDeviceType = R.map(
     obj => (
-       R.assoc(`deviceTypeFromName`,obj.name.split('_')[1]? obj.name.split('_')[1] : `cart`, obj)
+       R.assoc(`deviceTypeFromName`,obj.name.split('_')[1]? obj.name.split('_')[1] : `no_postfix`, obj)
     )
     ,flattenedSoftlist)
 
   //return a list of devices without the number in their briefname, so that we can tell if the machine
   //  for a 'cart' softlist actually has a working 'cart' device§
-  const supportedDevices = (deviceList) => R.map(
+  const supportedDevices = deviceList => R.map(
    device => (
     R.head(device.split(/[0-9].*/))
    )
   , deviceList)
 
-  //make a k-v in the object to tell us if the softlist we've made can actually run
+  //make a k-v in the object to tell us if the softlist we've made can actually run. If the softlist has no postfix, we assume it will run
+  //(an example is a2600.xml as the softlist name, which if you read the text description says its for 'cart')
   const deviceExists = R.map(
     obj => (
-       R.assoc(`doesSoftlistExist`, R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)) , obj)
+        R.assoc(`doesSoftlistExist`, obj.deviceTypeFromName === `no_postfix`? true : R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)) , obj)
     )
     , addDeviceType)
 
@@ -102,13 +103,13 @@ function callSheet(systems) {
   //maybe we should name those which don't have a device at this point?
   const problemDevices = R.map(
     obj =>
-      obj.doesSoftlistExist? null : console.log( `PROBLEM: ${obj.displayMachine} has a softlist for ${obj.deviceTypeFromName} but doesn't have a ${obj.deviceTypeFromName}`)
+      obj.doesSoftlistExist? null : console.log( `PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`)
     , deviceExists)
   //TODO: lost of these are HDD - how does HDD load, perhaps it isn't a mess 'device'?
   //for now return the unfiltered list
   //
+  console.log(JSON.stringify(deviceExists, null,`\t`))
   return deviceExists
- // console.log(JSON.stringify(deviceExists, null,`\t`))
  // process.exit()
 }
 
@@ -273,7 +274,7 @@ function print(softlist){
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
-  console.log(JSON.stringify(softlist, null, '\t'))
+ // console.log(JSON.stringify(softlist, null, '\t'))
 
   
   fs.writeFileSync(romdataOutPath, romdataToPrint.join(`\n`))
