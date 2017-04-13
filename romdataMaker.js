@@ -76,12 +76,13 @@ function callSheet(systems) {
    *   or not games anyway, we'll need to make a list
    */ 
 
-  const addDeviceType = R.map(
-    obj => (
-       R.assoc(`deviceTypeFromName`,obj.name.split('_')[1]? obj.name.split('_')[1] : `no_postfix`, obj)
-    )
-    ,flattenedSoftlist)
+  const addDeviceType = R.pipe( 
+      R.map( obj => (R.assoc(`deviceTypeFromName`, obj.name.split('_')[1]? obj.name.split('_')[1] : `no_postfix`, obj)))
+      //FM7's disk softlist breaks the  rule and is called 'disk'. They are just floppy images, they work fine
+    , R.map( obj => (obj.deviceTypeFromName === `disk`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
+  )(flattenedSoftlist)
 
+  
   //return a list of devices without the number in their briefname, so that we can tell if the machine
   //  for a 'cart' softlist actually has a working 'cart' device§
   const supportedDevices = deviceList => R.map(
