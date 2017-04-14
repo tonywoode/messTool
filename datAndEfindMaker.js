@@ -16,7 +16,7 @@ const
 
 
 //program flow
-mockSystems(function(systems){
+makeSystems(function(systems){
 
   R.pipe(
      cleanSoftlists

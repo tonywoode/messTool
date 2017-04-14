@@ -75,16 +75,19 @@ function callSheet(systems) {
    *   3) some postfixes are not about the device - we've got _a1000, _workbench, _hardware, with a bit of luck most of these are unsupported
    *   or not games anyway, we'll need to make a list
    */ 
-
   const addDeviceType = R.pipe( 
-      R.map( obj => (R.assoc(`deviceTypeFromName`, obj.name.split('_')[1]? obj.name.split('_')[1] : `no_postfix`, obj)))
+      R.map( obj => (R.assoc(`deviceTypeFromName`, obj.name.split(`_`)[1]? obj.name.split(`_`)[1] : `no_postfix`, obj)))
       //FM7's disk softlist breaks the  rule and is called 'disk'. They are just floppy images, they work fine
     , R.map( obj => (obj.deviceTypeFromName === `disk`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
+      // I suspect all the nes softlist will run on all systems, the postfixi isn't about a device, so we'll call it 'no_postfix`
+      // Note that the same isn't true for Famicom, as there seems to be a genuine problem that Famicoms don't have cass or flops
+    , R.map( obj => (obj.name.split(`_`)[0] === `nes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
+      //I suspect the same is true of the superfamicom devices bspack and strom, these aren't device names in the same way as flop or cass
+    , R.map( obj => (obj.name.split(`_`)[0] === `snes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
   )(flattenedSoftlist)
 
   
-  //return a list of devices without the number in their briefname, so that we can tell if the machine
-  //  for a 'cart' softlist actually has a working 'cart' device§
+  //return a list of devices without the number in their briefname, so we can tell if the machine for a 'cart' softlist actually has a working 'cart' device
   const supportedDevices = deviceList => R.map(
    device => (
     R.head(device.split(/[0-9].*/))
