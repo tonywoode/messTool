@@ -105,20 +105,25 @@ function callSheet(systems) {
 
   // next job is to make an exception or remove those softlists that say that the softlist device deosn't actually exist
   //maybe we should name those which don't have a device at this point?
-  const problemDevices = R.map(
-    obj =>
-      obj.doesSoftlistExist? null : console.log( `PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`)
-    , deviceExists)
-  //TODO: lost of these are HDD - how does HDD load, perhaps it isn't a mess 'device'?
-  //for now return the unfiltered list
-  //
-  console.log(JSON.stringify(deviceExists, null,`\t`))
-  return deviceExists
- // process.exit()
+  const alertProblemDevices = R.map( 
+    obj => obj.doesSoftlistExist? 
+      obj : 
+      console.log(
+        `PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`
+      )
+    , deviceExists)//TODO: lost of these are HDD - how does HDD load, perhaps it isn't a mess 'device'?
+  
+  // now remove them
+  const removedProblemDevices = R.filter( obj => obj.doesSoftlistExist === true, deviceExists)
+
+  console.log(JSON.stringify(removedProblemDevices, null,`\t`))
+  return removedProblemDevices
 }
 
 //program flow
+//this makes the json
 callSheet(systems)
+//this reads and prints a softlist
 makeSoftlists(function(softlist){
   R.pipe(
     cleanSoftlist
@@ -278,7 +283,7 @@ function print(softlist){
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
- // console.log(JSON.stringify(softlist, null, '\t'))
+  //console.log(JSON.stringify(softlist, null, '\t'))
 
   
   fs.writeFileSync(romdataOutPath, romdataToPrint.join(`\n`))
