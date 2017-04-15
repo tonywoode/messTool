@@ -5,14 +5,21 @@ const
   , path           = require(`path`)
   , XmlStream      = require(`xml-stream`)
   , R              = require(`Ramda`)
+  ,  mkdirp        = require('mkdirp')
 
 const
     rootDir        = `inputs/hash/`
   , filesInRoot    = fs.readdirSync(rootDir, 'utf8')
-  , stream         = fs.createReadStream(`inputs/hash/gamegear.xml`)
+
+  , systemType     = "Sega Game Gear"
+  , name           = "gamegear"
+  , call           = "gamegear"
+  , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
   , xml            = new XmlStream(stream)
-  , romdataOutDir  = `outputs/`
-  , romdataOutPath = `${romdataOutDir}/romdata.dat`
+  , outRootDir     = `outputs/`
+  , outTypePath    = `${outRootDir}/${systemType}`
+  , outNamePath    = `${outTypePath}/${name}`
+  , outFullPath    = `${outNamePath}/romdata.dat`
   , systemsJsonFile= fs.readFileSync(`outputs/systems.json`)
   , systems        = JSON.parse(systemsJsonFile)
 //TODO - you can append the DTD at the top of the file if it isn't being read correctly
@@ -116,7 +123,7 @@ function callSheet(systems) {
   // now remove them
   const removedProblemDevices = R.filter( obj => obj.doesSoftlistExist === true, deviceExists)
 
-  console.log(JSON.stringify(removedProblemDevices, null,`\t`))
+  //console.log(JSON.stringify(removedProblemDevices, null,`\t`))
   return removedProblemDevices
 }
 
@@ -266,7 +273,7 @@ function print(softlist){
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
       , path : path
-      , emu : `fake`
+      , emu : call
       , company : obj.company
       , year : obj.year
       , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
@@ -283,10 +290,10 @@ function print(softlist){
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
-  //console.log(JSON.stringify(softlist, null, '\t'))
+  console.log(JSON.stringify(softlist, null, '\t'))
 
-  
-  fs.writeFileSync(romdataOutPath, romdataToPrint.join(`\n`))
+  mkdirp.sync(outNamePath) 
+  fs.writeFileSync(outFullPath, romdataToPrint.join(`\n`))
   process.exit()
 
 }
