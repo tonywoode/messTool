@@ -24,23 +24,34 @@ const
   , systems        = JSON.parse(systemsJsonFile)
 //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
-//First task is to read the json for softlists and make ourselves a list of those xmls to find. We need to grab
-//the emulator name at this point too and pass it all the way down our pipeline
+//program flow
+//this makes the json
+callSheet(systems)
+//this reads and prints a softlist
+makeSoftlists(xml, function(softlist){
+  R.pipe(
+    cleanSoftlist
+    , print
+  )(softlist)
+
+})
+
+
+//read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
- const isSoftlist = obj => !!obj.softlist
- const filtered = R.pipe (
-  R.filter(isSoftlist)
- //the only props that we need are the softlists obj, devices, systemType and emulatorName, call might be useful later, display machine
-   //I took because when we split the softlists up to individual it won't be clear that a2500_cass and a2600_cart are both a2600
-  , R.map(obj => ({
+  const isSoftlist = obj => !!obj.softlist
+  const filtered = R.pipe (
+      R.filter(isSoftlist)
+    //make a softlist subset of json: obligatory are obj/devices/systemType/emulatorName, call might be useful later, 
+     // and display machine because when we split the softlists up to individual it won't be clear that a2600_cass and a2600_cart are both a2600
+    , R.map(obj => ({
         displayMachine: obj.displayMachine
       , systemType    : obj.systemType
       , softlist      : obj.softlist
       , device        : obj.device
       , call          : obj.call
-  }) )
- )(systems) 
-
+    }) )
+  )(systems) 
 
   //we only need the device shortnames from device
   const replaceDevice = R.map(
@@ -49,7 +60,6 @@ function callSheet(systems) {
     , obj)
   , filtered)
 
-  
   //convert that structure into one keyed by softlist (atm the machine is the organisational unit)
   const softlistKeyed = R.map(
     obj => R.map(
@@ -67,26 +77,25 @@ function callSheet(systems) {
     , obj.softlist)
   , replaceDevice)
 
-  //problem: softlist params are still array-ed to each machine
-  //let's flatten the lot, but introduce 'displayMachine' back to the object should we still need to tell what's affiliated
+  //problem: softlist params are still array-ed to each machine: flatten the lot (rely on 'displayMachine' to link)
   const flattenedSoftlist = R.unnest(softlistKeyed)
-  
 
-  /*
-   * A problem we now have is that sometimes a softlist exists for a device that isn't supported in the version of mess
+  /* A problem we now have is that sometimes a softlist exists for a device that isn't supported in the version of mess
    * For instance in mess 0.163, a2600 doesn't have a cass, but there exists a cass softlist, which will silently fail
    * if called. That's why we carried devices down to here: try and get the device from the softlist name and check
-   * Issues here are
-   *   1) There's no point in lookiing in a softlist xml for devices it's about, unless you want to try and parse the free text 'name' field
-   *   2) Some softlist names don't have a postfix, we can assume cart I think
+   * Considerations  here are
+   *   1) There's no point in looking in a softlist xml for devices it's about, unless you want to try and parse the free text 'name' field
+   *   2) Some softlist names don't have a postfix, but we're assuming we don't 'need' the device name (we can, we think, always call
+   *    'nes smb' and we never need to 'nes -cart smb'). This needs confirming
    *   3) some postfixes are not about the device - we've got _a1000, _workbench, _hardware, with a bit of luck most of these are unsupported
    *   or not games anyway, we'll need to make a list
    */ 
-  const addDeviceType = R.pipe( 
+  const addDeviceType = R.pipe(
+      //grab the device or declare there is none specified
       R.map( obj => (R.assoc(`deviceTypeFromName`, obj.name.split(`_`)[1]? obj.name.split(`_`)[1] : `no_postfix`, obj)))
       //FM7's disk softlist breaks the  rule and is called 'disk'. They are just floppy images, they work fine
     , R.map( obj => (obj.deviceTypeFromName === `disk`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
-      // I suspect all the nes softlist will run on all systems, the postfixi isn't about a device, so we'll call it 'no_postfix`
+      // I suspect all the nes softlist will run on all systems, essentially its postfixes aren't about mess `devices`
       // Note that the same isn't true for Famicom, as there seems to be a genuine problem that Famicoms don't have cass or flops
     , R.map( obj => (obj.name.split(`_`)[0] === `nes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
       //I suspect the same is true of the superfamicom devices bspack and strom, these aren't device names in the same way as flop or cass
@@ -96,13 +105,13 @@ function callSheet(systems) {
   
   //return a list of devices without the number in their briefname, so we can tell if the machine for a 'cart' softlist actually has a working 'cart' device
   const supportedDevices = deviceList => R.map(
-   device => (
-    R.head(device.split(/[0-9].*/))
-   )
+    device => (
+      R.head(device.split(/[0-9].*/))
+    )
   , deviceList)
 
   //make a k-v in the object to tell us if the softlist we've made can actually run. If the softlist has no postfix, we assume it will run
-  //(an example is a2600.xml as the softlist name, which if you read the text description says its for 'cart')
+  // (an example is a2600.xml as the softlist name, which if you read the text description says its for 'cart')
   const deviceExists = R.map(
     obj => (
         R.assoc(`doesSoftlistExist`, obj.deviceTypeFromName === `no_postfix`? true : R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)) , obj)
@@ -110,15 +119,14 @@ function callSheet(systems) {
     , addDeviceType)
 
 
-  // next job is to make an exception or remove those softlists that say that the softlist device deosn't actually exist
-  //maybe we should name those which don't have a device at this point?
+  //make exception or remove those softlists that say that the softlist device deosn't actually exist
   const alertProblemDevices = R.map( 
     obj => obj.doesSoftlistExist? 
       obj : 
       console.log(
         `PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`
       )
-    , deviceExists)//TODO: lost of these are HDD - how does HDD load, perhaps it isn't a mess 'device'?
+    , deviceExists)//TODO: lost of these are HDD and ROM - how does HDD load, perhaps it isn't a mess 'device'?
   
   // now remove them
   const removedProblemDevices = R.filter( obj => obj.doesSoftlistExist === true, deviceExists)
@@ -127,18 +135,19 @@ function callSheet(systems) {
   return removedProblemDevices
 }
 
-//program flow
-//this makes the json
-callSheet(systems)
-//this reads and prints a softlist
-makeSoftlists(function(softlist){
-  R.pipe(
-    cleanSoftlist
-    , print
-  )(softlist)
+//File operations on the hash folder
+function doFileOps(system) {
 
-})
+  const 
+      getExtension = file => path.extname(file)
+    , isXml = file => !!getExtension(file) === `.xml`
+    , hashFiles = R.filter(isXml, filesInRoot)
+    , getSystem = file => file.split(`_`)
+    , hashesSplit = R.map(getSystem, hashFiles)
+    , eachSystem = R.map(R.head, hashesSplit)//note for systems without a _ we are getting the whole filename still, need to drop after the dot
+  console.log(eachSystem)
 
+}
 
 //function mockSoftlists(callback){
 //  const 
@@ -149,21 +158,8 @@ makeSoftlists(function(softlist){
 //}
 //
 
-//File operations on the hash folder
-function doFileOps(system) {
 
-const 
-    getExtension = file => path.extname(file)
-  , isXml = file => !!getExtension(file) === `.xml`
-  , hashFiles = R.filter(isXml, filesInRoot)
-  , getSystem = file => file.split(`_`)
-  , hashesSplit = R.map(getSystem, hashFiles)
-  , eachSystem = R.map(R.head, hashesSplit)//note for systems without a _ we are getting the whole filename still, need to drop after the dot
-console.log(eachSystem)
-
-}
-
-function makeSoftlists(callback){
+function makeSoftlists(xml, callback){
   const softlist = []
 
   xml.collect(`info`)
@@ -200,10 +196,9 @@ function makeSoftlists(callback){
 }
 
 
-//I don't like working with a messy tree, lots of $ and needless repetition...
-// With softlists it tuned out that we have three identically keyed objects, so a generic
-// function will clean them all up
-
+/* I don't like working with a messy tree, lots of $ and needless repetition...With softlists it tuned
+ *   out that we have three identically keyed objects, so a generic function will clean them all up
+ */
 function cleanSoftlist(softlist){
   //I removed destructuring elsewhere but here the object isn't going to grow
   const cleanPairs = key  => 
@@ -225,15 +220,13 @@ function cleanSoftlist(softlist){
 }
 
 function print(softlist){
-
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
   const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
   ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬${emu}¬${company}¬${year}¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
-  /*  
-   *  1) _name, //this is the name used for display purposes
+  /*  1) _name, //this is the name used for display purposes
    *  2) _MAMEName, //Used Internally mainly for managing MAME clones.
    *  3) _ParentName, //Used Internally for storing the Parent of a Clone.
    *  4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
@@ -277,10 +270,10 @@ function print(softlist){
       , company : obj.company
       , year : obj.year
       , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
-            feature : obj.feature
-          , info : obj.info
-          , sharedFeat: obj.sharedFeat
-        })
+          feature : obj.feature
+        , info : obj.info
+        , sharedFeat: obj.sharedFeat
+      })
       
     }
    return romdataLine(romParams) 
