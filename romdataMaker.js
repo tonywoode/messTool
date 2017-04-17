@@ -11,31 +11,14 @@ const
     rootDir        = `inputs/hash/`
   , filesInRoot    = fs.readdirSync(rootDir, 'utf8')
 
-  , systemType     = "Sega Game Gear"
-  , name           = "gamegear"
-  , call           = "gamegear"
-  , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
-  , xml            = new XmlStream(stream)
-  , outRootDir     = `outputs/`
-  , outTypePath    = `${outRootDir}/${systemType}`
-  , outNamePath    = `${outTypePath}/${name}`
-  , outFullPath    = `${outNamePath}/romdata.dat`
   , systemsJsonFile= fs.readFileSync(`outputs/systems.json`)
   , systems        = JSON.parse(systemsJsonFile)
 //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
 //program flow
 //this makes the json
-callSheet(systems)
-//this reads and prints a softlist
-makeSoftlists(xml, function(softlist){
-  R.pipe(
-    cleanSoftlist
-    , print
-  )(softlist)
-
-})
-
+const softlists = callSheet(systems)
+const processing = processSoftlists(softlists)
 
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
@@ -135,6 +118,43 @@ function callSheet(systems) {
   return removedProblemDevices
 }
 
+function processSoftlists(softlists) {
+
+  const makeMeOne = softlistNode => {
+    //console.log("printing" + softlistNode.name)
+    const   
+        systemType     = "Sega Game Gear"
+      , name           = "gamegear"
+      , call           = "gamegear"
+      , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
+      , xml            = new XmlStream(stream)
+      , outRootDir     = `outputs/`
+      , outTypePath    = `${outRootDir}/${systemType}`
+      , outNamePath    = `${outTypePath}/${name}`
+      , outFullPath    = `${outNamePath}/romdata.dat`
+       
+      const softlistParams = { 
+        systemType     
+      , name           
+      , call           
+      , stream         
+      , xml           
+      , outRootDir    
+      , outTypePath   
+      , outNamePath   
+      , outFullPath   
+       }
+      
+      //this reads and prints a softlist
+      makeSoftlists(xml, function(softlist){
+      const cleanedSoftlist = cleanSoftlist(softlist)
+      const printed =  print(cleanedSoftlist, softlistParams)
+      })
+}
+R.map(obj => makeMeOne(null), [1,2,3,4,5,6,7,8,9, 1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9])
+//R.map(obj => makeMeOne(obj), softlists)
+}
+
 //File operations on the hash folder
 function doFileOps(system) {
 
@@ -219,7 +239,7 @@ function cleanSoftlist(softlist){
   return replacedSharedFeat
 }
 
-function print(softlist){
+function print(softlist, softlistParams){
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
@@ -266,7 +286,7 @@ function print(softlist){
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
       , path : path
-      , emu : call
+      , emu : softlistParams.call
       , company : obj.company
       , year : obj.year
       , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
@@ -285,8 +305,8 @@ function print(softlist){
   
   console.log(JSON.stringify(softlist, null, '\t'))
 
-  mkdirp.sync(outNamePath) 
-  fs.writeFileSync(outFullPath, romdataToPrint.join(`\n`))
-  process.exit()
+  mkdirp.sync(softlistParams.outNamePath) 
+  fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`))
+  //process.exit()
 
 }
