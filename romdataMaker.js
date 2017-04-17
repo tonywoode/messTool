@@ -110,12 +110,25 @@ function callSheet(systems) {
         `PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`
       )
     , deviceExists)//TODO: lost of these are HDD and ROM - how does HDD load, perhaps it isn't a mess 'device'?
+ 
   
   // now remove them
   const removedProblemDevices = R.filter( obj => obj.doesSoftlistExist === true, deviceExists)
 
-  //console.log(JSON.stringify(removedProblemDevices, null,`\t`))
-  return removedProblemDevices
+  //make a k-v telling us if list exists on disk - is the softlist found in the softlist directory
+  const softlistFileExists = R.map(
+    obj => (
+        R.assoc(`doesSoftlistFileExist`, fs.existsSync("inputs/hash/" + obj.name + ".xml")? true : false , obj)
+    )
+    , removedProblemDevices)
+//TODO: alert those that dont exist, as you've done above
+  //remove softlists with no softlist file in hashes dir
+  const removedNonExistingLists = R.filter( obj => obj.doesSoftlistFileExist === true, softlistFileExists)
+
+ // console.log(JSON.stringify(softlistFileExists, null,`\t`))
+//  process.exit()
+  
+  return removedNonExistingLists
 }
 
 function processSoftlists(softlists) {
@@ -123,9 +136,9 @@ function processSoftlists(softlists) {
   const makeMeOne = softlistNode => {
     //console.log("printing" + softlistNode.name)
     const   
-        systemType     = "Sega Game Gear"
-      , name           = "gamegear"
-      , call           = "gamegear"
+        systemType     = softlistNode.systemType 
+      , name           = softlistNode.name
+      , call           = softlistNode.call
       , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
       , xml            = new XmlStream(stream)
       , outRootDir     = `outputs/`
@@ -151,8 +164,8 @@ function processSoftlists(softlists) {
       const printed =  print(cleanedSoftlist, softlistParams)
       })
 }
-R.map(obj => makeMeOne(null), [1,2,3,4,5,6,7,8,9, 1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9])
-//R.map(obj => makeMeOne(obj), softlists)
+//R.map(obj => makeMeOne(null), [1,2,3,4,5,6,7,8,9, 1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9])
+R.map(obj => makeMeOne(obj), softlists)
 }
 
 //File operations on the hash folder
