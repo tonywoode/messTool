@@ -151,7 +151,7 @@ function processSoftlists(softlists) {
         systemType     = softlistNode.systemType? 
           softlistNode.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${softlistNode.displayMachine} doesn't have a system type to use as a potential folder name`) 
       , name           = softlistNode.name
-      , call           = softlistNode.emulatorName //TODO: mistake in the naming here
+      , emulatorName   = softlistNode.emulatorName 
       , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
       , xml            = new XmlStream(stream)
       , outRootDir     = `outputs/quickplay_softlists/`
@@ -162,7 +162,7 @@ function processSoftlists(softlists) {
       const softlistParams = { 
         systemType     
       , name           
-      , call           
+      , emulatorName           
       , stream         
       , xml           
       , outRootDir    
@@ -311,7 +311,7 @@ function print(softlist, softlistParams){
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
       , path : path
-      , emu : softlistParams.call
+      , emu : softlistParams.emulatorName
       , company : obj.company
       , year : obj.year
       , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
