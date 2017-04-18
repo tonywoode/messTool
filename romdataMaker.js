@@ -107,7 +107,7 @@ function callSheet(systems) {
     obj => obj.doesSoftlistExist? 
       obj : 
       console.log(
-        `PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`
+        `DEVICE PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`
       )
     , deviceExists)//TODO: lost of these are HDD and ROM - how does HDD load, perhaps it isn't a mess 'device'?
  
@@ -128,12 +128,10 @@ function callSheet(systems) {
     obj => obj.doesSoftlistFileExist==true? 
       obj : 
       console.log(
-        `PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but there's no file called "inputs/hash/${obj.name}.xml`
+        `FILE PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but there's no file called "inputs/hash/${obj.name}.xml`
       )
     , softlistFileExists)
  
-
-
   //remove softlists with no softlist file in hashes dir
   const removedNonExistingLists = R.filter( obj => obj.doesSoftlistFileExist === true, softlistFileExists)
 
@@ -147,8 +145,11 @@ function processSoftlists(softlists) {
 
   const makeMeOne = softlistNode => {
     //console.log("printing" + softlistNode.name)
+
     const   
-        systemType     = softlistNode.systemType 
+        //I like forward slashes in system type. System doesn't...
+        systemType     = softlistNode.systemType? 
+          softlistNode.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${softlistNode.displayMachine} doesn't have a system type to use as a potential folder name`) 
       , name           = softlistNode.name
       , call           = softlistNode.call
       , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
