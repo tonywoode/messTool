@@ -122,11 +122,23 @@ function callSheet(systems) {
     )
     , removedProblemDevices)
 //TODO: alert those that dont exist, as you've done above
+  
+
+  const alertNonExistentSoftlistFile = R.map( 
+    obj => obj.doesSoftlistFileExist==true? 
+      obj : 
+      console.log(
+        `PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but there's no file called "inputs/hash/${obj.name}.xml`
+      )
+    , softlistFileExists)
+ 
+
+
   //remove softlists with no softlist file in hashes dir
   const removedNonExistingLists = R.filter( obj => obj.doesSoftlistFileExist === true, softlistFileExists)
 
- // console.log(JSON.stringify(softlistFileExists, null,`\t`))
-//  process.exit()
+  //console.log(JSON.stringify(softlistFileExists, null,`\t`))
+  //process.exit()
   
   return removedNonExistingLists
 }
@@ -141,7 +153,7 @@ function processSoftlists(softlists) {
       , call           = softlistNode.call
       , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
       , xml            = new XmlStream(stream)
-      , outRootDir     = `outputs/`
+      , outRootDir     = `outputs/quickplay_softlists/`
       , outTypePath    = `${outRootDir}/${systemType}`
       , outNamePath    = `${outTypePath}/${name}`
       , outFullPath    = `${outNamePath}/romdata.dat`
@@ -164,7 +176,6 @@ function processSoftlists(softlists) {
       const printed =  print(cleanedSoftlist, softlistParams)
       })
 }
-//R.map(obj => makeMeOne(null), [1,2,3,4,5,6,7,8,9, 1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9])
 R.map(obj => makeMeOne(obj), softlists)
 }
 
