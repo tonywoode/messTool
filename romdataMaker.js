@@ -144,19 +144,28 @@ function callSheet(systems) {
 function processSoftlists(softlists) {
 
   const makeMeOne = softlistNode => {
-    //console.log("printing" + softlistNode.name)
+    //console.log("printing" + softlistNode.name
+    //console.log(JSON.stringify(softlistNode,null,'\t'))
+     // process.exit()
 
     const   
         //I like forward slashes in system type. System doesn't...
-        systemType     = softlistNode.systemType? 
+        systemType     = softlistNode.systemType?
           softlistNode.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${softlistNode.displayMachine} doesn't have a system type to use as a potential folder name`) 
-      , name           = softlistNode.name
+        //I like forward slashes in system names. System doesn't...and bloody apple again
+        //This is only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure
+      , displayMachine1= softlistNode.displayMachine.replace(/\/\/\//g, `III`)
+      , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
+      , displayMachine = displayMachine2.replace(/\//g, `-`)
+      , name1          = softlistNode.name.replace(/\/\/\//g, `III`)
+      , name2          = name1.replace(/\/\//g, `II`)
+      , name           = name2.replace(/\//g, `-`)
       , emulatorName   = softlistNode.emulatorName 
       , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
       , xml            = new XmlStream(stream)
       , outRootDir     = `outputs/quickplay_softlists/`
       , outTypePath    = `${outRootDir}/${systemType}`
-      , outNamePath    = `${outTypePath}/${name}`
+      , outNamePath    = `${outTypePath}/${displayMachine}/${name}`
       , outFullPath    = `${outNamePath}/romdata.dat`
        
       const softlistParams = { 
