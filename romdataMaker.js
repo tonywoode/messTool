@@ -151,7 +151,7 @@ function processSoftlists(softlists) {
         systemType     = softlistNode.systemType? 
           softlistNode.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${softlistNode.displayMachine} doesn't have a system type to use as a potential folder name`) 
       , name           = softlistNode.name
-      , call           = softlistNode.call
+      , call           = softlistNode.emulatorName //TODO: mistake in the naming here
       , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
       , xml            = new XmlStream(stream)
       , outRootDir     = `outputs/quickplay_softlists/`
