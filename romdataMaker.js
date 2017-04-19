@@ -5,7 +5,8 @@ const
   , path           = require(`path`)
   , XmlStream      = require(`xml-stream`)
   , R              = require(`Ramda`)
-  ,  mkdirp        = require('mkdirp')
+  , mkdirp         = require('mkdirp')
+  , leven          = require(`Levenshtein`)
 
 const
     rootDir        = `inputs/hash/`
@@ -144,53 +145,34 @@ function callSheet(systems) {
 }
 
 function filterSoftlists(softlists) {
-  //first let's do the rating stuff, add a rating to each object and give it a default of 50
-  const addedRatings =  R.map( obj => (R.assoc(`rating`, 50, obj)), softlists)
   
-  
-  /* next an unfortunately tricky bit. The best match for many softlists will that the display machine name contains the 
-   *  largest consequtive substring of the first bit of the softlist name, so we need to find all permutations of the softlist
-   *  name and see how many matches we get when comparing them all. Even a single char might be important (the 2 in msx2) but obv
-   *  the more chars that match the better
-   */
+  /* The best match for many softlists will that the call for the machine matches the prefix of the softlist - a2600
+   * There is then some utility to be gained for similarity in substrings. So rate the similarity */ 
 
-  //first we need to get all the substrings of the first bit of the softlist name
-  function getAllSubstrings(str) {
-    var i, j, result = [];
-
-    for (i = 0; i < str.length; i++) {
-      for (j = i + 1; j < str.length + 1; j++) {
-        result.push(str.slice(i, j));
-      }
-    }
-    return result;
+  //get the edit distance of every softlist system to the softlist prefix
+  const getDistance = (call,namePrefix) => {
+    const l = new leven(call, namePrefix)
+    let round = 0
+    if (l.distance === 0) round =  40
+    if (l.distance === 1) round =  30
+    if (l.distance === 2) round =  15
+    if (l.distance === 3) round =  10
+    if (l.distance === 4) round =   5
+    if (l.distance === 5) round = -10
+    if (l.distance === 6) round = -25
+    if (l.distance === 7) round = -30
+    if (l.distance >= 8)  round = -40
+ 
+    return round
   }
 
-  //so for each object, we need to generate the possible substrings of systemTypeFromName
-   
-  const withSubstrings =  R.map( obj => (R.assoc(`substrings`, getAllSubstrings(obj.systemTypeFromName), obj)), softlists)
-
-  //then compare that to displayMachine and simply count how many matches there are, and ffs that's a reduce!
-  function howManyMatches(string, substringArray) {
-    const contains = (accum, item ) => {
-    const system = "ibm5150"
-    const result =  system.includes(item)
-      if (result) accum++
-      return accum
-    }
-      const thingy =(R.reduce(contains, 0, substringArray))
-   console.log(thingy) 
-  }
-  const array = (getAllSubstrings("ibm5150"))
-  //a problem because a large word will get more matches, an exact match trumps anything else but then a nearly exact match does too
-  howManyMatches("ibm5150", array)
- // console.log(JSON.stringify(withSubstrings, null,`\t`))
-
-    process.exit()
-
+  // two things at once - we start a rating for each object at 50, but then use the Levenshtein distance to immediately make it useful
+  const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), softlists)
 
   console.log(JSON.stringify(addedRatings, null,`\t`))
   process.exit()
+
+
 
   //the current array of system types from dataAndEfindMaker isn't an object, easier to just make one...
   const systemTypes = R.map( ({systemType}) => ({systemType}), softlists)
