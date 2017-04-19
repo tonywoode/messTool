@@ -16,9 +16,9 @@ const
 //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
 //program flow
-//this makes the json
 const softlists = callSheet(systems)
-const processing = processSoftlists(softlists)
+const filteredSoftlists = filterSoftlists(softlists)
+const processing = processSoftlists(filteredSoftlists)
 
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
@@ -76,13 +76,15 @@ function callSheet(systems) {
   const addDeviceType = R.pipe(
       //grab the device or declare there is none specified
       R.map( obj => (R.assoc(`deviceTypeFromName`, obj.name.split(`_`)[1]? obj.name.split(`_`)[1] : `no_postfix`, obj)))
+      //while we're at it, get the system type from the softlist name, we need it immediately and later
+    , R.map( obj => (R.assoc(`systemTypeFromName`, obj.name.split(`_`)[0], obj)))
       //FM7's disk softlist breaks the  rule and is called 'disk'. They are just floppy images, they work fine
     , R.map( obj => (obj.deviceTypeFromName === `disk`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
       // I suspect all the nes softlist will run on all systems, essentially its postfixes aren't about mess `devices`
       // Note that the same isn't true for Famicom, as there seems to be a genuine problem that Famicoms don't have cass or flops
-    , R.map( obj => (obj.name.split(`_`)[0] === `nes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
+    , R.map( obj => (obj.systemTypeFromName === `nes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
       //I suspect the same is true of the superfamicom devices bspack and strom, these aren't device names in the same way as flop or cass
-    , R.map( obj => (obj.name.split(`_`)[0] === `snes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
+    , R.map( obj => (obj.systemTypeFromName === `snes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
   )(flattenedSoftlist)
 
   
@@ -139,6 +141,87 @@ function callSheet(systems) {
   //process.exit()
   
   return removedNonExistingLists
+}
+
+function filterSoftlists(softlists) {
+  //first let's do the rating stuff, add a rating to each object and give it a default of 50
+  const addedRatings =  R.map( obj => (R.assoc(`rating`, 50, obj)), softlists)
+  
+  
+  /* next an unfortunately tricky bit. The best match for many softlists will that the display machine name contains the 
+   *  largest consequtive substring of the first bit of the softlist name, so we need to find all permutations of the softlist
+   *  name and see how many matches we get when comparing them all. Even a single char might be important (the 2 in msx2) but obv
+   *  the more chars that match the better
+   */
+
+  //first we need to get all the substrings of the first bit of the softlist name
+  function getAllSubstrings(str) {
+    var i, j, result = [];
+
+    for (i = 0; i < str.length; i++) {
+      for (j = i + 1; j < str.length + 1; j++) {
+        result.push(str.slice(i, j));
+      }
+    }
+    return result;
+  }
+
+  //so for each object, we need to generate the possible substrings of systemTypeFromName
+   
+  const withSubstrings =  R.map( obj => (R.assoc(`substrings`, getAllSubstrings(obj.systemTypeFromName), obj)), softlists)
+
+  //then compare that to displayMachine and simply count how many matches there are, and ffs that's a reduce!
+  function howManyMatches(string, substringArray) {
+    const contains = (accum, item ) => {
+    const system = "ibm5150"
+    const result =  system.includes(item)
+      if (result) accum++
+      return accum
+    }
+      const thingy =(R.reduce(contains, 0, substringArray))
+   console.log(thingy) 
+  }
+  const array = (getAllSubstrings("ibm5150"))
+  //a problem because a large word will get more matches, an exact match trumps anything else but then a nearly exact match does too
+  howManyMatches("ibm5150", array)
+ // console.log(JSON.stringify(withSubstrings, null,`\t`))
+
+    process.exit()
+
+
+  console.log(JSON.stringify(addedRatings, null,`\t`))
+  process.exit()
+
+  //the current array of system types from dataAndEfindMaker isn't an object, easier to just make one...
+  const systemTypes = R.map( ({systemType}) => ({systemType}), softlists)
+  const uniqueTypes = R.uniq(systemTypes)
+
+  //make me a list of all machines that have this type
+  const type = obj => obj.systemType === "Atari 400/600/800/1200/XE"
+  const filterMePlease = R.filter( type, softlists)
+
+  //of those machines, what softlists are supported?
+  const listsOfThisType = R.map( ({name}) => ({name}), filterMePlease)
+  const uniqListsOfThisType = R.uniq(listsOfThisType)
+
+  //which machines from this type run the a400 softlist?
+  const a800 = obj => obj.name === "a800"
+  const whichRuns = R.filter( a800, filterMePlease)
+
+  //a problem we now have is some machines encode useful info Atari 2600 (NTSC)
+  //where some encode none Casio MX-10 (MSX1)
+  //i think all those that do have a FILTER key...
+  //nope, turns out the filter key can't be relied on, atarti 400 doen't have it
+  //but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
+  
+
+  //the ideal start of the tests for suitability for a softlist is that the largest subset of the name
+  //of the softlist is included in the system so ie: the softlist a800 would match "Atari 800" over "Atari 400"
+  // so we split 'a800' into an array, and we divide and conquer - we look for every subset ie a, 8, 0, 0, a8, 80, 00, a80, 800, a800 
+  // and in this case finding 800 will rate something higher....
+  //
+  console.log(JSON.stringify(whichRuns, null,`\t`))
+  process.exit()
 }
 
 function processSoftlists(softlists) {
