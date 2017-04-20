@@ -168,45 +168,66 @@ function filterSoftlists(softlists) {
 
   // two things at once - we start a rating for each object at 50, but then use the Levenshtein distance to immediately make it useful
   const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), softlists)
-
-  console.log(JSON.stringify(addedRatings, null,`\t`))
-  process.exit()
-
-
-
-  //the current array of system types from dataAndEfindMaker isn't an object, easier to just make one...
-  const systemTypes = R.map( ({systemType}) => ({systemType}), softlists)
-  const uniqueTypes = R.uniq(systemTypes)
-
-  //make me a list of all machines that have this type
-  const type = obj => obj.systemType === "Atari 400/600/800/1200/XE"
-  const filterMePlease = R.filter( type, softlists)
-
-  //of those machines, what softlists are supported?
-  const listsOfThisType = R.map( ({name}) => ({name}), filterMePlease)
-  const uniqListsOfThisType = R.uniq(listsOfThisType)
-
-  //which machines from this type run the a400 softlist?
-  const a800 = obj => obj.name === "a800"
-  const whichRuns = R.filter( a800, filterMePlease)
-
-  //a problem we now have is some machines encode useful info Atari 2600 (NTSC)
-  //where some encode none Casio MX-10 (MSX1)
-  //i think all those that do have a FILTER key...
-  //nope, turns out the filter key can't be relied on, atarti 400 doen't have it
-  //but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
-  
-
-  //the ideal start of the tests for suitability for a softlist is that the largest subset of the name
-  //of the softlist is included in the system so ie: the softlist a800 would match "Atari 800" over "Atari 400"
-  // so we split 'a800' into an array, and we divide and conquer - we look for every subset ie a, 8, 0, 0, a8, 80, 00, a80, 800, a800 
-  // and in this case finding 800 will rate something higher....
-  //
-  console.log(JSON.stringify(whichRuns, null,`\t`))
-  process.exit()
+return addedRatings
+//  console.log(JSON.stringify(addedRatings, null,`\t`))
+//  process.exit()
+//
+//
+//
+//  //the current array of system types from dataAndEfindMaker isn't an object, easier to just make one...
+//  const systemTypes = R.map( ({systemType}) => ({systemType}), softlists)
+//  const uniqueTypes = R.uniq(systemTypes)
+//
+//  //make me a list of all machines that have this type
+//  const type = obj => obj.systemType === "Atari 400/600/800/1200/XE"
+//  const filterMePlease = R.filter( type, softlists)
+//
+//  //of those machines, what softlists are supported?
+//  const listsOfThisType = R.map( ({name}) => ({name}), filterMePlease)
+//  const uniqListsOfThisType = R.uniq(listsOfThisType)
+//
+//  //which machines from this type run the a400 softlist?
+//  const a800 = obj => obj.name === "a800"
+//  const whichRuns = R.filter( a800, filterMePlease)
+//
+//  //a problem we now have is some machines encode useful info Atari 2600 (NTSC)
+//  //where some encode none Casio MX-10 (MSX1)
+//  //i think all those that do have a FILTER key...
+//  //nope, turns out the filter key can't be relied on, atarti 400 doen't have it
+//  //but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
+//  
+//
+//  //the ideal start of the tests for suitability for a softlist is that the largest subset of the name
+//  //of the softlist is included in the system so ie: the softlist a800 would match "Atari 800" over "Atari 400"
+//  // so we split 'a800' into an array, and we divide and conquer - we look for every subset ie a, 8, 0, 0, a8, 80, 00, a80, 800, a800 
+//  // and in this case finding 800 will rate something higher....
+//  //
+//  console.log(JSON.stringify(whichRuns, null,`\t`))
+//  process.exit()
 }
 
 function processSoftlists(softlists) {
+
+  //this will print out last-wins systems, we need to filter the output, should really do it earlier to save work done
+  //but this is far simpler, we need to say 'before you write, check if you've already written a softlist with an emu
+  //that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
+  // but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
+// so we need to store an object structure liks "a2600" : "80" to know that for each softlist)
+  //first let's just make a first-wins system
+
+const softlistRatings = {}
+const decideWhetherToMakeMeOne = (obj, softlists) => {
+  const decide = (rating, accum) => rating > accum? makeMeOne(obj) : console.log(obj.emulatorName + rating + " too small") 
+  
+  softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
+    makeMeOne(obj) 
+    , softlistRatings[obj.name] = obj.rating
+  )
+  //node.rating = obj.rating
+  //R.map(ratingsSeen => ratingsSeen.name === 'vc4000'? console.log("yesitdoes"): console.log("no it doesn't"), softlistRatings)
+  //R.contains( { name: 'vc4000', rating: 20 }, softlistRatings)? console.log("its here"):console.log("its not here")
+  //softlistRatings.push(node)
+}
 
   const makeMeOne = softlistNode => {
     //console.log("printing" + softlistNode.name
@@ -225,12 +246,12 @@ function processSoftlists(softlists) {
       , name1          = softlistNode.name.replace(/\/\/\//g, `III`)
       , name2          = name1.replace(/\/\//g, `II`)
       , name           = name2.replace(/\//g, `-`)
-      , emulatorName   = softlistNode.emulatorName 
+      , emulatorName   = softlistNode.emulatorName
       , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
       , xml            = new XmlStream(stream)
       , outRootDir     = `outputs/quickplay_softlists/`
       , outTypePath    = `${outRootDir}/${systemType}`
-      , outNamePath    = `${outTypePath}/${displayMachine}/${name}`
+      , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
       , outFullPath    = `${outNamePath}/romdata.dat`
        
       const softlistParams = { 
@@ -249,9 +270,15 @@ function processSoftlists(softlists) {
       makeSoftlists(xml, function(softlist){
       const cleanedSoftlist = cleanSoftlist(softlist)
       const printed =  print(cleanedSoftlist, softlistParams)
+      const console = printJson(printed) 
       })
 }
-R.map(obj => makeMeOne(obj), softlists)
+ const written = R.map(obj =>  decideWhetherToMakeMeOne(obj, softlists) , softlists) 
+  
+  console.log(softlistRatings)
+  //  obj.writtenToDisk? null : makeMeOne(obj)
+   // R.assoc(`writtenToDisk`, `yes`, obj)
+  //}, softlists)
 }
 
 //File operations on the hash folder
@@ -402,10 +429,16 @@ function print(softlist, softlistParams){
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
   
-  console.log(JSON.stringify(softlist, null, '\t'))
 
-  mkdirp.sync(softlistParams.outNamePath) 
+  mkdirp.sync(softlistParams.outNamePath)
+
+
   fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`))
+  return softlist
   //process.exit()
 
+}
+
+function printJson(softlist) {
+    console.log(JSON.stringify(softlist, null, '\t'))
 }
