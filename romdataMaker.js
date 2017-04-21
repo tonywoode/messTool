@@ -138,11 +138,9 @@ function callSheet(systems) {
   //remove softlists with no softlist file in hashes dir
   const removedNonExistingLists = R.filter( obj => obj.doesSoftlistFileExist === true, softlistFileExists)
 
-  //console.log(JSON.stringify(softlistFileExists, null,`\t`))
-  //process.exit()
-  
   return removedNonExistingLists
 }
+
 
 function filterSoftlists(softlists) {
   
@@ -168,143 +166,78 @@ function filterSoftlists(softlists) {
 
   // two things at once - we start a rating for each object at 50, but then use the Levenshtein distance to immediately make it useful
   const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), softlists)
-return addedRatings
-//  console.log(JSON.stringify(addedRatings, null,`\t`))
-//  process.exit()
-//
-//
-//
-//  //the current array of system types from dataAndEfindMaker isn't an object, easier to just make one...
-//  const systemTypes = R.map( ({systemType}) => ({systemType}), softlists)
-//  const uniqueTypes = R.uniq(systemTypes)
-//
-//  //make me a list of all machines that have this type
-//  const type = obj => obj.systemType === "Atari 400/600/800/1200/XE"
-//  const filterMePlease = R.filter( type, softlists)
-//
-//  //of those machines, what softlists are supported?
-//  const listsOfThisType = R.map( ({name}) => ({name}), filterMePlease)
-//  const uniqListsOfThisType = R.uniq(listsOfThisType)
-//
-//  //which machines from this type run the a400 softlist?
-//  const a800 = obj => obj.name === "a800"
-//  const whichRuns = R.filter( a800, filterMePlease)
-//
-//  //a problem we now have is some machines encode useful info Atari 2600 (NTSC)
-//  //where some encode none Casio MX-10 (MSX1)
-//  //i think all those that do have a FILTER key...
-//  //nope, turns out the filter key can't be relied on, atarti 400 doen't have it
-//  //but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
-//  
-//
-//  //the ideal start of the tests for suitability for a softlist is that the largest subset of the name
-//  //of the softlist is included in the system so ie: the softlist a800 would match "Atari 800" over "Atari 400"
-//  // so we split 'a800' into an array, and we divide and conquer - we look for every subset ie a, 8, 0, 0, a8, 80, 00, a80, 800, a800 
-//  // and in this case finding 800 will rate something higher....
-//  //
-//  console.log(JSON.stringify(whichRuns, null,`\t`))
-//  process.exit()
+  return addedRatings
+  // a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
+  // i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
+  // but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
 }
 
+
+/* We need to say 'before you write, check if you've already written a softlist with an emu
+ *  that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
+ *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
+ *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
 function processSoftlists(softlists) {
 
-  //this will print out last-wins systems, we need to filter the output, should really do it earlier to save work done
-  //but this is far simpler, we need to say 'before you write, check if you've already written a softlist with an emu
-  //that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
-  // but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
-// so we need to store an object structure liks "a2600" : "80" to know that for each softlist)
-
-const softlistRatings = {}
-const decideWhetherToMakeMeOne = (obj, softlists) => {
-  const decide = (rating, accum) => rating > accum? makeMeOne(obj) : console.log(obj.emulatorName + rating + " too small") 
+  const softlistRatings = {}
+  const decideWhetherToMakeMeOne = R.map( obj => {
+    const decide = (rating, accum) => rating > accum? makeMeOne(obj) : console.log(obj.emulatorName + rating + " too small") 
   
-  softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
-    makeMeOne(obj) 
-    , softlistRatings[obj.name] = obj.rating
-  )
-  //node.rating = obj.rating
-  //R.map(ratingsSeen => ratingsSeen.name === 'vc4000'? console.log("yesitdoes"): console.log("no it doesn't"), softlistRatings)
-  //R.contains( { name: 'vc4000', rating: 20 }, softlistRatings)? console.log("its here"):console.log("its not here")
-  //softlistRatings.push(node)
-}
+    softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
+        makeMeOne(obj) 
+      , softlistRatings[obj.name] = obj.rating
+    )
+  }, softlists)
 
-  const makeMeOne = softlistNode => {
-    //console.log("printing" + softlistNode.name
-    //console.log(JSON.stringify(softlistNode,null,'\t'))
-     // process.exit()
-
-    const   
-        //I like forward slashes in system type. System doesn't...
-        systemType     = softlistNode.systemType?
-          softlistNode.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${softlistNode.displayMachine} doesn't have a system type to use as a potential folder name`) 
-        //I like forward slashes in system names. System doesn't...and bloody apple again
-        //This is only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure
-      , displayMachine1= softlistNode.displayMachine.replace(/\/\/\//g, `III`)
-      , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
-      , displayMachine = displayMachine2.replace(/\//g, `-`)
-      , name1          = softlistNode.name.replace(/\/\/\//g, `III`)
-      , name2          = name1.replace(/\/\//g, `II`)
-      , name           = name2.replace(/\//g, `-`)
-      , emulatorName   = softlistNode.emulatorName
-      , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
-      , xml            = new XmlStream(stream)
-      , outRootDir     = `outputs/quickplay_softlists/`
-      , outTypePath    = `${outRootDir}/${systemType}`
-      , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
-      , outFullPath    = `${outNamePath}/romdata.dat`
-       
-      const softlistParams = { 
-        systemType     
-      , name           
-      , emulatorName           
-      , stream         
-      , xml           
-      , outRootDir    
-      , outTypePath   
-      , outNamePath   
-      , outFullPath   
-       }
-      
-      //this reads and prints a softlist
-      makeSoftlists(xml, function(softlist){
-      const cleanedSoftlist = cleanSoftlist(softlist)
-      const printed =  print(cleanedSoftlist, softlistParams)
-      const console = printJson(printed) 
-      })
-}
- const written = R.map(obj =>  decideWhetherToMakeMeOne(obj, softlists) , softlists) 
-  
   console.log(softlistRatings)
-  //  obj.writtenToDisk? null : makeMeOne(obj)
-   // R.assoc(`writtenToDisk`, `yes`, obj)
-  //}, softlists)
 }
 
-//File operations on the hash folder
-function doFileOps(system) {
 
-  const 
-      getExtension = file => path.extname(file)
-    , isXml = file => !!getExtension(file) === `.xml`
-    , hashFiles = R.filter(isXml, filesInRoot)
-    , getSystem = file => file.split(`_`)
-    , hashesSplit = R.map(getSystem, hashFiles)
-    , eachSystem = R.map(R.head, hashesSplit)//note for systems without a _ we are getting the whole filename still, need to drop after the dot
-  console.log(eachSystem)
+function makeMeOne(softlistNode) {
+
+  const //I like forward slashes in system type. System doesn't...
+      systemType     = softlistNode.systemType?
+      softlistNode.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${softlistNode.displayMachine} doesn't have a system type to use as a potential folder name`) 
+      //I like forward slashes in system names. System doesn't...and bloody apple again
+      //This is only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure
+    , displayMachine1= softlistNode.displayMachine.replace(/\/\/\//g, `III`)
+    , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
+    , displayMachine = displayMachine2.replace(/\//g, `-`)
+    , name1          = softlistNode.name.replace(/\/\/\//g, `III`)
+    , name2          = name1.replace(/\/\//g, `II`)
+    , name           = name2.replace(/\//g, `-`)
+    , emulatorName   = softlistNode.emulatorName
+    , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
+    , xml            = new XmlStream(stream)
+    , outRootDir     = `outputs/quickplay_softlists/`
+    , outTypePath    = `${outRootDir}/${systemType}`
+    , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
+    , outFullPath    = `${outNamePath}/romdata.dat`
+       
+  const softlistParams = { 
+       systemType     
+    , name           
+    , emulatorName           
+    , stream         
+    , xml           
+    , outRootDir    
+    , outTypePath   
+    , outNamePath   
+    , outFullPath   
+  }
+      
+  //this reads and prints a softlist
+  makeSoftlists(xml, function(softlist){
+    const cleanedSoftlist = cleanSoftlist(softlist)
+    const printed =  print(cleanedSoftlist, softlistParams)
+    const console = printJson(printed) 
+  })
 
 }
-
-//function mockSoftlists(callback){
-//  const 
-//      input   = fs.readFileSync(`inputs/mockGamegearHashScrape.json`)
-//   ,  systems = JSON.parse(input)
-//  
-//  callback(softlist, callback)
-//}
-//
 
 
 function makeSoftlists(xml, callback){
+
   const softlist = []
 
   xml.collect(`info`)
@@ -364,34 +297,19 @@ function cleanSoftlist(softlist){
   return replacedSharedFeat
 }
 
+
 function print(softlist, softlistParams){
+
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
   const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
   ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
-  /*  1) _name, //this is the name used for display purposes
-   *  2) _MAMEName, //Used Internally mainly for managing MAME clones.
-   *  3) _ParentName, //Used Internally for storing the Parent of a Clone.
-   *  4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
-   *  5) _path, //the path to the rom.
-   *  5) _emulator, //the Emulator this rom is linked to
-   *  6) _Company, //The company who made the game.
-   *  7) _Year,     //the year this ROM first came out
-   *  8) _GameType, //The type of game
-   *  9) _MultiPlayer,  //The type of Multiplayer game.
-   * 10)  _Language, //The language of this ROM
-   * 11)  _Parameters : String; //Any additional paramters to be used when running
-   * 12)  _Comment, //Any miscellaneous comments you might want to store.
-   * 13)  _ParamMode : TROMParametersMode; //type of parameter mode
-   * 14)  _Rating,   //A user rating.
-   * 15)  _NumPlay : integer;   //The amount of times this rom has been played
-   * 16)  IPS start
-   * 17)  IPS end
-   * 18)  ?
-   * 19)  _DefaultGoodMerge : String; //The user selected default GoodMerge ROM
-   */
+  /*  1)  Display name, 2) _MAMEName, 3) _ParentName, 4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
+   *  5) _rom path //the path to the rom, 6) _emulator,7) _Company, 8) _Year, 9) _GameType, 10) _MultiPlayer, 11)  _Language
+   * 12)  _Parameters : String, 13)  _Comment, 14)  _ParamMode : TROMParametersMode; //type of parameter mode
+   * 15)  _Rating, 16)  _NumPlay, 17)  IPS start, 18)  IPS end, 19)  _DefaultGoodMerge : String; //The user selected default GoodMerge ROM */
 
   //for a system, takes the simple and homomorphic arrays of feature, info and sharedFeat and turns them into an array of comments to be printed
   const createComment = (commentCandidates) => {
@@ -400,8 +318,8 @@ function print(softlist, softlistParams){
       commentCandidate? R.map(item => 
       comments.push(item.name + ":" + item.value)  , commentCandidate) : ''
     }, commentCandidates)
-      //if (comments[0]) { console.log(comments)}
-      return comments
+      
+    return comments
   }
 
   //sets the variables for a line of romdata entry for later injection into a romdata printer
@@ -427,14 +345,10 @@ function print(softlist, softlistParams){
 
   const romdata = applyRomdata(softlist)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
-  
 
   mkdirp.sync(softlistParams.outNamePath)
-
-
   fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   return softlist
-  //process.exit()
 
 }
 
