@@ -382,7 +382,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
     , devicesEfinderToPrint(obj) //don't check if devices exist, wouldn't be a mess game system without >0
   ) , efinder)
   
-  fs.writeFileSync(iniOutPath, devices.join(`\n`))
+  fs.writeFileSync(iniOutPath, devices.join(`\n`), `latinf1`) //utf8 isn't possible at this time
   
   madeDat(efinder) 
   
@@ -399,7 +399,7 @@ function madeDat(systems){
 
   const ordered = lister.sort( (a, b) => a.localeCompare(b) )
 
-  fs.writeFileSync(datOutPath, ordered.join('\n'))
+  fs.writeFileSync(datOutPath, ordered.join('\n'), `latin1`)  //utf8 isn't possible at this time
   //output.on('error', function(err) { console.log(`couldn't write the file`) });
   //systems.forEach(function(v) { output.write(v + '\n'); });
 

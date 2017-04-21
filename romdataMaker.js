@@ -213,7 +213,6 @@ function processSoftlists(softlists) {
   //that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
   // but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
 // so we need to store an object structure liks "a2600" : "80" to know that for each softlist)
-  //first let's just make a first-wins system
 
 const softlistRatings = {}
 const decideWhetherToMakeMeOne = (obj, softlists) => {
@@ -370,7 +369,7 @@ function print(softlist, softlistParams){
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
   const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
-  ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬${emu}¬${company}¬${year}¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+  ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
   /*  1) _name, //this is the name used for display purposes
    *  2) _MAMEName, //Used Internally mainly for managing MAME clones.
@@ -433,7 +432,7 @@ function print(softlist, softlistParams){
   mkdirp.sync(softlistParams.outNamePath)
 
 
-  fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`))
+  fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   return softlist
   //process.exit()
 
