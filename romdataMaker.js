@@ -369,7 +369,7 @@ function print(softlist, softlistParams){
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
   const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
-  ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+  ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
   /*  1) _name, //this is the name used for display purposes
    *  2) _MAMEName, //Used Internally mainly for managing MAME clones.
