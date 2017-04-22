@@ -19,7 +19,8 @@ const
 //program flow
 const softlists = callSheet(systems)
 const filteredSoftlists = filterSoftlists(softlists)
-const printed = printit(filteredSoftlists)
+const defaultEmus = processSoftlists(filteredSoftlists)
+R.map( obj => makeADat(obj), defaultEmus)
 
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
@@ -163,12 +164,75 @@ function filterSoftlists(softlists) {
   // but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
 }
 
+/* We need to say 'before you write, check if you've already written a softlist with an emu
+ *  that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
+ *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
+ *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
+function processSoftlists(softlists) {
+
+  const softlistRatings = {}
+  const defaultEmus = {}
+   const decideWhetherToMakeMeOne = R.map( obj => {
+    const decide = (rating, accum) => rating > accum? defaultEmus[obj.name] = obj : console.log(obj.emulatorName + rating + " too small") 
+ //TODO: its all side effects? but i use the return of this? 
+    softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
+        defaultEmus[obj.name] = obj 
+      , softlistRatings[obj.name] = obj.rating
+    )
+  }, softlists)
+// const decideWhetherToMakeMeOne = R.map( obj => {
+//    const decide = (rating, accum) => rating > accum? makeADat(obj) : console.log(obj.emulatorName + rating + " too small") 
+// //TODO: its all side effects? but i use the return of this? 
+//    softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
+//        makeADat(obj) 
+//      , softlistRatings[obj.name] = obj.rating
+//    )
+//  }, softlists)
+
+  console.log(softlistRatings)
+  console.log(defaultEmus)
+  return defaultEmus
+}
+
+function makeADat (emulator) {
+  //this reads and prints a softlist
+  const softlistParams = makeParams(emulator)
+
+  makeASoftlist(softlistParams.xml, function(softlist){
+    const cleanedSoftlist = cleanSoftlist(softlist)
+    const printed =  printARomdata(cleanedSoftlist, softlistParams)
+    const console = printJson(printed) 
+  })
+
+}
 
 
+function makeParams(emulator) {
+  
+  const //I like forward slashes in system type. System doesn't...
+      systemType     = emulator.systemType?
+      emulator.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${emulator.displayMachine} doesn't have a system type to use as a potential folder name`) 
+      //I like forward slashes in system names. System doesn't...and bloody apple again
+      //This is only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure
+    , displayMachine1= emulator.displayMachine.replace(/\/\/\//g, `III`)
+    , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
+    , displayMachine = displayMachine2.replace(/\//g, `-`)
+    , name1          = emulator.name.replace(/\/\/\//g, `III`)
+    , name2          = name1.replace(/\/\//g, `II`)
+    , name           = name2.replace(/\//g, `-`)
+    , emulatorName   = emulator.emulatorName
+    , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
+    , xml            = new XmlStream(stream)
+    , outRootDir     = `outputs/quickplay_softlists/`
+    , outTypePath    = `${outRootDir}/${systemType}`
+    , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
+    , outFullPath    = `${outNamePath}/romdata.dat`
+       
+  return  ({ systemType, name, emulatorName, stream, xml, outRootDir, outTypePath, outNamePath, outFullPath })
+}  
 
 
-
-function makeSoftlists(xml, callback){
+function makeASoftlist(xml, callback){
 
   const softlist = []
 
@@ -229,79 +293,13 @@ function cleanSoftlist(softlist){
   return replacedSharedFeat
 }
 
-
-function printit(softlist){
-
-const makeMeOne = emulator => {
-
-  const //I like forward slashes in system type. System doesn't...
-      systemType     = emulator.systemType?
-      emulator.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${emulator.displayMachine} doesn't have a system type to use as a potential folder name`) 
-      //I like forward slashes in system names. System doesn't...and bloody apple again
-      //This is only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure
-    , displayMachine1= emulator.displayMachine.replace(/\/\/\//g, `III`)
-    , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
-    , displayMachine = displayMachine2.replace(/\//g, `-`)
-    , name1          = emulator.name.replace(/\/\/\//g, `III`)
-    , name2          = name1.replace(/\/\//g, `II`)
-    , name           = name2.replace(/\//g, `-`)
-    , emulatorName   = emulator.emulatorName
-    , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
-    , xml            = new XmlStream(stream)
-    , outRootDir     = `outputs/quickplay_softlists/`
-    , outTypePath    = `${outRootDir}/${systemType}`
-    , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
-    , outFullPath    = `${outNamePath}/romdata.dat`
-       
-  const softlistParams = { 
-      systemType     
-    , name           
-    , emulatorName           
-    , stream         
-    , xml           
-    , outRootDir    
-    , outTypePath   
-    , outNamePath   
-    , outFullPath   
-  }
-      
-  //this reads and prints a softlist
-  makeSoftlists(xml, function(softlist){
-    const cleanedSoftlist = cleanSoftlist(softlist)
-    const printed =  print(cleanedSoftlist, softlistParams)
-    const console = printJson(printed) 
-  })
-
-}
-
-/* We need to say 'before you write, check if you've already written a softlist with an emu
- *  that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
- *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
- *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
- const processSoftlists = softlists => {
-
-  const softlistRatings = {}
-  const decideWhetherToMakeMeOne = R.map( obj => {
-    const decide = (rating, accum) => rating > accum? makeMeOne(obj) : console.log(obj.emulatorName + rating + " too small") 
- //TODO: its all side effects? but i use the return of this? 
-    softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
-        makeMeOne(obj) 
-      , softlistRatings[obj.name] = obj.rating
-    )
-  }, softlists)
-
-  console.log(softlistRatings)
-}
-
-
-const processing = processSoftlists(filteredSoftlists)
-
-const print = (softlist, softlistParams) => {
+ 
+function printARomdata(softlist, softlistParams) {
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
   const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
-  ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
   /*  1)  Display name, 2) _MAMEName, 3) _ParentName, 4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
    *  5) _rom path //the path to the rom, 6) _emulator,7) _Company, 8) _Year, 9) _GameType, 10) _MultiPlayer, 11)  _Language
@@ -337,7 +335,6 @@ const print = (softlist, softlistParams) => {
       
     }
    return romdataLine(romParams) 
-  
   }, softlist)
 
   const romdata = applyRomdata(softlist)
@@ -350,6 +347,5 @@ const print = (softlist, softlistParams) => {
 }
 
 function printJson(softlist) {
-    console.log(JSON.stringify(softlist, null, '\t'))
-}
+  console.log(JSON.stringify(softlist, null, '\t'))
 }
