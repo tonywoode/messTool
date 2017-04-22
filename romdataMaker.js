@@ -19,7 +19,7 @@ const
 //program flow
 const softlists = callSheet(systems)
 const filteredSoftlists = filterSoftlists(softlists)
-const processing = processSoftlists(filteredSoftlists)
+const printed = printit(filteredSoftlists)
 
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
@@ -98,39 +98,30 @@ function callSheet(systems) {
 
   //make a k-v in the object to tell us if the softlist we've made can actually run. If the softlist has no postfix, we assume it will run
   // (an example is a2600.xml as the softlist name, which if you read the text description says its for 'cart')
-  const deviceExists = R.map(
-    obj => (
+  const deviceExists = R.map( obj => (
         R.assoc(`doesSoftlistExist`, obj.deviceTypeFromName === `no_postfix`? true : R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)) , obj)
-    )
-    , addDeviceType)
-
+  ), addDeviceType)
 
   //make exception or remove those softlists that say that the softlist device deosn't actually exist
   const alertProblemDevices = R.map( 
-    obj => obj.doesSoftlistExist? 
-      obj : 
-      console.log(
+    obj => obj.doesSoftlistExist? obj : console.log(
         `DEVICE PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`
       )
-    , deviceExists)//TODO: lost of these are HDD and ROM - how does HDD load, perhaps it isn't a mess 'device'?
- 
+  , deviceExists)//TODO: lost of these are HDD and ROM - how does HDD load, perhaps it isn't a mess 'device'?
   
   // now remove them
   const removedProblemDevices = R.filter( obj => obj.doesSoftlistExist === true, deviceExists)
 
   //make a k-v telling us if list exists on disk - is the softlist found in the softlist directory
-  const softlistFileExists = R.map(
-    obj => (
-        R.assoc(`doesSoftlistFileExist`, fs.existsSync("inputs/hash/" + obj.name + ".xml")? true : false , obj)
+  const softlistFileExists = R.map( obj => (
+      R.assoc(`doesSoftlistFileExist`, fs.existsSync("inputs/hash/" + obj.name + ".xml")? true : false , obj)
     )
-    , removedProblemDevices)
-//TODO: alert those that dont exist, as you've done above
-  
+  , removedProblemDevices)
 
+  //alert those that dont exist
   const alertNonExistentSoftlistFile = R.map( 
     obj => obj.doesSoftlistFileExist==true? 
-      obj : 
-      console.log(
+      obj : console.log(
         `FILE PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but there's no file called "inputs/hash/${obj.name}.xml`
       )
     , softlistFileExists)
@@ -173,67 +164,8 @@ function filterSoftlists(softlists) {
 }
 
 
-/* We need to say 'before you write, check if you've already written a softlist with an emu
- *  that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
- *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
- *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
-function processSoftlists(softlists) {
-
-  const softlistRatings = {}
-  const decideWhetherToMakeMeOne = R.map( obj => {
-    const decide = (rating, accum) => rating > accum? makeMeOne(obj) : console.log(obj.emulatorName + rating + " too small") 
-  
-    softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
-        makeMeOne(obj) 
-      , softlistRatings[obj.name] = obj.rating
-    )
-  }, softlists)
-
-  console.log(softlistRatings)
-}
 
 
-function makeMeOne(softlistNode) {
-
-  const //I like forward slashes in system type. System doesn't...
-      systemType     = softlistNode.systemType?
-      softlistNode.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${softlistNode.displayMachine} doesn't have a system type to use as a potential folder name`) 
-      //I like forward slashes in system names. System doesn't...and bloody apple again
-      //This is only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure
-    , displayMachine1= softlistNode.displayMachine.replace(/\/\/\//g, `III`)
-    , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
-    , displayMachine = displayMachine2.replace(/\//g, `-`)
-    , name1          = softlistNode.name.replace(/\/\/\//g, `III`)
-    , name2          = name1.replace(/\/\//g, `II`)
-    , name           = name2.replace(/\//g, `-`)
-    , emulatorName   = softlistNode.emulatorName
-    , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
-    , xml            = new XmlStream(stream)
-    , outRootDir     = `outputs/quickplay_softlists/`
-    , outTypePath    = `${outRootDir}/${systemType}`
-    , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
-    , outFullPath    = `${outNamePath}/romdata.dat`
-       
-  const softlistParams = { 
-       systemType     
-    , name           
-    , emulatorName           
-    , stream         
-    , xml           
-    , outRootDir    
-    , outTypePath   
-    , outNamePath   
-    , outFullPath   
-  }
-      
-  //this reads and prints a softlist
-  makeSoftlists(xml, function(softlist){
-    const cleanedSoftlist = cleanSoftlist(softlist)
-    const printed =  print(cleanedSoftlist, softlistParams)
-    const console = printJson(printed) 
-  })
-
-}
 
 
 function makeSoftlists(xml, callback){
@@ -298,8 +230,73 @@ function cleanSoftlist(softlist){
 }
 
 
-function print(softlist, softlistParams){
+function printit(softlist){
 
+const makeMeOne = emulator => {
+
+  const //I like forward slashes in system type. System doesn't...
+      systemType     = emulator.systemType?
+      emulator.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${emulator.displayMachine} doesn't have a system type to use as a potential folder name`) 
+      //I like forward slashes in system names. System doesn't...and bloody apple again
+      //This is only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure
+    , displayMachine1= emulator.displayMachine.replace(/\/\/\//g, `III`)
+    , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
+    , displayMachine = displayMachine2.replace(/\//g, `-`)
+    , name1          = emulator.name.replace(/\/\/\//g, `III`)
+    , name2          = name1.replace(/\/\//g, `II`)
+    , name           = name2.replace(/\//g, `-`)
+    , emulatorName   = emulator.emulatorName
+    , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
+    , xml            = new XmlStream(stream)
+    , outRootDir     = `outputs/quickplay_softlists/`
+    , outTypePath    = `${outRootDir}/${systemType}`
+    , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
+    , outFullPath    = `${outNamePath}/romdata.dat`
+       
+  const softlistParams = { 
+      systemType     
+    , name           
+    , emulatorName           
+    , stream         
+    , xml           
+    , outRootDir    
+    , outTypePath   
+    , outNamePath   
+    , outFullPath   
+  }
+      
+  //this reads and prints a softlist
+  makeSoftlists(xml, function(softlist){
+    const cleanedSoftlist = cleanSoftlist(softlist)
+    const printed =  print(cleanedSoftlist, softlistParams)
+    const console = printJson(printed) 
+  })
+
+}
+
+/* We need to say 'before you write, check if you've already written a softlist with an emu
+ *  that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
+ *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
+ *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
+ const processSoftlists = softlists => {
+
+  const softlistRatings = {}
+  const decideWhetherToMakeMeOne = R.map( obj => {
+    const decide = (rating, accum) => rating > accum? makeMeOne(obj) : console.log(obj.emulatorName + rating + " too small") 
+ //TODO: its all side effects? but i use the return of this? 
+    softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
+        makeMeOne(obj) 
+      , softlistRatings[obj.name] = obj.rating
+    )
+  }, softlists)
+
+  console.log(softlistRatings)
+}
+
+
+const processing = processSoftlists(filteredSoftlists)
+
+const print = (softlist, softlistParams) => {
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
 
@@ -323,13 +320,13 @@ function print(softlist, softlistParams){
   }
 
   //sets the variables for a line of romdata entry for later injection into a romdata printer
-  const applyRomdata = obj => R.map ( obj => {
+  const applyRomdata = obj => R.map( obj => {
     const romParams = {
         name : obj.name
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
       , path : path
-      , emu : softlistParams.emulatorName
+      , emu : softlistParams.emulatorName //here's where we need to change this, it currently comes from the outside scope and its the sole reason why we pass softlistParams in
       , company : obj.company
       , year : obj.year
       , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
@@ -354,4 +351,5 @@ function print(softlist, softlistParams){
 
 function printJson(softlist) {
     console.log(JSON.stringify(softlist, null, '\t'))
+}
 }
