@@ -17,35 +17,37 @@ const
 //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
 //program flow
-const softlists = callSheet(systems)
-const filteredSoftlists = filterSoftlists(softlists)
-const defaultEmus = processSoftlists(filteredSoftlists)
-R.map( obj => makeADat(obj), defaultEmus)
+const softlistEmus = callSheet(systems)
+const filteredEmus = filterSoftlists(softlistEmus)
+const defaultEmus = processSoftlists(filteredEmus)
+R.map( emu => makeADat(emu), defaultEmus)
 
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
+  //filter by softlist
   const isSoftlist = obj => !!obj.softlist
+  
   const filtered = R.pipe (
       R.filter(isSoftlist)
-    //make a softlist subset of json: obligatory are obj/devices/systemType/emulatorName, call might be useful later, 
-     // and display machine because when we split the softlists up to individual it won't be clear that a2600_cass and a2600_cart are both a2600
+    //make a softlist subset of json, just those values we need. We'll add to it then
     , R.map(obj => ({
         displayMachine: obj.displayMachine
       , systemType    : obj.systemType
       , softlist      : obj.softlist
       , device        : obj.device
       , call          : obj.call
+      , cloneof       : obj.cloneof
     }) )
   )(systems) 
 
-  //we only need the device shortnames from device
+  //all we need from the device subobject is the shortnames
   const replaceDevice = R.map(
     obj => R.assoc(`device`, R.map(
       obj => obj.briefname, obj.device) 
     , obj)
   , filtered)
 
-  //convert that structure into one keyed by softlist (atm the machine is the organisational unit)
+  //convert that structure into one keyed by emu for a softlist (atm the machine is the organisational unit)
   const softlistKeyed = R.map(
     obj => R.map(
       softlist => ({
@@ -57,11 +59,14 @@ function callSheet(systems) {
        , filter        : softlist.filter
        , device        : obj.device
        , call          : obj.call
+       , cloneof       : obj.cloneof
 
       })
     , obj.softlist)
   , replaceDevice)
 
+  console.log(JSON.stringify(softlistKeyed, null, `\t`))
+  process.exit()
   //problem: softlist params are still array-ed to each machine: flatten the lot (rely on 'displayMachine' to link)
   const flattenedSoftlist = R.unnest(softlistKeyed)
 
