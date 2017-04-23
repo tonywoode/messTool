@@ -16,11 +16,22 @@ const
   , systems        = JSON.parse(systemsJsonFile)
 //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
+
+
 //program flow
-const softlistEmus = callSheet(systems)
-const filteredEmus = filterSoftlists(softlistEmus)
-const defaultEmus = processSoftlists(filteredEmus)
-R.map( emu => makeADat(emu), defaultEmus)
+R.pipe(
+    callSheet
+  , filterSoftlists
+  , processSoftlists
+  , R.map(emu => {
+      const softlistParams = makeParams(emu)
+      makeASoftlist(softlistParams.xml, function(softlist){
+        const cleanedSoftlist = cleanSoftlist(softlist)
+        printARomdata(cleanedSoftlist, softlistParams)
+      })
+    })
+)(systems)
+
 
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
@@ -47,7 +58,7 @@ function callSheet(systems) {
     , obj)
   , filtered)
 
-  //convert that structure into one keyed by emu for a softlist (atm the machine is the organisational unit)
+  //convert that structure into one keyed by softlist (atm the machine is the organisational unit)
   const softlistKeyed = R.map(
     obj => R.map(
       softlist => ({
@@ -65,21 +76,23 @@ function callSheet(systems) {
     , obj.softlist)
   , replaceDevice)
 
-  console.log(JSON.stringify(softlistKeyed, null, `\t`))
-  process.exit()
-  //problem: softlist params are still array-ed to each machine: flatten the lot (rely on 'displayMachine' to link)
-  const flattenedSoftlist = R.unnest(softlistKeyed)
+   //problem: softlist params are still array-ed to each machine: flatten the lot (rely on 'displayMachine' to link)
+  const flattenedSoftlistEmus = R.unnest(softlistKeyed)
+  
+  return flattenedSoftlistEmus
+}
 
-  /* A problem we now have is that sometimes a softlist exists for a device that isn't supported in the version of mess
-   * For instance in mess 0.163, a2600 doesn't have a cass, but there exists a cass softlist, which will silently fail
-   * if called. That's why we carried devices down to here: try and get the device from the softlist name and check
-   * Considerations  here are
-   *   1) There's no point in looking in a softlist xml for devices it's about, unless you want to try and parse the free text 'name' field
-   *   2) Some softlist names don't have a postfix, but we're assuming we don't 'need' the device name (we can, we think, always call
-   *    'nes smb' and we never need to 'nes -cart smb'). This needs confirming
-   *   3) some postfixes are not about the device - we've got _a1000, _workbench, _hardware, with a bit of luck most of these are unsupported
-   *   or not games anyway, we'll need to make a list
-   */ 
+
+function filterSoftlists(softlistEmus) {
+
+  /* Sometimes a softlist exists for a device that isn't supported in the version of mess e.g.: in mess 0.163, 
+   *  a2600 doesn't have a cass, but there exists a cass softlist, which will silently fail  if called. 
+   *   So, try and get the device from the softlist name and check. Considerations:
+   *     1) There's no point in looking in a softlist xml for devices it's about, unless you want to try and parse the free text 'name' field
+   *     2) Some softlist names don't have a postfix, but we're assuming we don't 'need' the device name 
+   *       (we can, we think, always call'nes smb' and we never need to 'nes -cart smb'. This needs confirming)
+   *     3) some postfixes are not about the device - we've got _a1000, _workbench, _hardware
+   *       (with a bit of luck most of these are unsupported or not games anyway, we'll need to make a list) */ 
   const addDeviceType = R.pipe(
       //grab the device or declare there is none specified
       R.map( obj => (R.assoc(`deviceTypeFromName`, obj.name.split(`_`)[1]? obj.name.split(`_`)[1] : `no_postfix`, obj)))
@@ -92,7 +105,7 @@ function callSheet(systems) {
     , R.map( obj => (obj.systemTypeFromName === `nes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
       //I suspect the same is true of the superfamicom devices bspack and strom, these aren't device names in the same way as flop or cass
     , R.map( obj => (obj.systemTypeFromName === `snes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
-  )(flattenedSoftlist)
+  )(softlistEmus)
 
   
   //return a list of devices without the number in their briefname, so we can tell if the machine for a 'cart' softlist actually has a working 'cart' device
@@ -135,12 +148,7 @@ function callSheet(systems) {
   //remove softlists with no softlist file in hashes dir
   const removedNonExistingLists = R.filter( obj => obj.doesSoftlistFileExist === true, softlistFileExists)
 
-  return removedNonExistingLists
-}
-
-
-function filterSoftlists(softlists) {
-  
+ 
   /* The best match for many softlists will that the call for the machine matches the prefix of the softlist - a2600
    * There is then some utility to be gained for similarity in substrings. So rate the similarity */ 
 
@@ -162,7 +170,7 @@ function filterSoftlists(softlists) {
   }
 
   // two things at once - we start a rating for each object at 50, but then use the Levenshtein distance to immediately make it useful
-  const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), softlists)
+  const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), removedNonExistingLists)
   return addedRatings
   // a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
   // i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
@@ -177,39 +185,20 @@ function processSoftlists(softlists) {
 
   const softlistRatings = {}
   const defaultEmus = {}
+  const rejectedEmus = {}
    const decideWhetherToMakeMeOne = R.map( obj => {
-    const decide = (rating, accum) => rating > accum? defaultEmus[obj.name] = obj : console.log(obj.emulatorName + rating + " too small") 
+    const decide = (rating, accum) => rating > accum? defaultEmus[obj.name] = obj : rejectedEmus[obj.name] = `${obj.emulatorName}  rating: ${rating}` 
  //TODO: its all side effects? but i use the return of this? 
     softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
         defaultEmus[obj.name] = obj 
       , softlistRatings[obj.name] = obj.rating
     )
   }, softlists)
-// const decideWhetherToMakeMeOne = R.map( obj => {
-//    const decide = (rating, accum) => rating > accum? makeADat(obj) : console.log(obj.emulatorName + rating + " too small") 
-// //TODO: its all side effects? but i use the return of this? 
-//    softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
-//        makeADat(obj) 
-//      , softlistRatings[obj.name] = obj.rating
-//    )
-//  }, softlists)
-
-  console.log(softlistRatings)
-  console.log(defaultEmus)
+  
   return defaultEmus
 }
 
-function makeADat (emulator) {
-  //this reads and prints a softlist
-  const softlistParams = makeParams(emulator)
 
-  makeASoftlist(softlistParams.xml, function(softlist){
-    const cleanedSoftlist = cleanSoftlist(softlist)
-    const printed =  printARomdata(cleanedSoftlist, softlistParams)
-    const console = printJson(printed) 
-  })
-
-}
 
 
 function makeParams(emulator) {
@@ -347,10 +336,8 @@ function printARomdata(softlist, softlistParams) {
 
   mkdirp.sync(softlistParams.outNamePath)
   fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
+  console.log(JSON.stringify(softlist, null, '\t'))
   return softlist
 
 }
 
-function printJson(softlist) {
-  console.log(JSON.stringify(softlist, null, '\t'))
-}
