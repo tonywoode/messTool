@@ -22,7 +22,7 @@ const
 R.pipe(
     callSheet
   , filterSoftlists
-  , processSoftlists
+  , chooseDefaultEmus
   , R.map(emu => {
       const softlistParams = makeParams(emu)
       makeASoftlist(softlistParams.xml, function(softlist){
@@ -171,14 +171,14 @@ function filterSoftlists(softlistEmus) {
 
   // two things at once - we start a rating for each object at 50, but then use the Levenshtein distance to immediately make it useful
   const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), removedNonExistingLists)
+
+  //now any emu that is a clone gets reduced in rating by 40 (problem here is we lose accuracy if there are clone trees, i'm not sure if there are)
+    const removedClones = R.map( obj => obj.cloneof? ( 
+      obj.rating = obj.rating - 90
+      , obj
+    ): obj ,addedRatings)
   
-  //we forgot to use cloneof, let's get it out now. What we need is to say "if this machine has a cloneof, follow it and use that instead. This will HAVE to move AFTER the pal and ntsc checks for an individual game. It should probably form part of the rating process, for now just kill any objects that have a cloneof to see what the result is like
-  const alertClones = R.map( obj => obj.cloneof? console.log(`${obj.displayMachine} is a clone of ${obj.cloneof}`) :  obj , addedRatings)
-  const isClone = obj => !obj.cloneof
-  const removedClones = R.filter(isClone, addedRatings)
-  
-  //process.exit()
-return removedClones
+  return removedClones
   // a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
   // i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
   // but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
@@ -188,22 +188,32 @@ return removedClones
  *  that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
  *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
  *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
-function processSoftlists(softlistEmus) {
-
-    const softlistRatings = {}, defaultEmus = {} , rejectedEmus = {}
-  const decideWhetherToMakeMeOne = R.map( obj => {
-  const decide = (rating, accum) => rating > accum? defaultEmus[obj.name] = obj : rejectedEmus[obj.name] = `${obj.emulatorName}  rating: ${rating}` 
- //TODO: its all side effects? but i use the return of this? 
-    softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
-        defaultEmus[obj.name] = obj 
-      , softlistRatings[obj.name] = obj.rating
-    )
-  }, softlistEmus)
+function chooseDefaultEmus(softlistEmus) {
   
-  return defaultEmus
+  //TODO: this whole function is very impure, yet isn't using anything outside what's passed in....
+  const softlistRatings = {}, defaultEmus = {}, logDecisions = {}
+  
+  const decideWhetherToMakeMeOne = R.map( emu => {
+
+    //rate the current object we're on against an accumulated value
+    const decide = (rating, accum) => rating > accum? (
+        defaultEmus[emu.name]         = emu
+      , softlistRatings[emu.name]     = emu.rating
+      , logDecisions[emu.emulatorName] = `accepted for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}`
+    )
+    :   logDecisions[emu.emulatorName] = `rejected for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}` 
+   
+    //if the emu has a rating for the softlist it runs, compare it against the total, if it doesn't set it as the default
+    softlistRatings[emu.name]? 
+      decide(emu.rating, softlistRatings[emu.name]) : (
+          defaultEmus[emu.name] = emu
+        , softlistRatings[emu.name] = emu.rating
+      )
+    
+  }, softlistEmus)
+
+  return defaultEmus //note this now keyed by softlist name, but it functions just the same.
 }
-
-
 
 
 function makeParams(emulator) {
