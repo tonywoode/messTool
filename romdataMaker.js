@@ -14,7 +14,7 @@ const
 
   , systemsJsonFile= fs.readFileSync(`outputs/systems.json`)
   , systems        = JSON.parse(systemsJsonFile)
-//TODO - you can append the DTD at the top of the file if it isn't being read correctly
+  //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
 
 
@@ -171,7 +171,14 @@ function filterSoftlists(softlistEmus) {
 
   // two things at once - we start a rating for each object at 50, but then use the Levenshtein distance to immediately make it useful
   const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), removedNonExistingLists)
-  return addedRatings
+  
+  //we forgot to use cloneof, let's get it out now. What we need is to say "if this machine has a cloneof, follow it and use that instead. This will HAVE to move AFTER the pal and ntsc checks for an individual game. It should probably form part of the rating process, for now just kill any objects that have a cloneof to see what the result is like
+  const alertClones = R.map( obj => obj.cloneof? console.log(`${obj.displayMachine} is a clone of ${obj.cloneof}`) :  obj , addedRatings)
+  const isClone = obj => !obj.cloneof
+  const removedClones = R.filter(isClone, addedRatings)
+  
+  //process.exit()
+return removedClones
   // a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
   // i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
   // but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
@@ -181,19 +188,17 @@ function filterSoftlists(softlistEmus) {
  *  that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
  *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
  *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
-function processSoftlists(softlists) {
+function processSoftlists(softlistEmus) {
 
-  const softlistRatings = {}
-  const defaultEmus = {}
-  const rejectedEmus = {}
-   const decideWhetherToMakeMeOne = R.map( obj => {
-    const decide = (rating, accum) => rating > accum? defaultEmus[obj.name] = obj : rejectedEmus[obj.name] = `${obj.emulatorName}  rating: ${rating}` 
+    const softlistRatings = {}, defaultEmus = {} , rejectedEmus = {}
+  const decideWhetherToMakeMeOne = R.map( obj => {
+  const decide = (rating, accum) => rating > accum? defaultEmus[obj.name] = obj : rejectedEmus[obj.name] = `${obj.emulatorName}  rating: ${rating}` 
  //TODO: its all side effects? but i use the return of this? 
     softlistRatings[obj.name]? decide(obj.rating, softlistRatings[obj.name]) : (
         defaultEmus[obj.name] = obj 
       , softlistRatings[obj.name] = obj.rating
     )
-  }, softlists)
+  }, softlistEmus)
   
   return defaultEmus
 }
