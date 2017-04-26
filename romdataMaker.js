@@ -18,21 +18,30 @@ const
 
 
 
-//program flow
+//program flow at list level
 R.pipe(
     callSheet
   , filterSoftlists
   , chooseDefaultEmus
-  , R.map(emu => {
-      const softlistParams = makeParams(emu)
-      makeASoftlist(softlistParams.xml, function(softlist){
-        const cleanedSoftlist = cleanSoftlist(softlist)
-        printARomdata(cleanedSoftlist, softlistParams)
-      })
-    })
+  , makeSoftlists 
 )(systems)
 
+//program flow at emu level
+function makeSoftlists(emuSystems) {
+  R.map(emu => {
+        const softlistParams = makeParams(emu)
+        makeASoftlist(softlistParams.xml, function(softlist){
+          const cleanedSoftlist = cleanSoftlist(softlist)
+          //atm its really really quick to make the romdatas without checking for pal or ntsc etc in the 
+          //game name, you simply can't sort out every emaulator at the point of every game
+          //wouldn't it be better instead to look for things in brackets in the game name, and if you find them,
+          //get the 'system type' of the emu that's going to be chosen, then look for the ntsc/pal emu in that and 
+          //change it? i 'think' the alternative it to change the lookup so its a sub-list, so its system type
+          printARomdata(cleanedSoftlist, softlistParams)
+        })
+      }, emuSystems)
 
+}
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
   //filter by softlist
@@ -173,12 +182,12 @@ function filterSoftlists(softlistEmus) {
   const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), removedNonExistingLists)
 
   //now any emu that is a clone gets reduced in rating by 40 (problem here is we lose accuracy if there are clone trees, i'm not sure if there are)
-    const removedClones = R.map( obj => obj.cloneof? ( 
+    const deRateClones = R.map( obj => obj.cloneof? ( 
       obj.rating = obj.rating - 90
       , obj
     ): obj ,addedRatings)
   
-  return removedClones
+  return deRateClones
   // a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
   // i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
   // but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
@@ -189,9 +198,9 @@ function filterSoftlists(softlistEmus) {
  *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
  *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
 function chooseDefaultEmus(softlistEmus) {
-  
+ 
   //TODO: this whole function is very impure, yet isn't using anything outside what's passed in....
-  const softlistRatings = {}, defaultEmus = {}, logDecisions = {}
+  const softlistRatings = {}, defaultEmus = {}, logDecisions = {}, rejectedEmus = []
   
   const decideWhetherToMakeMeOne = R.map( emu => {
 
@@ -201,8 +210,10 @@ function chooseDefaultEmus(softlistEmus) {
       , softlistRatings[emu.name]     = emu.rating
       , logDecisions[emu.emulatorName] = `accepted for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}`
     )
-    :   logDecisions[emu.emulatorName] = `rejected for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}` 
-   
+    : (
+        logDecisions[emu.emulatorName] = `rejected for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}` 
+      , rejectedEmus.push(emu.emulatorName)
+    )
     //if the emu has a rating for the softlist it runs, compare it against the total, if it doesn't set it as the default
     softlistRatings[emu.name]? 
       decide(emu.rating, softlistRatings[emu.name]) : (
@@ -212,6 +223,27 @@ function chooseDefaultEmus(softlistEmus) {
     
   }, softlistEmus)
 
+ // console.log(JSON.stringify(logDecisions, null, '\t'))
+ // process.exit()
+  // add regional variant defaults
+  //for each defaultEmu, check if it matches a regional regex
+  R.map(defaultEmu => {
+      const matchme = !!defaultEmu.emulatorName.match(/\(.*\)|only/) //actually this list is pretty good as it is ( itshould contain all regions instead of that kleene)
+      if (matchme) {
+        console.log(defaultEmu.emulatorName + " is a match")
+        //if it does, then look back in the rejected emus for those named the same except for the ()
+        //const regex1 = defaultEmu.emulatorName.replace(/\(.*\)/,`(.*)`)//only relace first occurance
+        //const regex = new RegExp(regex2.replace(/PAL|NTSC/,`.*`)) 
+        const nesRegex = defaultEmu.emulatorName.replace(/ \/ Famicom /,``)//only relace first occurance
+        const snesRegex = nesRegex.replace(/ \/ Super Famicom /,``)//only relace first occurance
+        const megadriveRegex = snesRegex.replace(/Genesis/,`Mega Drive`)//only relace first occurance
+        const regex = new RegExp(megadriveRegex.replace(/\(.*/,``))//only relace first occurance
+        console.log(regex)
+        R.map(rejected => !!rejected.match(regex)? console.log(`---->>>> ${regex} matches ${rejected}`) : null , rejectedEmus)
+      }
+  //and add them to a key "regions"
+  },defaultEmus)
+ process.exit()
   return defaultEmus //note this now keyed by softlist name, but it functions just the same.
 }
 
