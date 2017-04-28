@@ -32,11 +32,6 @@ function makeSoftlists(emuSystems) {
         const softlistParams = makeParams(emu)
         makeASoftlist(softlistParams.xml, function(softlist){
           const cleanedSoftlist = cleanSoftlist(softlist)
-          //atm its really really quick to make the romdatas without checking for pal or ntsc etc in the 
-          //game name, you simply can't sort out every emaulator at the point of every game
-          //wouldn't it be better instead to look for things in brackets in the game name, and if you find them,
-          //get the 'system type' of the emu that's going to be chosen, then look for the ntsc/pal emu in that and 
-          //change it? i 'think' the alternative it to change the lookup so its a sub-list, so its system type
           printARomdata(cleanedSoftlist, softlistParams)
         })
       }, emuSystems)
@@ -85,7 +80,7 @@ function callSheet(systems) {
     , obj.softlist)
   , replaceDevice)
 
-   //problem: softlist params are still array-ed to each machine: flatten the lot (rely on 'displayMachine' to link)
+  //problem: softlist params are still array-ed to each machine: flatten the lot (rely on 'displayMachine' to link)
   const flattenedSoftlistEmus = R.unnest(softlistKeyed)
   
   return flattenedSoftlistEmus
@@ -95,7 +90,7 @@ function callSheet(systems) {
 function filterSoftlists(softlistEmus) {
 
   /* Sometimes a softlist exists for a device that isn't supported in the version of mess e.g.: in mess 0.163, 
-   *  a2600 doesn't have a cass, but there exists a cass softlist, which will silently fail  if called. 
+   *  a2600 doesn't have a cass, but there exists a cass softlist, which will silently fail if called. 
    *   So, try and get the device from the softlist name and check. Considerations:
    *     1) There's no point in looking in a softlist xml for devices it's about, unless you want to try and parse the free text 'name' field
    *     2) Some softlist names don't have a postfix, but we're assuming we don't 'need' the device name 
@@ -188,9 +183,7 @@ function filterSoftlists(softlistEmus) {
     ): obj ,addedRatings)
   
   return deRateClones
-  // a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
-  // i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
-  // but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
+
 }
 
 /* We need to say 'before you write, check if you've already written a softlist with an emu
@@ -212,7 +205,7 @@ function chooseDefaultEmus(softlistEmus) {
     )
     : (
         logDecisions[emu.emulatorName] = `rejected for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}` 
-      , rejectedEmus.push(emu.emulatorName)
+      , rejectedEmus.push(emu)
     )
     //if the emu has a rating for the softlist it runs, compare it against the total, if it doesn't set it as the default
     softlistRatings[emu.name]? 
@@ -223,27 +216,35 @@ function chooseDefaultEmus(softlistEmus) {
     
   }, softlistEmus)
 
- // console.log(JSON.stringify(logDecisions, null, '\t'))
- // process.exit()
-  // add regional variant defaults
-  //for each defaultEmu, check if it matches a regional regex
-  R.map(defaultEmu => {
-      const matchme = !!defaultEmu.emulatorName.match(/\(.*\)|only/) //actually this list is pretty good as it is ( itshould contain all regions instead of that kleene)
+  // add regional variant defaults - for each defaultEmu, check if it matches a regional regex
+  // a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
+  // i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
+  // but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
+  const regionality = R.map(defaultEmu => { 
+    const regionals = []
+    const matchme = defaultEmu.emulatorName.match(/\(.*\)|only/) //actually this list is pretty good as it is ( it should contain all regions instead of that kleene)
       if (matchme) {
         console.log(defaultEmu.emulatorName + " is a match")
         //if it does, then look back in the rejected emus for those named the same except for the ()
-        //const regex1 = defaultEmu.emulatorName.replace(/\(.*\)/,`(.*)`)//only relace first occurance
-        //const regex = new RegExp(regex2.replace(/PAL|NTSC/,`.*`)) 
-        const nesRegex = defaultEmu.emulatorName.replace(/ \/ Famicom /,``)//only relace first occurance
-        const snesRegex = nesRegex.replace(/ \/ Super Famicom /,``)//only relace first occurance
-        const megadriveRegex = snesRegex.replace(/Genesis/,`Mega Drive`)//only relace first occurance
-        const regex = new RegExp(megadriveRegex.replace(/\(.*/,``))//only relace first occurance
+        const nesRegex = defaultEmu.emulatorName.replace(/ \/ Famicom /,``)
+        const snesRegex = nesRegex.replace(/ \/ Super Famicom /,``)
+        const megadriveRegex = snesRegex.replace(/Genesis/,`Mega Drive`)
+        const regex1 = megadriveRegex.replace(/PAL|NTSC only/,``)
+        
+        const regex = new RegExp(regex1.replace(/\(.*\)/,`(.*)`))//only relace first occurance
         console.log(regex)
-        R.map(rejected => !!rejected.match(regex)? console.log(`---->>>> ${regex} matches ${rejected}`) : null , rejectedEmus)
+        R.map(rejected => !!rejected.emulatorName.match(regex)? (
+          console.log(`---->>>> matches ${rejected.emulatorName}`)
+            //add them to a key "regions", but filter by softlist name otherwise Atari 800 (NTSC) -SOFTLIST a800 matches Atari 800 (PAL) -SOFTLIST a800_flop
+          , defaultEmu.name === rejected.name ? (  regionals.push(rejected.emulatorName) 
+          , console.log(regionals)): null
+        )
+        : null , rejectedEmus)
+        regionals[0]? defaultEmu.regions = regionals : null
+        return defaultEmu
       }
-  //and add them to a key "regions"
   },defaultEmus)
- process.exit()
+
   return defaultEmus //note this now keyed by softlist name, but it functions just the same.
 }
 
