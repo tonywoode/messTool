@@ -255,14 +255,16 @@ function makeParams(emulator) {
       systemType     = emulator.systemType?
       emulator.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${emulator.displayMachine} doesn't have a system type to use as a potential folder name`) 
       //I like forward slashes in system names. System doesn't...and bloody apple again
-      //This is only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure
+      //(The apple specifics are only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure)
     , displayMachine1= emulator.displayMachine.replace(/\/\/\//g, `III`)
     , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
     , displayMachine = displayMachine2.replace(/\//g, `-`)
     , name1          = emulator.name.replace(/\/\/\//g, `III`)
     , name2          = name1.replace(/\/\//g, `II`)
+
     , name           = name2.replace(/\//g, `-`)
-    , emulatorName   = emulator.emulatorName
+
+    , thisEmulator   = emulator
     , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
     , xml            = new XmlStream(stream)
     , outRootDir     = `outputs/quickplay_softlists/`
@@ -270,7 +272,8 @@ function makeParams(emulator) {
     , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
     , outFullPath    = `${outNamePath}/romdata.dat`
        
-  return  ({ systemType, name, emulatorName, stream, xml, outRootDir, outTypePath, outNamePath, outFullPath })
+  return  ({ systemType, name, thisEmulator, stream, xml, outRootDir, outTypePath, outNamePath, outFullPath })
+
 }  
 
 
@@ -339,7 +342,6 @@ function cleanSoftlist(softlist){
 function printARomdata(softlist, softlistParams) {
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
-
   const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
     ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
@@ -366,7 +368,7 @@ function printARomdata(softlist, softlistParams) {
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
       , path : path
-      , emu : softlistParams.emulatorName //here's where we need to change this, it currently comes from the outside scope and its the sole reason why we pass softlistParams in
+      , emu : softlistParams.thisEmulator.emulatorName //here's where we need to change this, it currently comes from the outside scope and its the sole reason why we pass softlistParams in
       , company : obj.company
       , year : obj.year
       , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
