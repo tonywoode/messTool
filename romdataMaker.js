@@ -375,96 +375,115 @@ function printARomdata(softlist, softlistParams) {
   const testRegion = R.cond([
 
       // first the master regions, for there is no point specialising further if we find these
-      [ game => /\([^)]*World.*\)/.test(game),      game => `World`] 
-    , [ game => /\([^)]*USA.*\)/.test(game),        game => `US`] //(Eur, USA - we should say USA wins so this goes up top), checked US[^A]
-    , [ game => /\([^)]*Euro.*\)/.test(game),       game => `European`] //if Euro is a region theres no point customising further, checked 'Eur'
-    , [ game => /\([^)]*Asia.*\)/.test(game),       game => `Asiatic`] 
-    , [ game => /\([^)]*Arab.*\)/.test(game),       game => `Arabian`] 
+      [ game => /\([^)]*World.*\)/.test(game),      country => `World` ] //that's a good case for the default
+    , [ game => /\([^)]*USA.*\)/.test(game),        country => `US` ] //(Eur, USA - we should say USA wins so this goes up top), checked US[^A]
+    , [ game => /\([^)]*Euro.*\)/.test(game),       country => `European` ] //if Euro is a region theres no point customising further, checked 'Eur'
+    , [ game => /\([^)]*Asia.*\)/.test(game),       country => `Asiatic` ] 
+    , [ game => /\([^)]*Arab.*\)/.test(game),       country => `Arabian` ] 
     
       //then the sub regions
-    , [ game => /\([^)]*Jpn|Japan.*\)/.test(game),  game => `Japanese`] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
-    , [ game => /\([^)]*UK.*\)/.test(game),         game => `UK`] 
-    , [ game => /\([^)]*Fra|French.*\)/.test(game), game => `French`] 
-    , [ game => /\([^)]*Spa.*\)/.test(game),        game => `Spanish`] //checked 'Esp' 
-    , [ game => /\([^)]*Ger.*\)/.test(game),        game => `German`] //checked 'Deu' 
-    , [ game => /\([^)]*Swe.*\)/.test(game),        game => `Swedish`] 
-    , [ game => /\([^)]*Pol.*\)/.test(game),        game => `Polish`]
-    , [ game => /\([^)]*Fin.*\)/.test(game),        game => `Finish`]
-    , [ game => /\([^)]*Den.*\)/.test(game),        game => `Danish`]
-    , [ game => /\([^)]*Hun.*\)/.test(game),        game => `Hungarian`]
-    , [ game => /\([^)]*Nor.*\)/.test(game),        game => `Norweigian`]
-    , [ game => /\([^)]*Bra.*\)/.test(game),        game => `Brazilian`]
-    , [ game => /\([^)]*Kor.*\)/.test(game),        game => `Korean`]
-    , [ game => /\([^)]*Ned.*\)/.test(game),        game => `Netherlandic`] 
-    , [ game => /\([^)]*Ita.*\)/.test(game),        game => `Italian`] 
-    , [ game => /\([^)]*Tw.*\)/.test(game),         game => `Taiwanese`]
-    , [ game => /\([^)]*Aus.*\)/.test(game),        game => `Australian`]
+    , [ game => /\([^)]*UK.*\)/.test(game),         country => `UK` ] 
+    , [ game => /\([^)]*Fra|French.*\)/.test(game), country => `French` ] 
+    , [ game => /\([^)]*Spa.*\)/.test(game),        country => `Spanish` ] //checked 'Esp' 
+    , [ game => /\([^)]*Ita.*\)/.test(game),        country => `Italian` ] 
+    , [ game => /\([^)]*Ger.*\)/.test(game),        country => `German` ] //checked 'Deu' 
+    , [ game => /\([^)]*Swe.*\)/.test(game),        country => `Swedish` ] 
+    , [ game => /\([^)]*Pol.*\)/.test(game),        country => `Polish` ]
+    , [ game => /\([^)]*Fin.*\)/.test(game),        country => `Finish` ]
+    , [ game => /\([^)]*Den.*\)/.test(game),        country => `Danish` ]
+    , [ game => /\([^)]*Hun.*\)/.test(game),        country => `Hungarian` ]
+    , [ game => /\([^)]*Nor.*\)/.test(game),        country => `Norweigian` ]
+    , [ game => /\([^)]*Ned.*\)/.test(game),        country => `Netherlandic` ] 
+    
+    , [ game => /\([^)]*Jpn|Japan.*\)/.test(game),  country => `Japanese` ] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
+    , [ game => /\([^)]*Kor.*\)/.test(game),        country => `Korean` ]
+    , [ game => /\([^)]*Tw.*\)/.test(game),         country => `Taiwanese` ]
+    
+    , [ game => /\([^)]*Aus.*\)/.test(game),        country => `Australian` ]
+    , [ game => /\([^)]*Bra.*\)/.test(game),        country => `Brazilian` ]
     
       //lasty these are the fallback
-    , [ game => /\([^)]*NTSC.*\)/.test(game),       game => `NTSC`]
-    , [ game => /\([^)]*PAL.*\)/.test(game),        game => `PAL`]
+    , [ game => /\([^)]*NTSC.*\)/.test(game),       country => `NTSC` ]
+    , [ game => /\([^)]*PAL.*\)/.test(game),        country => `PAL` ]
  
   ])
 
   //the regex here is slightly different beceuase we don't care about brackets: we want to catch 'NTSC only'
-  const testEmu = R.cond([
-      [ emu => /US|USA|America/.test(emu),  emu => `US`]
-    , [ emu => /Europe/.test(emu),          emu => `European`]
-    , [ emu => /Arabic/.test(emu),          emu => `Arabian`]
+  // we need to return a function, hence the tag "country"
+  const whichCountryIsThisEmuFor = R.cond([
+      [ emu => /US|USA|America/.test(emu),  country => `US` ]
+    , [ emu => /Europe/.test(emu),          country => `European` ]
+    , [ emu => /Arabic/.test(emu),          country => `Arabian` ]
     
-    , [ emu => /Japan/.test(emu),           emu => `Japanese`]
-    , [ emu => /Sweden/.test(emu),          emu => `Swedish`]
-    , [ emu => /Germany/.test(emu),         emu => `German`]
-    , [ emu => /UK/.test(emu),              emu => `UK`]
-    , [ emu => /Spaini|Spanish/.test(emu),  emu => `Spanish`]
-    , [ emu => /Greece/.test(emu),          emu => `Greek`]
-    , [ emu => /Italy/.test(emu),           emu => `Italian`]
-    , [ emu => /Korea/.test(emu),           emu => `Korean`]
-    , [ emu => /Brazil/.test(emu),          emu => `Brazilian`]
-    , [ emu => /Japan/.test(emu),           emu => `Japanese`]
-    , [ emu => /Denmark/.test(emu),         emu => `Danish`]
-    , [ emu => /Poland/.test(emu),          emu => `Polish`]
-    , [ emu => /Estonian/.test(emu),        emu => `Estonian`]
-    , [ emu => /Russian/.test(emu),         emu => `Russian`]
+    , [ emu => /Japan/.test(emu),           country => `Japanese` ]
+    , [ emu => /Sweden/.test(emu),          country => `Swedish` ]
+    , [ emu => /Germany/.test(emu),         country => `German` ]
+    , [ emu => /UK/.test(emu),              country => `UK` ]
+    , [ emu => /Spaini|Spanish/.test(emu),  country => `Spanish` ]
+    , [ emu => /Greece/.test(emu),          country => `Greek` ]
+    , [ emu => /Italy/.test(emu),           country => `Italian` ]
+    , [ emu => /Korea/.test(emu),           country => `Korean` ]
+    , [ emu => /Brazil/.test(emu),          country => `Brazilian` ]
+    , [ emu => /Denmark/.test(emu),         country => `Danish` ]
+    , [ emu => /Poland/.test(emu),          country => `Polish` ]
+    , [ emu => /Estonian/.test(emu),        country => `Estonian` ]
+    , [ emu => /Russian/.test(emu),         country => `Russian` ]
    
-    , [ emu => /PAL/.test(emu),             emu => `PAL`]
-    , [ emu => /NTSC/.test(emu),            emu => `NTSC`]
+    , [ emu => /PAL/.test(emu),             country => `PAL` ]
+    , [ emu => /NTSC/.test(emu),            country => `NTSC` ]
 
   ])
     //we also need to say "if you find America but no USA game, look for a PAL game
 
+  const whichRegionIsThisCountryFor = R.cond([
+      [ country => country.match(
+        /^(UK|French|Spanish|German|Spanish|Swedish|Finish|Danish|Hungarian|Norweigian|Netherlandic|Italian)$/
+      ), region => `European` ]
+    , [ country => country.match(/^(Japanese|Korean|Taiwanese)$/), region => `Asiatic` ]
+  ])
+
+  const whichStandardIsThisCountryFor = R.cond([
+      [ country => country.match(/^(US|Asiatic)$/)  , standard => `NTSC` ]
+    , [ country => country.match(/^(European|Arabian|Brazilian|Australian)$/), standard => `PAL` ]
+  ])
+
 
   const setRegionalEmu = (gameName, emuName, emuRegionalNames) => {
-    let gameRegion = '' 
 
     //choose emu on a game-by-game basis
-    const gameNeedsRegion = testRegion(gameName) 
-    gameNeedsRegion? (
+    const gameRegion = testRegion(gameName) 
+    gameRegion? (
       emuRegionalNames? (
-      //  console.log(`${gameName} is ${gameNeedsRegion} so use one of ${emuRegionalNames}`)
-         chooseRegionalEmu(gameNeedsRegion, emuRegionalNames)
+      //  console.log(`${gameName} is ${gameRegion} so use one of ${emuRegionalNames}`)
+         chooseRegionalEmu(gameRegion, emuRegionalNames)
       ): ''//console.log(`${gameName} only has one emu so use default ${emuName}`)
     ) : ''//console.log(`${gameName} doesnt need a regional emu, use default ${emuName}`)
 
     //look at the emus that could run this region
     //console.log(softlistParams.thisEmulator.emulatorName)
-    //const emuResult = testEmu(softlistParams.thisEmulator.emulatorName)
+    //const emuResult = whichCountryIsThisEmuFor(softlistParams.thisEmulator.emulatorName)
     //emuResult? console.log(emuResult) : console.log(softlistParams.thisEmulator.emulatorName + " has no region")
 
   }
 
 
-  const chooseRegionalEmu = (gameNeedsRegion, emuRegionalNames) => {
+  const chooseRegionalEmu = (gameRegion, emuRegionalNames) => {
     //first get my region names for each of the regional emus
     const regions = R.map(obj => getEmuRegion(obj) , emuRegionalNames)
-    console.log(regions)
-   //console.log(gameNeedsRegion)
-   // console.log(emuRegionalNames)
+    const emuRegions = R.map( emu => R.keys(emu), regions) 
+    //so now we have the basics of a decision node: LHS=region code RHS=region code choices
+    console.log(`Game is ${gameRegion}, possible emus are ${emuRegions}` )
+    //first: do we find a match?
+    //then: do we have a regional match for a country?
+    //then: fallback to PAL/NTSC - all regions/countries need this setting
+    //lastly give up and choose default
   }
 
   const getEmuRegion = emuName => {
-    const emuResult = emuName + " is " + testEmu(emuName)
-    return emuResult
+    const node = {}
+    const tagRegion = whichCountryIsThisEmuFor(emuName)
+    node[tagRegion] = emuName
+    return node
   }
 
   //sets the variables for a line of romdata entry for later injection into a romdata printer
