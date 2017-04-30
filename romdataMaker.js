@@ -370,40 +370,40 @@ function printARomdata(softlist, softlistParams) {
   const testRegion = R.cond([
 
       // first the master regions, for there is no point specialising further if we find these
-      [ game => /\([^)]*World.*\)/.test(game),      game => `${game} is World`] 
-    , [ game => /\([^)]*USA.*\)/.test(game),        game => `${game} is US`] //(Eur, USA - we should say USA wins so this goes up top), checked US[^A]
-    , [ game => /\([^)]*Euro.*\)/.test(game),       game => `${game} is European`] //if Euro is a region theres no point customising further, checked 'Eur'
-    , [ game => /\([^)]*Asia.*\)/.test(game),       game => `${game} is Asiatic`] 
-    , [ game => /\([^)]*Arab.*\)/.test(game),       game => `${game} is Arabian`] 
+      [ game => /\([^)]*World.*\)/.test(game),      game => `World`] 
+    , [ game => /\([^)]*USA.*\)/.test(game),        game => `US`] //(Eur, USA - we should say USA wins so this goes up top), checked US[^A]
+    , [ game => /\([^)]*Euro.*\)/.test(game),       game => `European`] //if Euro is a region theres no point customising further, checked 'Eur'
+    , [ game => /\([^)]*Asia.*\)/.test(game),       game => `Asiatic`] 
+    , [ game => /\([^)]*Arab.*\)/.test(game),       game => `Arabian`] 
     
       //then the sub regions
-    , [ game => /\([^)]*Jpn|Japan.*\)/.test(game),  game => `${game} is Japanese`] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
-    , [ game => /\([^)]*UK.*\)/.test(game),         game => `${game} is UK`] 
-    , [ game => /\([^)]*Fra|French.*\)/.test(game), game => `${game} is French`] 
-    , [ game => /\([^)]*Spa.*\)/.test(game),        game => `${game} is Spanish`] //checked 'Esp' 
-    , [ game => /\([^)]*Ger.*\)/.test(game),        game => `${game} is German`] //checked 'Esp' 
-    , [ game => /\([^)]*Swe.*\)/.test(game),        game => `${game} is Swedish`] 
-    , [ game => /\([^)]*Pol.*\)/.test(game),        game => `${game} is Polish`]
-    , [ game => /\([^)]*Fin.*\)/.test(game),        game => `${game} is Finish`]
-    , [ game => /\([^)]*Den.*\)/.test(game),        game => `${game} is Danish`]
-    , [ game => /\([^)]*Hun.*\)/.test(game),        game => `${game} is Hungarian`]
-    , [ game => /\([^)]*Nor.*\)/.test(game),        game => `${game} is Norweigian`]
-    , [ game => /\([^)]*Bra.*\)/.test(game),        game => `${game} is Brazilian`]
-    , [ game => /\([^)]*Kor.*\)/.test(game),        game => `${game} is Korean`]
-    , [ game => /\([^)]*Ned.*\)/.test(game),        game => `${game} is Netherlandic`] 
-    , [ game => /\([^)]*Ita.*\)/.test(game),        game => `${game} is Italian`] 
-    , [ game => /\([^)]*Tw.*\)/.test(game),         game => `${game} is Taiwanese`]
-    , [ game => /\([^)]*Aus.*\)/.test(game),        game => `${game} is Australian`]
+    , [ game => /\([^)]*Jpn|Japan.*\)/.test(game),  game => `Japanese`] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
+    , [ game => /\([^)]*UK.*\)/.test(game),         game => `UK`] 
+    , [ game => /\([^)]*Fra|French.*\)/.test(game), game => `French`] 
+    , [ game => /\([^)]*Spa.*\)/.test(game),        game => `Spanish`] //checked 'Esp' 
+    , [ game => /\([^)]*Ger.*\)/.test(game),        game => `German`] //checked 'Deu' 
+    , [ game => /\([^)]*Swe.*\)/.test(game),        game => `Swedish`] 
+    , [ game => /\([^)]*Pol.*\)/.test(game),        game => `Polish`]
+    , [ game => /\([^)]*Fin.*\)/.test(game),        game => `Finish`]
+    , [ game => /\([^)]*Den.*\)/.test(game),        game => `Danish`]
+    , [ game => /\([^)]*Hun.*\)/.test(game),        game => `Hungarian`]
+    , [ game => /\([^)]*Nor.*\)/.test(game),        game => `Norweigian`]
+    , [ game => /\([^)]*Bra.*\)/.test(game),        game => `Brazilian`]
+    , [ game => /\([^)]*Kor.*\)/.test(game),        game => `Korean`]
+    , [ game => /\([^)]*Ned.*\)/.test(game),        game => `Netherlandic`] 
+    , [ game => /\([^)]*Ita.*\)/.test(game),        game => `Italian`] 
+    , [ game => /\([^)]*Tw.*\)/.test(game),         game => `Taiwanese`]
+    , [ game => /\([^)]*Aus.*\)/.test(game),        game => `Australian`]
     
       //lasty these are the fallback
-    , [ game => /\([^)]*NTSC.*\)/.test(game),       game => `${game} is NTSC`]
-    , [ game => /\([^)]*PAL.*\)/.test(game),        game => `${game} is PAL`]
+    , [ game => /\([^)]*NTSC.*\)/.test(game),       game => `NTSC`]
+    , [ game => /\([^)]*PAL.*\)/.test(game),        game => `PAL`]
  
   ])
 
   //the regex here is slightly different beceuase we don't care about brackets: we want to catch 'NTSC only'
   const testEmu = R.cond([
-      [ emu => /US|USA|America/.test(emu),  emu => `${emu} is US`]
+      [ emu => /US|USA|America/.test(emu),  `US`]
     , [ emu => /Europe/.test(emu),          emu => `${emu} is European`]
     , [ emu => /Arabic/.test(emu),          emu => `${emu} is Arabian`]
     
@@ -428,20 +428,35 @@ function printARomdata(softlist, softlistParams) {
   ])
     //we also need to say "if you find America but no USA game, look for a PAL game
 
-  //sets the variables for a line of romdata entry for later injection into a romdata printer
-  const applyRomdata = obj => R.map( obj => {
-  
+
+  const setRegionalEmu = (gameName, emuName, emuRegionalNames) => {
+    let gameRegion = '' 
+
     //choose emu on a game-by-game basis
-    const result = testRegion(obj.name) 
-//    result? console.log(result) : null
+    const gameNeedsRegion = testRegion(gameName) 
+    gameNeedsRegion? (
+      emuRegionalNames? (
+        console.log(`${gameName} is ${gameNeedsRegion} so use one of ${emuName} or ${emuRegionalNames}`)
+      ): console.log(`${gameName} only has one emu so use default ${emuName}`)
+    ) : console.log(`${gameName} doesnt need a regional emu, use default ${emuName}`)
 
     //look at the emus that could run this region
     //console.log(softlistParams.thisEmulator.emulatorName)
-    const emuResult = testEmu(softlistParams.thisEmulator.emulatorName)
-    emuResult? tim.push(emuResult) : tim.push(softlistParams.thisEmulator.emulatorName + " has no region"
-    )
+    //const emuResult = testEmu(softlistParams.thisEmulator.emulatorName)
+    //emuResult? console.log(emuResult) : console.log(softlistParams.thisEmulator.emulatorName + " has no region")
 
-    const romParams = {
+
+
+  }
+
+
+
+  //sets the variables for a line of romdata entry for later injection into a romdata printer
+  const applyRomdata = obj => R.map( obj => {
+
+setRegionalEmu(obj.name, softlistParams.thisEmulator.emulatorName, softlistParams.thisEmulator.regions)
+
+        const romParams = {
         name : obj.name
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
@@ -459,10 +474,7 @@ function printARomdata(softlist, softlistParams) {
    return romdataLine(romParams) 
   }, softlist)
 
-    const tim = []
-    var strEq = R.eqBy(String);
   const romdata = applyRomdata(softlist)
-console.log(R.uniqWith(strEq, tim))
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
 
   mkdirp.sync(softlistParams.outNamePath)
