@@ -372,7 +372,7 @@ function printARomdata(softlist, softlistParams) {
    * MAME usually considers NTSC as the default, so we do too */
   //Logice for Euro and PAL are converse - Euro wants to come before all of its regions else one of those will get chosen at random? If there's no
   //Euro machine THEN look for regions. PAL however is always trumped by any region, its the last check
-  const testRegion = R.cond([
+  const whichCountryIsThisGameFor = R.cond([
 
       // first the master regions, for there is no point specialising further if we find these
       [ game => /\([^)]*World.*\)/.test(game),      country => `World` ] //that's a good case for the default
@@ -436,10 +436,16 @@ function printARomdata(softlist, softlistParams) {
     //we also need to say "if you find America but no USA game, look for a PAL game
 
   const whichRegionIsThisCountryFor = R.cond([
-      [ country => country.match(
-        /^(UK|French|Spanish|German|Spanish|Swedish|Finish|Danish|Hungarian|Norweigian|Netherlandic|Italian)$/
+      [ country => country.match(/^US|World$/), region => `US` ] //regrettable
+    , [ country => country===`Arabian`, region => `Arabian` ] //regrettable
+    , [ country => country===`PAL`, region => `PAL` ] //regrettable
+    , [ country => country===`NTSC`, region => `NTSC` ] //regrettable
+    , [ country => country===`Brazilian`, region => `Brazilian` ] //regrettable
+    , [ country => country===`Australian`, region => `Australian` ] //regrettable
+    , [ country => country.match(
+        /^(European|UK|French|Spanish|German|Spanish|Swedish|Finish|Danish|Polish|Hungarian|Norweigian|Netherlandic|Italian)$/
       ), region => `European` ]
-    , [ country => country.match(/^(Japanese|Korean|Taiwanese)$/), region => `Asiatic` ]
+    , [ country => country.match(/^(Asiatic|Japanese|Korean|Taiwanese)$/), region => `Asiatic` ]
   ])
 
   const whichStandardIsThisCountryFor = R.cond([
@@ -451,38 +457,36 @@ function printARomdata(softlist, softlistParams) {
   const setRegionalEmu = (gameName, emuName, emuRegionalNames) => {
 
     //choose emu on a game-by-game basis
-    const gameRegion = testRegion(gameName) 
-    gameRegion? (
+    const gameCountry = whichCountryIsThisGameFor(gameName) 
+    gameCountry? (
       emuRegionalNames? (
-      //  console.log(`${gameName} is ${gameRegion} so use one of ${emuRegionalNames}`)
-         chooseRegionalEmu(gameRegion, emuRegionalNames)
+       //console.log(`${gameName} is ${gameCountry} so use one of ${emuRegionalNames}`)
+         chooseRegionalEmu(gameCountry, emuRegionalNames)
       ): ''//console.log(`${gameName} only has one emu so use default ${emuName}`)
     ) : ''//console.log(`${gameName} doesnt need a regional emu, use default ${emuName}`)
-
-    //look at the emus that could run this region
-    //console.log(softlistParams.thisEmulator.emulatorName)
-    //const emuResult = whichCountryIsThisEmuFor(softlistParams.thisEmulator.emulatorName)
-    //emuResult? console.log(emuResult) : console.log(softlistParams.thisEmulator.emulatorName + " has no region")
 
   }
 
 
-  const chooseRegionalEmu = (gameRegion, emuRegionalNames) => {
+  const chooseRegionalEmu = (gameCountry, emuRegionalNames) => {
     //first get my region names for each of the regional emus
-    const regions = R.map(obj => getEmuRegion(obj) , emuRegionalNames)
+    const regions = R.map(regionalEmus => getEmuRegion(regionalEmus) , emuRegionalNames)
     const emuRegions = R.map( emu => R.keys(emu), regions) 
     //so now we have the basics of a decision node: LHS=region code RHS=region code choices
-    console.log(`Game is ${gameRegion}, possible emus are ${emuRegions}` )
+    console.log(`Game is ${gameCountry}, possible emus are ${emuRegions}` )
     //first: do we find a match?
     //then: do we have a regional match for a country?
+    const gameRegion = whichRegionIsThisCountryFor(gameCountry)
+    console.log(`and the region for that country comes out as ${gameRegion}`)
     //then: fallback to PAL/NTSC - all regions/countries need this setting
+    //const gameStandard = whichStandardIsThisCountryFor(
     //lastly give up and choose default
   }
 
   const getEmuRegion = emuName => {
     const node = {}
     const tagRegion = whichCountryIsThisEmuFor(emuName)
-    node[tagRegion] = emuName
+    tagRegion? node[tagRegion] = emuName : null //we didn't ensure we always had a country in the regional emus, apple2's ROM003 derivatives are giving us a couple of undef
     return node
   }
 
