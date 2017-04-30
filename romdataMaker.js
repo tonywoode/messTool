@@ -37,6 +37,8 @@ function makeSoftlists(emuSystems) {
       }, emuSystems)
 
 }
+
+
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
   //filter by softlist
@@ -360,9 +362,20 @@ function printARomdata(softlist, softlistParams) {
       
     return comments
   }
-
+ 
+  /*because we often need the right regional machine for a game,  
+   * MAME usually considers NTSC as the default, so we do too */
+  const testRegion = R.cond([
+      [ game => /\(.*Jpn|Japan.*\)/.test(game), game => `${game} is Jap alright`] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
+    ])
+ 
   //sets the variables for a line of romdata entry for later injection into a romdata printer
   const applyRomdata = obj => R.map( obj => {
+  
+    //choose emu on a game-by-game basis
+    const result = testRegion(obj.name) 
+    result? console.log(result) : null
+  
     const romParams = {
         name : obj.name
       , MAMEName : obj.call
@@ -386,7 +399,7 @@ function printARomdata(softlist, softlistParams) {
 
   mkdirp.sync(softlistParams.outNamePath)
   fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
-  console.log(JSON.stringify(softlist, null, '\t'))
+  //console.log(JSON.stringify(softlist, null, '\t'))
   return softlist
 
 }
