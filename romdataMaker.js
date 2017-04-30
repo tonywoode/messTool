@@ -408,27 +408,27 @@ function printARomdata(softlist, softlistParams) {
 
   //the regex here is slightly different beceuase we don't care about brackets: we want to catch 'NTSC only'
   const testEmu = R.cond([
-      [ emu => /US|USA|America/.test(emu),  `US`]
-    , [ emu => /Europe/.test(emu),          emu => `${emu} is European`]
-    , [ emu => /Arabic/.test(emu),          emu => `${emu} is Arabian`]
+      [ emu => /US|USA|America/.test(emu),  emu => `US`]
+    , [ emu => /Europe/.test(emu),          emu => `European`]
+    , [ emu => /Arabic/.test(emu),          emu => `Arabian`]
     
-    , [ emu => /Japan/.test(emu),           emu => `${emu} is Japanese`]
-    , [ emu => /Sweden/.test(emu),          emu => `${emu} is Swedish`]
-    , [ emu => /Germany/.test(emu),         emu => `${emu} is German`]
-    , [ emu => /UK/.test(emu),              emu => `${emu} is UK`]
-    , [ emu => /Spaini|Spanish/.test(emu),  emu => `${emu} is Spanish`]
-    , [ emu => /Greece/.test(emu),          emu => `${emu} is Greek`]
-    , [ emu => /Italy/.test(emu),           emu => `${emu} is Italian`]
-    , [ emu => /Korea/.test(emu),           emu => `${emu} is Korean`]
-    , [ emu => /Brazil/.test(emu),          emu => `${emu} is Brazilian`]
-    , [ emu => /Japan/.test(emu),           emu => `${emu} is Japanese`]
-    , [ emu => /Denmark/.test(emu),         emu => `${emu} is Danish`]
-    , [ emu => /Poland/.test(emu),          emu => `${emu} is Polish`]
-    , [ emu => /Estonian/.test(emu),        emu => `${emu} is Estonian`]
-    , [ emu => /Russian/.test(emu),         emu => `${emu} is Russian`]
+    , [ emu => /Japan/.test(emu),           emu => `Japanese`]
+    , [ emu => /Sweden/.test(emu),          emu => `Swedish`]
+    , [ emu => /Germany/.test(emu),         emu => `German`]
+    , [ emu => /UK/.test(emu),              emu => `UK`]
+    , [ emu => /Spaini|Spanish/.test(emu),  emu => `Spanish`]
+    , [ emu => /Greece/.test(emu),          emu => `Greek`]
+    , [ emu => /Italy/.test(emu),           emu => `Italian`]
+    , [ emu => /Korea/.test(emu),           emu => `Korean`]
+    , [ emu => /Brazil/.test(emu),          emu => `Brazilian`]
+    , [ emu => /Japan/.test(emu),           emu => `Japanese`]
+    , [ emu => /Denmark/.test(emu),         emu => `Danish`]
+    , [ emu => /Poland/.test(emu),          emu => `Polish`]
+    , [ emu => /Estonian/.test(emu),        emu => `Estonian`]
+    , [ emu => /Russian/.test(emu),         emu => `Russian`]
    
-    , [ emu => /PAL/.test(emu),             emu => `${emu} is PAL`]
-    , [ emu => /NTSC/.test(emu),            emu => `${emu} is NTSC`]
+    , [ emu => /PAL/.test(emu),             emu => `PAL`]
+    , [ emu => /NTSC/.test(emu),            emu => `NTSC`]
 
   ])
     //we also need to say "if you find America but no USA game, look for a PAL game
@@ -441,20 +441,31 @@ function printARomdata(softlist, softlistParams) {
     const gameNeedsRegion = testRegion(gameName) 
     gameNeedsRegion? (
       emuRegionalNames? (
-        console.log(`${gameName} is ${gameNeedsRegion} so use one of ${emuRegionalNames}`)
-      ): console.log(`${gameName} only has one emu so use default ${emuName}`)
-    ) : console.log(`${gameName} doesnt need a regional emu, use default ${emuName}`)
+      //  console.log(`${gameName} is ${gameNeedsRegion} so use one of ${emuRegionalNames}`)
+         chooseRegionalEmu(gameNeedsRegion, emuRegionalNames)
+      ): ''//console.log(`${gameName} only has one emu so use default ${emuName}`)
+    ) : ''//console.log(`${gameName} doesnt need a regional emu, use default ${emuName}`)
 
     //look at the emus that could run this region
     //console.log(softlistParams.thisEmulator.emulatorName)
     //const emuResult = testEmu(softlistParams.thisEmulator.emulatorName)
     //emuResult? console.log(emuResult) : console.log(softlistParams.thisEmulator.emulatorName + " has no region")
 
-
-
   }
 
 
+  const chooseRegionalEmu = (gameNeedsRegion, emuRegionalNames) => {
+    //first get my region names for each of the regional emus
+    const regions = R.map(obj => getEmuRegion(obj) , emuRegionalNames)
+    console.log(regions)
+   //console.log(gameNeedsRegion)
+   // console.log(emuRegionalNames)
+  }
+
+  const getEmuRegion = emuName => {
+    const emuResult = emuName + " is " + testEmu(emuName)
+    return emuResult
+  }
 
   //sets the variables for a line of romdata entry for later injection into a romdata printer
   const applyRomdata = obj => R.map( obj => {
