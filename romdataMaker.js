@@ -372,13 +372,13 @@ function printARomdata(softlist, softlistParams) {
       // first the master regions, for there is no point specialising further if we find these
       [ game => /\([^)]*World.*\)/.test(game),      game => `${game} is World`] 
     , [ game => /\([^)]*USA.*\)/.test(game),        game => `${game} is US`] //(Eur, USA - we should say USA wins so this goes up top), checked US[^A]
-    , [ game => /\([^)]*Euro.*\)/.test(game),       game => `${game} is Euro`] //if Euro is a region theres no point customising further, checked 'Eur'
-    , [ game => /\([^)]*Asia.*\)/.test(game),       game => `${game} is Asia`] 
+    , [ game => /\([^)]*Euro.*\)/.test(game),       game => `${game} is European`] //if Euro is a region theres no point customising further, checked 'Eur'
+    , [ game => /\([^)]*Asia.*\)/.test(game),       game => `${game} is Asiatic`] 
     , [ game => /\([^)]*Arab.*\)/.test(game),       game => `${game} is Arabian`] 
     
       //then the sub regions
-    , [ game => /\([^)]*Jpn|Japan.*\)/.test(game),  game => `${game} is Jap`] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
-    , [ game => /\([^)]*UK.*\)/.test(game),        game => `${game} is UK`] 
+    , [ game => /\([^)]*Jpn|Japan.*\)/.test(game),  game => `${game} is Japanese`] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
+    , [ game => /\([^)]*UK.*\)/.test(game),         game => `${game} is UK`] 
     , [ game => /\([^)]*Fra|French.*\)/.test(game), game => `${game} is French`] 
     , [ game => /\([^)]*Spa.*\)/.test(game),        game => `${game} is Spanish`] //checked 'Esp' 
     , [ game => /\([^)]*Ger.*\)/.test(game),        game => `${game} is German`] //checked 'Esp' 
@@ -390,7 +390,7 @@ function printARomdata(softlist, softlistParams) {
     , [ game => /\([^)]*Nor.*\)/.test(game),        game => `${game} is Norweigian`]
     , [ game => /\([^)]*Bra.*\)/.test(game),        game => `${game} is Brazilian`]
     , [ game => /\([^)]*Kor.*\)/.test(game),        game => `${game} is Korean`]
-    , [ game => /\([^)]*Ned.*\)/.test(game),        game => `${game} is Netherlands`] 
+    , [ game => /\([^)]*Ned.*\)/.test(game),        game => `${game} is Netherlandic`] 
     , [ game => /\([^)]*Ita.*\)/.test(game),        game => `${game} is Italian`] 
     , [ game => /\([^)]*Tw.*\)/.test(game),         game => `${game} is Taiwanese`]
     , [ game => /\([^)]*Aus.*\)/.test(game),        game => `${game} is Australian`]
@@ -400,14 +400,47 @@ function printARomdata(softlist, softlistParams) {
     , [ game => /\([^)]*PAL.*\)/.test(game),        game => `${game} is PAL`]
  
   ])
- 
+
+  //the regex here is slightly different beceuase we don't care about brackets: we want to catch 'NTSC only'
+  const testEmu = R.cond([
+      [ emu => /US|USA|America/.test(emu),  emu => `${emu} is US`]
+    , [ emu => /Europe/.test(emu),          emu => `${emu} is European`]
+    , [ emu => /Arabic/.test(emu),          emu => `${emu} is Arabian`]
+    
+    , [ emu => /Japan/.test(emu),           emu => `${emu} is Japanese`]
+    , [ emu => /Sweden/.test(emu),          emu => `${emu} is Swedish`]
+    , [ emu => /Germany/.test(emu),         emu => `${emu} is German`]
+    , [ emu => /UK/.test(emu),              emu => `${emu} is UK`]
+    , [ emu => /Spaini|Spanish/.test(emu),  emu => `${emu} is Spanish`]
+    , [ emu => /Greece/.test(emu),          emu => `${emu} is Greek`]
+    , [ emu => /Italy/.test(emu),           emu => `${emu} is Italian`]
+    , [ emu => /Korea/.test(emu),           emu => `${emu} is Korean`]
+    , [ emu => /Brazil/.test(emu),          emu => `${emu} is Brazilian`]
+    , [ emu => /Japan/.test(emu),           emu => `${emu} is Japanese`]
+    , [ emu => /Denmark/.test(emu),         emu => `${emu} is Danish`]
+    , [ emu => /Poland/.test(emu),          emu => `${emu} is Polish`]
+    , [ emu => /Estonian/.test(emu),        emu => `${emu} is Estonian`]
+    , [ emu => /Russian/.test(emu),         emu => `${emu} is Russian`]
+   
+    , [ emu => /PAL/.test(emu),             emu => `${emu} is PAL`]
+    , [ emu => /NTSC/.test(emu),            emu => `${emu} is NTSC`]
+
+  ])
+    //we also need to say "if you find America but no USA game, look for a PAL game
+
   //sets the variables for a line of romdata entry for later injection into a romdata printer
   const applyRomdata = obj => R.map( obj => {
   
     //choose emu on a game-by-game basis
     const result = testRegion(obj.name) 
-    result? console.log(result) : null
-  
+//    result? console.log(result) : null
+
+    //look at the emus that could run this region
+    //console.log(softlistParams.thisEmulator.emulatorName)
+    const emuResult = testEmu(softlistParams.thisEmulator.emulatorName)
+    emuResult? tim.push(emuResult) : tim.push(softlistParams.thisEmulator.emulatorName + " has no region"
+    )
+
     const romParams = {
         name : obj.name
       , MAMEName : obj.call
@@ -426,7 +459,10 @@ function printARomdata(softlist, softlistParams) {
    return romdataLine(romParams) 
   }, softlist)
 
+    const tim = []
+    var strEq = R.eqBy(String);
   const romdata = applyRomdata(softlist)
+console.log(R.uniqWith(strEq, tim))
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
 
   mkdirp.sync(softlistParams.outNamePath)
