@@ -242,7 +242,12 @@ function chooseDefaultEmus(softlistEmus) {
           , console.log(regionals)): null
         )
         : null , rejectedEmus)
-        regionals[0]? defaultEmu.regions = regionals : null
+        regionals[0]? (
+            //add the original emu name to the list here, it does help the picker logic later, even though NTSC is generally the default
+            regionals.push(defaultEmu.emulatorName)
+            //put the list in the default emulators object
+          , defaultEmu.regions = regionals 
+        ): null
         return defaultEmu
       }
   },defaultEmus)
@@ -436,7 +441,7 @@ function printARomdata(softlist, softlistParams) {
     const gameNeedsRegion = testRegion(gameName) 
     gameNeedsRegion? (
       emuRegionalNames? (
-        console.log(`${gameName} is ${gameNeedsRegion} so use one of ${emuName} or ${emuRegionalNames}`)
+        console.log(`${gameName} is ${gameNeedsRegion} so use one of ${emuRegionalNames}`)
       ): console.log(`${gameName} only has one emu so use default ${emuName}`)
     ) : console.log(`${gameName} doesnt need a regional emu, use default ${emuName}`)
 
