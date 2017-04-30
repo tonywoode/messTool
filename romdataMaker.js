@@ -365,9 +365,41 @@ function printARomdata(softlist, softlistParams) {
  
   /*because we often need the right regional machine for a game,  
    * MAME usually considers NTSC as the default, so we do too */
+  //Logice for Euro and PAL are converse - Euro wants to come before all of its regions else one of those will get chosen at random? If there's no
+  //Euro machine THEN look for regions. PAL however is always trumped by any region, its the last check
   const testRegion = R.cond([
-      [ game => /\(.*Jpn|Japan.*\)/.test(game), game => `${game} is Jap alright`] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
-    ])
+
+      // first the master regions, for there is no point specialising further if we find these
+      [ game => /\([^)]*World.*\)/.test(game),      game => `${game} is World`] 
+    , [ game => /\([^)]*USA.*\)/.test(game),        game => `${game} is US`] //(Eur, USA - we should say USA wins so this goes up top), checked US[^A]
+    , [ game => /\([^)]*Euro.*\)/.test(game),       game => `${game} is Euro`] //if Euro is a region theres no point customising further, checked 'Eur'
+    , [ game => /\([^)]*Asia.*\)/.test(game),       game => `${game} is Asia`] 
+    , [ game => /\([^)]*Arab.*\)/.test(game),       game => `${game} is Arabian`] 
+    
+      //then the sub regions
+    , [ game => /\([^)]*Jpn|Japan.*\)/.test(game),  game => `${game} is Jap`] //Vampire Killer (Euro) ~ Akumajou Dracula (Jpn)
+    , [ game => /\([^)]*UK.*\)/.test(game),        game => `${game} is UK`] 
+    , [ game => /\([^)]*Fra|French.*\)/.test(game), game => `${game} is French`] 
+    , [ game => /\([^)]*Spa.*\)/.test(game),        game => `${game} is Spanish`] //checked 'Esp' 
+    , [ game => /\([^)]*Ger.*\)/.test(game),        game => `${game} is German`] //checked 'Esp' 
+    , [ game => /\([^)]*Swe.*\)/.test(game),        game => `${game} is Swedish`] 
+    , [ game => /\([^)]*Pol.*\)/.test(game),        game => `${game} is Polish`]
+    , [ game => /\([^)]*Fin.*\)/.test(game),        game => `${game} is Finish`]
+    , [ game => /\([^)]*Den.*\)/.test(game),        game => `${game} is Danish`]
+    , [ game => /\([^)]*Hun.*\)/.test(game),        game => `${game} is Hungarian`]
+    , [ game => /\([^)]*Nor.*\)/.test(game),        game => `${game} is Norweigian`]
+    , [ game => /\([^)]*Bra.*\)/.test(game),        game => `${game} is Brazilian`]
+    , [ game => /\([^)]*Kor.*\)/.test(game),        game => `${game} is Korean`]
+    , [ game => /\([^)]*Ned.*\)/.test(game),        game => `${game} is Netherlands`] 
+    , [ game => /\([^)]*Ita.*\)/.test(game),        game => `${game} is Italian`] 
+    , [ game => /\([^)]*Tw.*\)/.test(game),         game => `${game} is Taiwanese`]
+    , [ game => /\([^)]*Aus.*\)/.test(game),        game => `${game} is Australian`]
+    
+      //lasty these are the fallback
+    , [ game => /\([^)]*NTSC.*\)/.test(game),       game => `${game} is NTSC`]
+    , [ game => /\([^)]*PAL.*\)/.test(game),        game => `${game} is PAL`]
+ 
+  ])
  
   //sets the variables for a line of romdata entry for later injection into a romdata printer
   const applyRomdata = obj => R.map( obj => {
