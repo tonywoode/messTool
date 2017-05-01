@@ -186,7 +186,7 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(/Apple Computer/, `Apple`), systRep(`Apple`, /(Macintosh LC|Macintosh II.*)/, `Macintosh II (68020/68030)`)
     , systRep(`Apple`, /Macintosh (Plus|SE|Classic)/, `Macintosh (6800)`), systRep(`Apple`,/(^II.*|\]\[|\/\/c|\/\/e)/,`II`)
     , systRep(`Apple`,/\/\/\//,`III`)
-    , systRep(`Atari`,/(400|800.*|XE Game System)/, `400/600/800/1200/XE`)
+    , systRep(`Atari`,/(400|^800.*|XE Game System)/, `400/600/800/1200/XE`) //don't match atari 7800
     , compRep(`Bally Manufacturing`,`Bally`)
     , systRep(`Bandai`,`Super Vision 8000`, `Super Vision`) 
     , systRep(`Bondwell Holding`, /.*/, `Bondwell`), compRep(`Bondwell Holding`, ``) //change company after
@@ -382,7 +382,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
     , devicesEfinderToPrint(obj) //don't check if devices exist, wouldn't be a mess game system without >0
   ) , efinder)
   
-  fs.writeFileSync(iniOutPath, devices.join(`\n`), `latinf1`) //utf8 isn't possible at this time
+  fs.writeFileSync(iniOutPath, devices.join(`\n`), `latin1`) //utf8 isn't possible at this time
   
   madeDat(efinder) 
   
