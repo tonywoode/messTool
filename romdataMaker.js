@@ -448,7 +448,7 @@ function printARomdata(softlist, softlistParams) {
     , [ country => country.match(/^(Asiatic|Japanese|Korean|Taiwanese)$/), region => `Asiatic` ]
   ])
 
-  const whichStandardIsThisCountryFor = R.cond([
+  const whichStandardIsThisRegionFor = R.cond([
       [ country => country.match(/^(US|Asiatic)$/)  , standard => `NTSC` ]
     , [ country => country.match(/^(European|Arabian|Brazilian|Australian)$/), standard => `PAL` ]
   ])
@@ -458,42 +458,72 @@ function printARomdata(softlist, softlistParams) {
 
     //choose emu on a game-by-game basis
     const gameCountry = whichCountryIsThisGameFor(gameName) 
+    let chosenEmulator = softlistParams.thisEmulator.emulatorName //if it all goes wrong return default
     gameCountry? (
       emuRegionalNames? (
        //console.log(`${gameName} is ${gameCountry} so use one of ${emuRegionalNames}`)
-         chooseRegionalEmu(gameCountry, emuRegionalNames)
+         chosenEmulator = chooseRegionalEmu(gameName, gameCountry, emuRegionalNames)
       ): ''//console.log(`${gameName} only has one emu so use default ${emuName}`)
     ) : ''//console.log(`${gameName} doesnt need a regional emu, use default ${emuName}`)
 
   }
 
 
-  const chooseRegionalEmu = (gameCountry, emuRegionalNames) => {
+  const chooseRegionalEmu = (gameName, gameCountry, emuRegionalNames) => {
+    var emuWithRegionSet = '' 
     //first get my region names for each of the regional emus
-    const regions = R.map(regionalEmus => getEmuRegion(regionalEmus) , emuRegionalNames)
-    const emuRegions = R.map( emu => R.keys(emu), regions) 
+    const regions = tagEmuCountry(emuRegionalNames)
+    const emuRegions =  R.keys(regions) 
     //so now we have the basics of a decision node: LHS=region code RHS=region code choices
-    console.log(`Game is ${gameCountry}, possible emus are ${emuRegions}` )
+    console.log(`${gameName} is ${gameCountry}, possible emus are ${JSON.stringify(emuRegions)}` )
+    
     //first: do we find a match?
+    const foundInCountry = R.indexOf(gameCountry, emuRegions) !== -1? gameCountry : null
+    if (foundInCountry){
+      const foundEmu = regions[foundInCountry]
+      console.log(`  ---->country match: ${foundInCountry} matches ${foundEmu}`)
+      return foundEmu
+    }
+    
     //then: do we have a regional match for a country?
     const gameRegion = whichRegionIsThisCountryFor(gameCountry)
     console.log(`and the region for that country comes out as ${gameRegion}`)
+    const foundInRegion = R.indexOf(gameRegion, emuRegions) !== -1? gameRegion : null
+    if (foundInRegion){
+      const foundEmu = regions[foundInRegion]
+      console.log(`  ---->region match: ${foundInRegion} matches ${foundEmu}`)
+      return foundEmu
+    }
+
     //then: fallback to PAL/NTSC - all regions/countries need this setting
-    //const gameStandard = whichStandardIsThisCountryFor(
+    const gameStandard = whichStandardIsThisRegionFor(gameRegion)
+    console.log(`and the standard for that region comes out as ${gameStandard}`)
+    const foundInStandard = R.indexOf(gameStandard, emuRegions) !== -1? gameStandard : null
+    if (foundInStandard){
+      const foundEmu = regions[foundInStandard]
+      console.log(`  ---->standard match: ${foundInStandard} matches ${foundEmu}`)
+      return foundEmu
+    }
     //lastly give up and choose default
+    console.log(`I found nothing for ${gameName}`)
   }
 
-  const getEmuRegion = emuName => {
+   //key by country name - consider here that we just want one PAL or NTSC emu to run, c64_cart and coco 3 have >1 of these each, so for now last wins
+   const tagEmuCountry = emuRegionalNames => {
     const node = {}
-    const tagRegion = whichCountryIsThisEmuFor(emuName)
-    tagRegion? node[tagRegion] = emuName : null //we didn't ensure we always had a country in the regional emus, apple2's ROM003 derivatives are giving us a couple of undef
+    R.map(emuName => {
+      const tagRegion = whichCountryIsThisEmuFor(emuName)
+      tagRegion? node[tagRegion] = emuName : null //we didn't ensure we always had a country in the regional emus, apple2's ROM003 derivatives are giving us a couple of undef
+    } , emuRegionalNames)
+      
     return node
-  }
+   }
+
 
   //sets the variables for a line of romdata entry for later injection into a romdata printer
   const applyRomdata = obj => R.map( obj => {
 
-setRegionalEmu(obj.name, softlistParams.thisEmulator.emulatorName, softlistParams.thisEmulator.regions)
+        const emuWithRegionSet = setRegionalEmu(obj.name, softlistParams.thisEmulator.emulatorName, softlistParams.thisEmulator.regions)
 
         const romParams = {
         name : obj.name
