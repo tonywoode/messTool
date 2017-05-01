@@ -433,7 +433,6 @@ function printARomdata(softlist, softlistParams) {
     , [ emu => /NTSC/.test(emu),            country => `NTSC` ]
 
   ])
-    //we also need to say "if you find America but no USA game, look for a PAL game
 
   const whichRegionIsThisCountryFor = R.cond([
       [ country => country.match(/^US|World$/), region => `US` ] //regrettable
@@ -449,8 +448,8 @@ function printARomdata(softlist, softlistParams) {
   ])
 
   const whichStandardIsThisRegionFor = R.cond([
-      [ country => country.match(/^(US|Asiatic)$/)  , standard => `NTSC` ]
-    , [ country => country.match(/^(European|Arabian|Brazilian|Australian)$/), standard => `PAL` ]
+      [ country => country.match(/^(NTSC|US|Asiatic)$/)  , standard => `NTSC` ] //that first NTSC VERY regrettable
+    , [ country => country.match(/^(PAL|European|Arabian|Brazilian|Australian)$/), standard => `PAL` ]
   ])
 
 
@@ -491,7 +490,7 @@ function printARomdata(softlist, softlistParams) {
     const emuRegions = R.keys(emusTaggedByRegion)
     const gameRegion = whichRegionIsThisCountryFor(gameCountry)
     console.log(`and the game's region for that country comes out as ${gameRegion}`)
-    console.log(`so i'm matching ${gameRegion} against ${JSON.stringify(emuRegions)}`)
+    //console.log(`so i'm matching ${gameRegion} against ${JSON.stringify(emuRegions)}`)
     const foundInRegion = R.indexOf(gameRegion, emuRegions) !== -1? gameRegion : null
     if (foundInRegion){
       const foundEmu = emusTaggedByRegion[foundInRegion]
@@ -500,12 +499,15 @@ function printARomdata(softlist, softlistParams) {
     }
 
     //then: fallback to PAL/NTSC - all region/countries need this setting
+    //again that emu list to standard now
+    const emusTaggedByStandard = tagEmuStandard(emusTaggedByRegion)
+    const emuStandards = R.keys(emusTaggedByStandard)
     const gameStandard = whichStandardIsThisRegionFor(gameRegion)
     //console.log(`and the game's standard for that region comes out as ${gameStandard}`)
     //console.log(`so i'm matching ${gameStandard} against ${JSON.stringify(emuRegions)}`)
-    const foundInStandard = R.indexOf(gameStandard, emuRegions) !== -1? gameStandard : null
+    const foundInStandard = R.indexOf(gameStandard, emuStandards) !== -1? gameStandard : null
     if (foundInStandard){
-      const foundEmu = emusTaggedByCountry[foundInStandard]
+      const foundEmu = emusTaggedByStandard[foundInStandard]
       console.log(`  ---->standard match: ${foundInStandard} matches ${foundEmu}`)
       return foundEmu
     }
@@ -534,6 +536,23 @@ function printARomdata(softlist, softlistParams) {
       tagRegion? node[tagRegion] = emusTaggedByCountry[emuCountry] : null //this time we have to look back at the country key in the passed in array and pick out its emulator
     } , keys)
     console.log('           ++++ Made a region keyed emu list' + JSON.stringify(node))
+    
+    return node
+   
+  }
+
+  //and again...sigh
+  const tagEmuStandard = emusTaggedByRegion => {
+    //console.log("------------------------Incoming Emus tageed by region--------------------" + JSON.stringify(emusTaggedByRegion))
+    const node = {}
+    const keys = R.keys(emusTaggedByRegion) //we encoded the country info as key, so get that out to compare
+    R.map(emuRegion => {
+      const tagStandard = whichStandardIsThisRegionFor(emuRegion) 
+    //console.log("------------------------emuRegion--------------------" + emuRegion)
+    //console.log("------------------------tagStandard is--------------------" + tagStandard)
+      tagStandard? node[tagStandard] = emusTaggedByRegion[emuRegion] : null //this time we have to look back at the country key in the passed in array and pick out its emulator
+    } , keys)
+    console.log('           ++++ Made a standard keyed emu list' + JSON.stringify(node))
     
     return node
    
