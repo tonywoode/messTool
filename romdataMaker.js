@@ -361,17 +361,18 @@ function printARomdata(softlist, softlistParams) {
   const createComment = (commentCandidates) => {
     const comments = []  
     R.map(commentCandidate => {
-      commentCandidate? R.map(item => 
-      comments.push(item.name + ":" + item.value)  , commentCandidate) : ''
+      commentCandidate? R.map( item => {
+        const nonJapItem = item.value.replace(/[^\x00-\x7F]/g, "")
+        comments.push(item.name + ":" + nonJapItem )  }, commentCandidate) : ''
     }, commentCandidates)
       
     return comments
   }
  
   /*because we often need the right regional machine for a game,  
-   * MAME usually considers NTSC as the default, so we do too */
-  //Logice for Euro and PAL are converse - Euro wants to come before all of its regions else one of those will get chosen at random? If there's no
-  //Euro machine THEN look for regions. PAL however is always trumped by any region, its the last check
+   * MAME usually considers NTSC as the default, so we do too 
+   * The logic for Euro and PAL are converse - Euro wants to come before all of its regions else one of those will get chosen at random? If there's no
+   * Euro machine THEN look for regions. PAL however is always trumped by any region, its the last check */
   const whichCountryIsThisGameFor = R.cond([
 
       // first the master regions, for there is no point specialising further if we find these
@@ -435,7 +436,7 @@ function printARomdata(softlist, softlistParams) {
   ])
 
   const whichRegionIsThisCountryFor = R.cond([
-      [ country => country.match(/^US|World$/), region => `US` ] //regrettable
+      [ country => country.match(/^US|World$/), region => `US` ] //MESS implies NTSC/US as default, so we do too 
     , [ country => country===`Arabian`, region => `Arabian` ] //regrettable
     , [ country => country===`PAL`, region => `PAL` ] //regrettable
     , [ country => country===`NTSC`, region => `NTSC` ] //regrettable
@@ -471,19 +472,18 @@ function printARomdata(softlist, softlistParams) {
 
 
   const chooseRegionalEmu = (gameCountry, emuRegionalNames, useTheDefaultEmulator) => {
-    var emuWithRegionSet = '' 
     //first get my region names for each of the regional emus
     const emusTaggedByCountry = tagEmuCountry(emuRegionalNames)
     const emuCountries =  R.keys(emusTaggedByCountry) 
     //so now we have the basics of a decision node: LHS=region code RHS=region code choices
-    console.log(`-> Matching ${gameCountry}, possible emus are ${JSON.stringify(emuCountries)}` )
+    console.log(`  -> Matching ${gameCountry}, possible emus are ${JSON.stringify(emuCountries)}` )
    
 
     //first: do we find a match?
     const foundInCountry = R.indexOf(gameCountry, emuCountries) !== -1? gameCountry : null
     if (foundInCountry){
       const foundEmu = emusTaggedByCountry[foundInCountry]
-      console.log(`  ---->country match: ${foundInCountry} matches ${foundEmu}`)
+      console.log(`    ---->country match: ${foundInCountry} matches ${foundEmu}`)
       return foundEmu
     }
     
@@ -497,7 +497,7 @@ function printARomdata(softlist, softlistParams) {
     const foundInRegion = R.indexOf(gameRegion, emuRegions) !== -1? gameRegion : null
     if (foundInRegion){
       const foundEmu = emusTaggedByRegion[foundInRegion]
-      console.log(`  ---->region match: ${foundInRegion} matches ${foundEmu}`)
+      console.log(`    ---->region match: ${foundInRegion} matches ${foundEmu}`)
       return foundEmu
     }
 
@@ -510,7 +510,7 @@ function printARomdata(softlist, softlistParams) {
     const foundInStandard = R.indexOf(gameStandard, emuStandards) !== -1? gameStandard : null
     if (foundInStandard){
       const foundEmu = emusTaggedByStandard[foundInStandard]
-      console.log(`  ---->standard match: ${foundInStandard} matches ${foundEmu}`)
+      console.log(`    ---->standard match: ${foundInStandard} matches ${foundEmu}`)
       return foundEmu
     }
     
@@ -539,7 +539,7 @@ function printARomdata(softlist, softlistParams) {
       const tagRegion = whichRegionIsThisCountryFor(emuCountry) 
       tagRegion? node[tagRegion] = emusTaggedByCountry[emuCountry] : null //this time we have to look back at the country key in the passed in array and pick out its emulator
     } , keys)
-    console.log('           ++++ Made a region keyed emu list' + JSON.stringify(node))
+    console.log('     ++++ Made a region keyed emu list' + JSON.stringify(node))
     
     return node
    
@@ -553,7 +553,7 @@ function printARomdata(softlist, softlistParams) {
       const tagStandard = whichStandardIsThisRegionFor(emuRegion) 
       tagStandard? node[tagStandard] = emusTaggedByRegion[emuRegion] : null //this time we have to look back at the country key in the passed in array and pick out its emulator
     } , keys)
-    console.log('           ++++ Made a standard keyed emu list' + JSON.stringify(node))
+    console.log('      ++++ Made a standard keyed emu list' + JSON.stringify(node))
     
     return node
    
@@ -566,12 +566,12 @@ function printARomdata(softlist, softlistParams) {
         const emuWithRegionSet = setRegionalEmu(obj.name, softlistParams.thisEmulator.emulatorName, softlistParams.thisEmulator.regions)
 
         const romParams = {
-        name : obj.name
+        name : obj.name.replace(/[^\x00-\x7F]/g, "") //remove japanese
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
       , path : path
-      , emu : emuWithRegionSet //here's where we need to change this, it currently comes from the outside scope and its the sole reason why we pass softlistParams in
-      , company : obj.company
+      , emu : emuWithRegionSet //we can't just use the default emu as many system's games are region locked. Hence all the regional code!
+      , company : obj.company.replace(/[^\x00-\x7F]/g, "")
       , year : obj.year
       , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
           feature : obj.feature
@@ -580,10 +580,13 @@ function printARomdata(softlist, softlistParams) {
       })
       
     }
-   return romdataLine(romParams) 
+
+  return romdataLine(romParams) 
+
   }, softlist)
 
   const romdata = applyRomdata(softlist)
+//console.log(romdata)
   const romdataToPrint = R.prepend(romdataHeader, romdata) 
 
   mkdirp.sync(softlistParams.outNamePath)
