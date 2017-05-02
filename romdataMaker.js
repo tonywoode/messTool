@@ -347,6 +347,12 @@ function cleanSoftlist(softlist){
 
  
 function printARomdata(softlist, softlistParams) {
+  //don't make a dat or folder if all of the games for a softlist aren't supported
+  if (!softlist.length) { 
+    console.log(`INFO: Not printing soflist for ${softlistParams.name} because there are no working games`)
+    return softlist
+  }
+
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
   const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
