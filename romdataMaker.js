@@ -9,8 +9,8 @@ const
   , leven          = require(`Levenshtein`)
 
 const
-    rootDir        = `inputs/hash/`
-  , filesInRoot    = fs.readdirSync(rootDir, 'utf8')
+    hashDir        = `inputs/hash/`
+  , filesInRoot    = fs.readdirSync(hashDir, 'utf8')
 
   , systemsJsonFile= fs.readFileSync(`outputs/systems.json`)
   , systems        = JSON.parse(systemsJsonFile)
@@ -143,7 +143,7 @@ function filterSoftlists(softlistEmus) {
 
   //make a k-v telling us if list exists on disk - is the softlist found in the softlist directory
   const softlistFileExists = R.map( obj => (
-      R.assoc(`doesSoftlistFileExist`, fs.existsSync("inputs/hash/" + obj.name + ".xml")? true : false , obj)
+      R.assoc(`doesSoftlistFileExist`, fs.existsSync(`${hashDir}${obj.name}.xml`)? true : false , obj)
     )
   , removedProblemDevices)
 
@@ -151,7 +151,7 @@ function filterSoftlists(softlistEmus) {
   const alertNonExistentSoftlistFile = R.map( 
     obj => obj.doesSoftlistFileExist==true? 
       obj : console.log(
-        `FILE PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but there's no file called "inputs/hash/${obj.name}.xml`
+        `FILE PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but there's no file called "${hashDir}${obj.name}.xml`
       )
     , softlistFileExists)
  
@@ -278,7 +278,7 @@ function makeParams(emulator) {
     , name           = name2.replace(/\//g, `-`)
 
     , thisEmulator   = emulator
-    , stream         = fs.createReadStream(`inputs/hash/${name}.xml`)
+    , stream         = fs.createReadStream(`${hashDir}${name}.xml`)
     , xml            = new XmlStream(stream)
     , outRootDir     = `outputs/quickplay_softlists/`
     , outTypePath    = `${outRootDir}/${systemType}`
