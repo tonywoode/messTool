@@ -10,7 +10,7 @@ const
   , xml        = new XmlStream(stream)
   , iniOutPath = `outputs/mess.ini`
   , datOutPath = `outputs/systems.dat`
-  , jsonPath   = `outputs/systems.json`
+  , jsonOutPath   = `outputs/systems.json`
   , spaceIsSeparator  = ` `
   , oneWord = 1
 
@@ -346,7 +346,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   )(systems)
  
   //create the vars which will populate each instance of the efindTemplate, first for each machine's softlist (if they exist)
-  //topLine here becomes the Emulator name, v.important for softlist generation. Save it back into the object while we have it
+  //topLine here becomes the Emulator name for softlist generation. Save it back into the object while we have it
   const softlistEfinderToPrint = obj => R.map(softlist => {
     const emulatorName = `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
              + (softlist.filter? ` ${softlist.filter} only` : ``)
@@ -389,7 +389,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
 }
 
 
-
+/* Now the ini is out, print out a systems list and the json that the softlist maker will use */
 function madeDat(systems){
 
   const lister =  R.pipe(
@@ -403,9 +403,9 @@ function madeDat(systems){
   //output.on('error', function(err) { console.log(`couldn't write the file`) });
   //systems.forEach(function(v) { output.write(v + '\n'); });
 
-  //print out the json we made
+  //print out the json we made, romdatamaker.js uses it
   console.log(JSON.stringify(systems,null, '\t'))
-  fs.writeFileSync(jsonPath, JSON.stringify(systems,null, '\t'))
+  fs.writeFileSync(jsonOutPath, JSON.stringify(systems,null, '\t'))
   process.exit()
 }
 

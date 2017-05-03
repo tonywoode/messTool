@@ -141,7 +141,7 @@ function filterSoftlists(softlistEmus) {
     obj => obj.doesSoftlistExist? obj : console.log(
         `DEVICE PROBLEM: ${obj.displayMachine} has a softlist called ${obj.name} but doesn't have a ${obj.deviceTypeFromName}`
       )
-  , deviceExists)//TODO: lost of these are HDD and ROM - how does HDD load, perhaps it isn't a mess 'device'?
+  , deviceExists)
   
   // now remove them
   const removedProblemDevices = R.filter( obj => obj.doesSoftlistExist === true, deviceExists)
