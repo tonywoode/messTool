@@ -6,14 +6,19 @@ const
   , R          = require(`Ramda`)
 
 const 
-    stream     = fs.createReadStream(`inputs/mame.xml`)
-  , xml        = new XmlStream(stream)
-  , iniOutPath = `outputs/mess.ini`
-  , datOutPath = `outputs/systems.dat`
-  , jsonOutPath   = `outputs/systems.json`
+    stream      = fs.createReadStream(`inputs/mame.xml`)
+  , xml         = new XmlStream(stream)
+  , iniOutPath  = `outputs/mess.ini`
+  , datOutPath  = `outputs/systems.dat`
+  , jsonOutPath = `outputs/systems.json`
   , spaceIsSeparator  = ` `
   , oneWord = 1
 
+//set simple console logging
+const
+    logIni  = false
+  , logDat  = false
+  , logJSON = false
 
 //program flow
 makeSystems(function(systems){
@@ -46,7 +51,7 @@ function makeSystems(callback){
   xml.collect('device')
   xml.collect('softwarelist')
   xml.collect(`extension`) //turns out xml stream is just regexing these keys, so this is deeply-nested
-  
+  console.log(`Reading a very large xml file, patience...`) 
   xml.on(`updateElement: machine`, function(machine) {
     if ( //machine.softwarelist // we used to do this when doing retroarch, but it turned out life wasn't that simple after all....
          machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
@@ -381,8 +386,11 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
       obj.softlist?  softlistEfinderToPrint(obj) : ``
     , devicesEfinderToPrint(obj) //don't check if devices exist, wouldn't be a mess game system without >0
   ) , efinder)
-  
-  fs.writeFileSync(iniOutPath, devices.join(`\n`), `latin1`) //utf8 isn't possible at this time
+ 
+  const joinedDevices = devices.join(`\n`)
+  console.log(`Printing mess ini to ${iniOutPath}`)
+  logIni? console.log(joinedDevices) : ``
+  fs.writeFileSync(iniOutPath, joinedDevices, `latin1`) //utf8 isn't possible at this time
   
   madeDat(efinder) 
   
@@ -398,14 +406,19 @@ function madeDat(systems){
   )(systems)
 
   const ordered = lister.sort( (a, b) => a.localeCompare(b) )
-
-  fs.writeFileSync(datOutPath, ordered.join('\n'), `latin1`)  //utf8 isn't possible at this time
+  const joined = ordered.join('\n')
+  console.log(`Printing systems dat to ${datOutPath}`)
+  logDat? console.log(joined) : ``
+  fs.writeFileSync(datOutPath, joined, `latin1`)  //utf8 isn't possible at this time
   //output.on('error', function(err) { console.log(`couldn't write the file`) });
   //systems.forEach(function(v) { output.write(v + '\n'); });
 
   //print out the json we made, romdatamaker.js uses it
-  console.log(JSON.stringify(systems,null, '\t'))
-  fs.writeFileSync(jsonOutPath, JSON.stringify(systems,null, '\t'))
+  const pretty = JSON.stringify(systems, null, `\t`)
+  console.log(`Printing systems JSON to ${jsonOutPath}`)
+  logJSON? console.log(pretty) : ``
+  fs.writeFileSync(jsonOutPath, pretty)
+  console.log(`done`)
   process.exit()
 }
 
