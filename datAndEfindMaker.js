@@ -198,6 +198,7 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(`Comx World Operations Ltd`, `COMX`)
     , compRep(`Dick Smith Electronics`, `Dick Smith`)
     , compRep(`Digital Equipment Corporation`, `DEC`)
+    , compRep(`Dragon Data Ltd`, `Dragon`)
     , systRep(`EACA`,`Colour Genie EG2000`, `Colour Genie`)
     , systRep(`Ei Nis`, `Pecom 32`, `Pecom`) 
     , systRep(`Elektronika`,`BK 0010`, `BK`)
@@ -209,10 +210,11 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(`Franklin Computer`, `Franklin`)
     , compRep(`General Consumer Electronics`, `GCE`)
       , systRep(`Hewlett Packard`, /HP48*/, `HP`) 
+    , systRep(`Hawthorne Technology`, `TonyGiant HT68k`, `TinyGiant`) 
     , compRep(`Interton Electronic`, `Interton`)
     , compRep(`Jupiter Cantab`, `Jupiter`)
       , systRep(`Kyosei`, `Kyotronic 85`, `Kyotronic`)
-    , systRep(`Joseph Glagla and Dieter Feiler`, `Ravensburger Selbstbaucomputer V0.9 `, `Ravensburger Selbstbaucomputer`)
+    , systRep(`Joseph Glagla and Dieter Feiler`, `Ravensburger Selbstbaucomputer V0.9 `, `Ravensburger Selbstbaucomputer`)//todo: not working
       , compRep(`Joseph Glagla and Dieter Feiler`, ``) //change company after
     , systRep(`Kontiki Data`, `A/S 100`, `100`), compRep(`Kontiki Data`, `Kontiki`) //change company after
     , compRep(`Luxor Datorer AB`, `Luxor`), systRep(`Luxor`, /ABC.*/, `ABC`)
@@ -220,6 +222,7 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(`Memotech Ltd`, `Memotech`), systRep(`Memotech`, `MTX .*`, `MTX`) 
     , systRep(`Mikroelektronika`, `Pyldin-601`, `Pyldin`)
     , systRep(`Microkey`, `Primo A-32`, `Primo`)
+    , systRep(`Applied Technology`, `Microbee 16 Standard`, `Microbee`)
     , systRep(`Micronique`, `Hector 2HR+`, `Hector`)
     , systRep(`Nascom Microcomputers`, `1|2`, `Nascom`), compRep(`Nascom Microcomputers`, ``) //change company after
     , systRep(`NEC`, `PC-8201A`, `PC-8201`)
@@ -257,6 +260,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Spectravideo`, `SVI-318`, `SVI`)
     , systRep(`Tandy Radio Shack`, /(TRS-80 .*|Color Computer)/, `TRS-80 CoCo`)
     , systRep(`Texas Instruments`, /TI-99.*/, 'TI-99')
+    , systRep(`Texas Instruments`, `TI Avigo 10 PDA`, 'TI Avigo')
     , systRep(`Thomson`, `MO5 NR`, `MO5`), systRep(`Thomson`, /(TO7.*|TO9.*)/, `TO7/TO9`)
     , compRep(`V. I. Lenin`, `Lenin`), systRep(`Lenin`, `PK-01 Lviv`, `Lviv`)
     , systRep(`Video Technology`, /Laser.*/, `Laser Mk1`)
@@ -332,7 +336,12 @@ function removeBoringSystems(systems){
     , `Josef Kratochvil BOB-85`, `LCD EPFL Stoppani Dauphin`, `Manchester University Small-Scale Experimental Machine, 'Baby'`, `Michael Bauer Dream 6800` 
     , `Militaerverlag der DDR Ausbaufaehiger Mikrocomputer mit dem U 880`, `MOS Technologies KIM-1`, `Motorola MEK6800D2`, `Mugler/Mathes PC/M`
     , `Multitech Micro Professor 1`, `Multitech Microkit09`, `National JR-100`,`Netronics Explorer/85`, `Nokia Data MikroMikko 1 M6`, `Osborne 1`
-    ,
+    , `Peripheral Technology PT68K2`, `Peripheral Technology PT68K4`, `Pitronics Beta`, `PolyMorphic Systems Poly-88`, `Radio Bulletin Cosmicos`
+    , `Research Machines RM-380Z`, `Rockwell AIM 65`, `Sanyo MBC`, `Signetics Instructor 50`, `Signetics PIPBUG`, `Slicer Computers Slicer`
+    , `Small Systems Engineering SoftBox`, `SWTPC S/09 Sbug`, `System 99 Users Group SGCPU`, `Talking Electronics magazine TEC-1A with JMON`
+    , `Tandy Radio Shack 200`, `Texas Instruments TI-74 BASICALC`, `Texas Instruments TM 990/189 University Board microcomputer`
+    , `USSR 15IE-00-013`, `UT-88 mini`, `VEB Mikroelektronik Lerncomputer LC 80`, `VEB Polytechnik Poly-Computer 880`, `VEB Robotron Electronics Riesa Z1013`
+    , `Video Technology Vtech IT Unlimited`, `Visual 1050`, `Xerox Alto-II`, `Xor Data Science S-100-12`, `Yamaha FB-01`, `ZPA Novy Bor IQ-151`
   ]
 
   const isItBoring = systemType => { 
