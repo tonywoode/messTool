@@ -287,15 +287,18 @@ function makeFinalSystemTypes(systems){
 
   //a function we'll pass in later that calls the clone system or reports a problem
   const lookupCall = (cloneof, call) =>  {
-    const referredSystem = R.find( R.propEq(`call`, cloneof) 
-    )(systemsWithType)
-    return referredSystem === undefined ? 
-      console.log(`PROBLEM: ${call} says its a (working) cloneof ${cloneof} but ${cloneof} is emulated badly?`) : referredSystem.systemType
+    const referredSystem = R.find( R.propEq(`call`, cloneof) )(systemsWithType)
+    const originalSystem = R.find( R.propEq(`call`, call) )(systemsWithType)
+    
+    return referredSystem === undefined ? ( 
+        console.log(`PROBLEM: ${call} says its a (working) cloneof ${cloneof} but ${cloneof} is emulated badly. Setting system type to ${originalSystem.systemType}`) 
+      , originalSystem.systemType
+    ): referredSystem.systemType
   }
 
   //before we replace the clone systems with the system type they are cloned from, we need to get our type property together
   const systemsWithType = R.map(obj => 
-    R.assoc(`systemType`, (obj.mungedCompany ===`` || obj.mungedSystem ===``)? 
+    R.assoc(`systemType`, (obj.mungedCompany === `` || obj.mungedSystem === ``)? 
       `${obj.mungedSystem}`:`${obj.mungedCompany} ${obj.mungedSystem}`, obj
     ), systems 
   )
