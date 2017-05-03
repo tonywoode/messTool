@@ -29,6 +29,7 @@ makeSystems(function(systems){
   ,  mungeCompanyAndSytemsNames
   ,  mungeCompanyForType
   ,  makeFinalSystemTypes
+  ,  removeBoringSystems
   ,  print
   )(systems)
 
@@ -142,12 +143,6 @@ function cleanDevices(systems){
 
 }
 
-
-//here, for now is just a straight list of systems that aren't of interest to our endevour
-//(because they are never going to have enjoyable games for them
-//thesee (for better or worse) are the fully munged system types, so may have to convert them back into their original systems
-//(i made them just from reading a finished systems.dat
-//const rejectSystems =[`Acorn System 1`, `Acorn System 3`, `Ampro Litte Z80 Board`, `Andrew Donald Booth All Purpose Electronic X-ray Computer`,`Apollo DN3500`, `Apple III`,`Applix Pty Ltd 1616`, `BBC Bridge Companion`, `BBN BitGraph rev A`, `BGR Computers Excalibur 64`, `Bit Corporation Chuang Zao Zhe 50`, `BNPO Bashkiria-2M`, `BP EVM PK8000 Vesta`, `Canon X-07`, `Corvus Systems Concept`, `Digital Research Computers Big Board`, `Elwro 800 Junior`, `Frank Heyder Amateurcomputer AC1 Berlin`, `Intel Intellec MDS-II`, `Joachim Czepa C-80`, ]
 
 /* we have multiple needs for company name:
  *  1) we'll track what mame calls it - Sinclair Research Systems Ltd
@@ -312,6 +307,27 @@ function makeFinalSystemTypes(systems){
 
 }
 
+/* Many systems aren't of interest since they're never going to have enjoyable games
+ *  it was easiest to specify the fully munged system types (that's why i'm removing these as a last step) */
+function removeBoringSystems(systems){
+
+  const boringSystems =[
+    `Acorn System 1`, `Acorn System 3`, `Ampro Litte Z80 Board`, `Andrew Donald Booth All Purpose Electronic X-ray Computer`,
+    `Apollo DN3500`, `Applix Pty Ltd 1616`, `BBC Bridge Companion`, `BBN BitGraph rev A`, `BGR Computers Excalibur 64`, 
+    `Bit Corporation Chuang Zao Zhe 50`, `BNPO Bashkiria-2M`, `BP EVM PK8000 Vesta`, `Canon X-07`, `Corvus Systems Concept`, 
+    `Digital Research Computers Big Board`, `Elwro 800 Junior`, `Frank Heyder Amateurcomputer AC1 Berlin`, `Intel Intellec MDS-II`, `Joachim Czepa C-80` 
+  ]
+
+  const isItBoring = systemType => { 
+    if (boringSystems.includes(systemType)) { console.log( `removing an emu of type ${systemType} - there will likely never be any games`) }
+    return boringSystems.includes(systemType) 
+  }
+  
+  const systemsWithGames = R.reject(obj => isItBoring(obj.systemType), systems)
+
+  return systemsWithGames
+}
+
 
 /*
  * A subtltey here is that we want to print the munged COMPANY name (to avoid xx Computer Electronics Holding Ltd AB etc), but we want to largely keep 
@@ -412,8 +428,6 @@ function madeDat(systems){
   console.log(`Printing systems dat to ${datOutPath}`)
   logDat? console.log(joined) : ``
   fs.writeFileSync(datOutPath, joined, `latin1`)  //utf8 isn't possible at this time
-  //output.on('error', function(err) { console.log(`couldn't write the file`) });
-  //systems.forEach(function(v) { output.write(v + '\n'); });
 
   //print out the json we made, romdatamaker.js uses it
   const pretty = JSON.stringify(systems, null, `\t`)
