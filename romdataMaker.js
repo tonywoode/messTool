@@ -106,10 +106,15 @@ function filterSoftlists(softlistEmus) {
   const addDeviceType = R.pipe(
       //grab the device or declare there is none specified
       R.map( obj => (R.assoc(`deviceTypeFromName`, obj.name.split(`_`)[1]? obj.name.split(`_`)[1] : `no_postfix`, obj)))
-      //while we're at it, get the system type from the softlist name, we need it immediately and later
+      //get system type from softlist name, needed immediately and later
     , R.map( obj => (R.assoc(`systemTypeFromName`, obj.name.split(`_`)[0], obj)))
+
       //FM7's disk softlist breaks the  rule and is called 'disk'. They are just floppy images, they work fine
     , R.map( obj => (obj.deviceTypeFromName === `disk`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
+      //ditto epson_cpm, some of which really are games
+    , R.map( obj => (obj.deviceTypeFromName === `cpm`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
+      //ditto for Timex Sinclair TS-2068
+    , R.map( obj => (obj.deviceTypeFromName === `dock`? obj.deviceTypeFromName = `cart`: obj.deviceTypeFromName, obj))
       // I suspect all the nes softlist will run on all systems, essentially its postfixes aren't about mess `devices`
       // Note that the same isn't true for Famicom, as there seems to be a genuine problem that Famicoms don't have cass or flops
     , R.map( obj => (obj.systemTypeFromName === `nes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
