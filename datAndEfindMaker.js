@@ -181,7 +181,7 @@ function mungeCompanyAndSytemsNames(systems){
       compRep(/(<unknown>|<generic>)/, ``)
       //system specific (btw replace accepts regex or string by default (i'm trying to show what's intended), but match matches only regex
     , systRep(`Acorn`, /BBC/, `BBC`), systRep(`Acorn`, /Electron/, `Atom`)
-    , compRep(/Amstrad .*/, `Amstrad`), systRep(`Amstrad`, /(CPC|GX4000)/, `CPC`)
+    , compRep(/Amstrad .*/, `Amstrad`), systRep(`Amstrad`, /(CPC|GX4000)/, `CPC`), systRep(`Amstrad`, /^PC([0-9]*).*/, `PC`)
     , compRep(`APF Electronics Inc.`, `APF`), systRep(`APF`, `M-1000`, `Imagination Machine`)
     , compRep(/Apple Computer/, `Apple`), systRep(`Apple`, /(Macintosh LC|Macintosh II.*)/, `Macintosh II (68020/68030)`)
     , systRep(`Apple`, /Macintosh (Plus|SE|Classic)/, `Macintosh (6800)`), systRep(`Apple`,/(^II.*|\]\[|\/\/c|\/\/e)/,`II`)
@@ -191,6 +191,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Bandai`,`Super Vision 8000`, `Super Vision`) 
     , systRep(`Bondwell Holding`, /.*/, `Bondwell`), compRep(`Bondwell Holding`, ``) //change company after
     , systRep(`Casio`, `PV-1000`, `PV`)
+    , systRep(`Central Data`, `CD 2650`, `2650`)
     , compRep(`Commodore Business Machines`, `Commodore`), systRep(`Commodore`, /(B500|P500|B128-80HP)/, `500/600/700`) 
     , systRep(`Commodore`, /PET .*|CBM .*/, `PET/CBM`), systRep(`Commodore`, /\b(64|128)/, `64/128`)
     , systRep(`Commodore`, `VIC-10 / Max Machine / UltiMax`, `Max/Ultimax`), systRep(`Commodore`, `VIC-1001`, `VIC-20`)
@@ -210,26 +211,29 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(`Franklin Computer`, `Franklin`)
     , compRep(`General Consumer Electronics`, `GCE`)
       , systRep(`Hewlett Packard`, /HP48*/, `HP`) 
-    , systRep(`Hawthorne Technology`, `TonyGiant HT68k`, `TinyGiant`) 
+    , systRep(`Hawthorne Technology`, `TinyGiant HT68k`, `TinyGiant`) 
     , compRep(`Interton Electronic`, `Interton`)
+    , systRep(`Intelligent Game`, `Game MPT-03`, `Game`)
+      , compRep(`Intelligent Game`, `Intelligent`) //change company after
     , compRep(`Jupiter Cantab`, `Jupiter`)
       , systRep(`Kyosei`, `Kyotronic 85`, `Kyotronic`)
-    , systRep(`Joseph Glagla and Dieter Feiler`, `Ravensburger Selbstbaucomputer V0.9 `, `Ravensburger Selbstbaucomputer`)//todo: not working
+    , systRep(`Joseph Glagla and Dieter Feiler`, /Ravensburger Selbstbaucomputer.*/, `Ravensburger Selbstbaucomputer`)
       , compRep(`Joseph Glagla and Dieter Feiler`, ``) //change company after
-    , systRep(`Kontiki Data`, `A/S 100`, `100`), compRep(`Kontiki Data`, `Kontiki`) //change company after
+    , compRep(`Kontiki Data A/S`, `Kontiki`) //change company after
     , compRep(`Luxor Datorer AB`, `Luxor`), systRep(`Luxor`, /ABC.*/, `ABC`)
     , systRep(`Matra & Hachette`, `Alice 32`, `MC-10`), compRep(`Matra & Hachette`, `Tandy Radio Shack`) //change company after
     , compRep(`Memotech Ltd`, `Memotech`), systRep(`Memotech`, `MTX .*`, `MTX`) 
     , systRep(`Mikroelektronika`, `Pyldin-601`, `Pyldin`)
     , systRep(`Microkey`, `Primo A-32`, `Primo`)
+    , systRep(`Myarc`, `Geneve 9640`, `Geneve`)
     , systRep(`Applied Technology`, `Microbee 16 Standard`, `Microbee`)
     , systRep(`Micronique`, `Hector 2HR+`, `Hector`)
     , systRep(`Nascom Microcomputers`, `1|2`, `Nascom`), compRep(`Nascom Microcomputers`, ``) //change company after
-    , systRep(`NEC`, `PC-8201A`, `PC-8201`)
     , systRep(`Nintendo`, `Entertainment System / Famicom`, `NES`)
     , systRep(`Nintendo`, `Game Boy Color`, `Game Boy`)
     , systRep(`Nintendo`, `Super Entertainment System / Super Famicom `, `SNES`)
-    , compRep(`Nippon Electronic Company`, `NEC`), systRep(`NEC`, `PC Engine`, `PC Engine/TurboGrafx-16`)
+    , systRep(`Nippon Electronic Company`, `PC Engine`, `PC Engine/TurboGrafx-16`)
+      , systRep(`Nippon Electronic Company`, `PC-8201A`, `PC-8201`), compRep(`Nippon Electronic Company`, `NEC`) //change company after
     , systRep(`Non Linear Systems`, `Kaypro II - 2/83`, `Kaypro`)
     , compRep(`Nuova Elettronica`, `Nuova`)
     , compRep(`Orbit Electronics`, `Orbit`)
@@ -259,6 +263,8 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Sord`, `m.5`, `M5`)
     , systRep(`Spectravideo`, `SVI-318`, `SVI`)
     , systRep(`Tandy Radio Shack`, /(TRS-80 .*|Color Computer)/, `TRS-80 CoCo`)
+    , systRep(`Tatung`, `Einstein TC-01`, 'Einstein')
+    , systRep(`Telercas Oy`, /Telmac.*/, 'Telmac')
     , systRep(`Texas Instruments`, /TI-99.*/, 'TI-99')
     , systRep(`Texas Instruments`, `TI Avigo 10 PDA`, 'TI Avigo')
     , systRep(`Thomson`, `MO5 NR`, `MO5`), systRep(`Thomson`, /(TO7.*|TO9.*)/, `TO7/TO9`)
