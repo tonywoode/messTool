@@ -212,16 +212,28 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(`Interton Electronic`, `Interton`)
     , compRep(`Jupiter Cantab`, `Jupiter`)
       , systRep(`Kyosei`, `Kyotronic 85`, `Kyotronic`)
+    , systRep(`Joseph Glagla and Dieter Feiler`, `Ravensburger Selbstbaucomputer V0.9 `, `Ravensburger Selbstbaucomputer`)
+      , compRep(`Joseph Glagla and Dieter Feiler`, ``) //change company after
+    , systRep(`Kontiki Data`, `A/S 100`, `100`), compRep(`Kontiki Data`, `Kontiki`) //change company after
     , compRep(`Luxor Datorer AB`, `Luxor`), systRep(`Luxor`, /ABC.*/, `ABC`)
     , systRep(`Matra & Hachette`, `Alice 32`, `MC-10`), compRep(`Matra & Hachette`, `Tandy Radio Shack`) //change company after
     , compRep(`Memotech Ltd`, `Memotech`), systRep(`Memotech`, `MTX .*`, `MTX`) 
     , systRep(`Mikroelektronika`, `Pyldin-601`, `Pyldin`)
+    , systRep(`Microkey`, `Primo A-32`, `Primo`)
+    , systRep(`Micronique`, `Hector 2HR+`, `Hector`)
     , systRep(`Nascom Microcomputers`, `1|2`, `Nascom`), compRep(`Nascom Microcomputers`, ``) //change company after
+    , systRep(`NEC`, `PC-8201A`, `PC-8201`)
     , systRep(`Nintendo`, `Entertainment System / Famicom`, `NES`)
     , systRep(`Nintendo`, `Game Boy Color`, `Game Boy`)
     , systRep(`Nintendo`, `Super Entertainment System / Super Famicom `, `SNES`)
     , compRep(`Nippon Electronic Company`, `NEC`), systRep(`NEC`, `PC Engine`, `PC Engine/TurboGrafx-16`)
     , systRep(`Non Linear Systems`, `Kaypro II - 2/83`, `Kaypro`)
+    , compRep(`Nuova Elettronica`, `Nuova`)
+    , compRep(`Orbit Electronics`, `Orbit`)
+    , compRep(`Ormatu Electronics`, `Ormatu`)
+    , systRep(``, `PC/AT 486 with CS4031 chipset`, `PC/AT 486`)
+    , systRep(`PEL Varazdin`, `Orao 102`, `Orao`)
+    , systRep(`Psion`, /Organiser II.*/, `Organiser II`)
     , compRep(`Data Applications International`, `DAI`), systRep(`DAI`, `DAI Personal Computer`, `Personal Computer`)
     , compRep(`Elektronika inzenjering` , ``)
     , systRep(`International Business Machines`, `IBM PC 5150`, `PC`), compRep(`International Business Machines`, `IBM`) //change company after
@@ -233,13 +245,14 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(`Miles Gordon Technology plc`, `MGT`)
     , compRep(`Processor Technology Corporation`, `PTC`), systRep(`PTC`, `SOL-20`, `Sol`)
     , systRep(``, `Radio86RK` , `Radio-86RK`) //seems MESS made the mistake here...
-    , systRep(`Sanyo`, `MBC-55x`, `MBC`)
+    , systRep(`Sanyo`, `MBC-55x`, `MBC`), systRep(`Sanyo`, `PHC-25`, `PHC`)
     , systRep(`SNK`, /(Neo-Geo$|Neo-Geo AES)/, `Neo Geo`), systRep(`SNK`, `Neo-Geo CDZ`, `Neo Geo CD`) //wikipedia says MESS is wrong
       , systRep(`SNK`, `NeoGeo Pocket`, `Neo Geo Pocket`) //MESS says MESS is wrong....
     , systRep(`Sega`, `Genesis`, `Genesis/32X`), systRep(`Sega`, `Master System II`, `Master System`)
        , systRep(`Sega`, /(SC-3000|SG-1000)/, `SG-1000/SC-3000/SF-7000`)
     , systRep(`Sharp`, /MZ.*/, `MZ`)
     , compRep(`Sinclair Research Ltd`, `Sinclair`), systRep(`Sinclair`, /ZX Spectrum .*/, `ZX Spectrum`)
+    , compRep(`Sony Computer Entertainment`, `Sony`)
     , systRep(`Sord`, `m.5`, `M5`)
     , systRep(`Spectravideo`, `SVI-318`, `SVI`)
     , systRep(`Tandy Radio Shack`, /(TRS-80 .*|Color Computer)/, `TRS-80 CoCo`)
@@ -312,10 +325,14 @@ function makeFinalSystemTypes(systems){
 function removeBoringSystems(systems){
 
   const boringSystems =[
-    `Acorn System 1`, `Acorn System 3`, `Ampro Litte Z80 Board`, `Andrew Donald Booth All Purpose Electronic X-ray Computer`,
-    `Apollo DN3500`, `Applix Pty Ltd 1616`, `BBC Bridge Companion`, `BBN BitGraph rev A`, `BGR Computers Excalibur 64`, 
-    `Bit Corporation Chuang Zao Zhe 50`, `BNPO Bashkiria-2M`, `BP EVM PK8000 Vesta`, `Canon X-07`, `Corvus Systems Concept`, 
-    `Digital Research Computers Big Board`, `Elwro 800 Junior`, `Frank Heyder Amateurcomputer AC1 Berlin`, `Intel Intellec MDS-II`, `Joachim Czepa C-80` 
+      `Acorn System 1`, `Acorn System 3`, `Ampro Litte Z80 Board`, `Andrew Donald Booth All Purpose Electronic X-ray Computer`
+    , `Apollo DN3500`, `Applix Pty Ltd 1616`, `BBC Bridge Companion`, `BBN BitGraph rev A`, `BGR Computers Excalibur 64`
+    , `Bit Corporation Chuang Zao Zhe 50`, `BNPO Bashkiria-2M`, `BP EVM PK8000 Vesta`, `Canon X-07`, `Corvus Systems Concept`
+    , `Digital Research Computers Big Board`, `Elwro 800 Junior`, `Frank Heyder Amateurcomputer AC1 Berlin`, `Intel Intellec MDS-II`, `Joachim Czepa C-80` 
+    , `Josef Kratochvil BOB-85`, `LCD EPFL Stoppani Dauphin`, `Manchester University Small-Scale Experimental Machine, 'Baby'`, `Michael Bauer Dream 6800` 
+    , `Militaerverlag der DDR Ausbaufaehiger Mikrocomputer mit dem U 880`, `MOS Technologies KIM-1`, `Motorola MEK6800D2`, `Mugler/Mathes PC/M`
+    , `Multitech Micro Professor 1`, `Multitech Microkit09`, `National JR-100`,`Netronics Explorer/85`, `Nokia Data MikroMikko 1 M6`, `Osborne 1`
+    ,
   ]
 
   const isItBoring = systemType => { 
