@@ -11,8 +11,8 @@ const
 const
     hashDir        = `inputs/hash/`
   , filesInRoot    = fs.readdirSync(hashDir, 'utf8')
-
-  , systemsJsonFile= fs.readFileSync(`outputs/systems.json`)
+  , outputDir      = `outputs/`
+  , systemsJsonFile= fs.readFileSync(`${outputDir}systems.json`)
   , systems        = JSON.parse(systemsJsonFile)
   //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
@@ -285,7 +285,7 @@ function makeParams(emulator) {
     , thisEmulator   = emulator
     , stream         = fs.createReadStream(`${hashDir}${name}.xml`)
     , xml            = new XmlStream(stream)
-    , outRootDir     = `outputs/quickplay_softlists/`
+    , outRootDir     = `${outputDir}quickplay_softlists/`
     , outTypePath    = `${outRootDir}/${systemType}`
     , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
     , outFullPath    = `${outNamePath}/romdata.dat`
