@@ -211,6 +211,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Commodore`, `VIC-10 / Max Machine / UltiMax`, `Max/Ultimax`), systRep(`Commodore`, `VIC-1001`, `VIC-20`)
       , systRep(`Commodore`, `264`, `+4/C16`) 
     , compRep(`Comx World Operations Ltd`, `COMX`)
+    , compRep(`Cybiko Inc`, `Cybiko`)
     , compRep(`Dick Smith Electronics`, `Dick Smith`)
     , compRep(`Digital Equipment Corporation`, `DEC`)
     , compRep(`Dragon Data Ltd`, `Dragon`)
@@ -262,7 +263,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(``, `Orion128` , `Orion`) //note these assume youve transformed <unknown> already
     , systRep(``, `PK8020Korvet` , `Korvet PK`)
     , compRep(`Jungle Soft / KenSingTon / Chintendo / Siatronics`, '')
-    , systRep(/Welback Holdings .*/ , `Mega Duck / Cougar Boy`, `Mega Duck/Couger Boy`), compRep(/Welback Holdings .*/, ``) //change company after
+    , systRep(/Welback Holdings .*/ , `Mega Duck / Cougar Boy`, `Mega Duck/Cougar Boy`), compRep(/Welback Holdings .*/, ``) //change company after
     , compRep(`Miles Gordon Technology plc`, `MGT`)
     , compRep(`Processor Technology Corporation`, `PTC`), systRep(`PTC`, `SOL-20`, `Sol`)
     , systRep(``, `Radio86RK` , `Radio-86RK`) //seems MESS made the mistake here...
@@ -273,7 +274,7 @@ function mungeCompanyAndSytemsNames(systems){
        , systRep(`Sega`, /(SC-3000|SG-1000)/, `SG-1000/SC-3000/SF-7000`)
     , systRep(`Sharp`, /MZ.*/, `MZ`)
     , compRep(`Sinclair Research Ltd`, `Sinclair`), systRep(`Sinclair`, /ZX Spectrum .*/, `ZX Spectrum`)
-    , compRep(`Sony Computer Entertainment`, `Sony`)
+    , compRep(`Sony Computer Entertainment`, `Sony`), compRep(`Sony Inc`, `Sony`)
     , systRep(`Sord`, `m.5`, `M5`)
     , systRep(`Spectravideo`, `SVI-318`, `SVI`)
     , systRep(`Tandy Radio Shack`, /(TRS-80 .*|Color Computer)/, `TRS-80 CoCo`)
@@ -470,6 +471,16 @@ function madeDat(systems){
   )(systems)
 
   const ordered = lister.sort( (a, b) => a.localeCompare(b) )
+
+  //console.log(R.difference(currentTypeList, ordered))
+  
+  //make the union dat of the old quickplay and the new systems dat
+  const unionDat = R.union(currentTypeList, ordered)
+  const orderedUnionDat = unionDat.sort( (a, b) => a.localeCompare(b) )
+  const joinedUnionDat =orderedUnionDat.join(`\n`) 
+  fs.writeFileSync(`unionDat`, joinedUnionDat, `latin1`)
+ 
+
   const joined = ordered.join('\n')
   console.log(`Printing systems dat to ${datOutPath}`)
   logDat? console.log(joined) : ``
