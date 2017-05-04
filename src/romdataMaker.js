@@ -1,26 +1,26 @@
 "use strict"
 
 const 
-    fs             = require(`fs`)
-  , path           = require(`path`)
-  , XmlStream      = require(`xml-stream`)
-  , R              = require(`Ramda`)
-  , mkdirp         = require('mkdirp')
-  , leven          = require(`Levenshtein`)
+    fs              = require(`fs`)
+  , path            = require(`path`)
+  , XmlStream       = require(`xml-stream`)
+  , R               = require(`Ramda`)
+  , mkdirp          = require('mkdirp')
+  , leven           = require(`Levenshtein`)
 
 const
-    hashDir        = `inputs/hash/`
-  , filesInRoot    = fs.readdirSync(hashDir, 'utf8')
-  , outputDir      = `outputs/`
-  , systemsJsonFile= fs.readFileSync(`${outputDir}systems.json`)
-  , systems        = JSON.parse(systemsJsonFile)
+    hashDir         = `inputs/hash/`
+  , filesInRoot     = fs.readdirSync(hashDir, 'utf8')
+  , outputDir       = `outputs/`
+  , systemsJsonFile = fs.readFileSync(`${outputDir}systems.json`)
+  , systems         = JSON.parse(systemsJsonFile)
   //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
   //decide what we want to print to console
-  , logGames       = false
-  , logChoices     = false
-  , logRegions     = false
-  , logPrinter     = true
+  , logGames        = false
+  , logChoices      = false
+  , logRegions      = false
+  , logPrinter      = true
 
 //program flow at list level
 R.pipe(

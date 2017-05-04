@@ -1,19 +1,19 @@
 "use strict"
 
 const 
-    fs         = require(`fs`)
-  , readline   = require('readline')
-  , XmlStream  = require(`xml-stream`)
-  , R          = require(`Ramda`)
+    fs            = require(`fs`)
+  , readline      = require('readline')
+  , XmlStream     = require(`xml-stream`)
+  , R             = require(`Ramda`)
 
 const 
-    datInPath   = `inputs/systems.dat`
+    datInPath     = `inputs/systems.dat`
   , mameXMLInPath = `inputs/mame.xml`
-  , stream      = fs.createReadStream(mameXMLInPath)
-  , xml         = new XmlStream(stream)
-  , iniOutPath  = `outputs/mess.ini`
-  , datOutPath  = `outputs/systems.dat`
-  , jsonOutPath = `outputs/systems.json`
+  , stream        = fs.createReadStream(mameXMLInPath)
+  , xml           = new XmlStream(stream)
+  , iniOutPath    = `outputs/mess.ini`
+  , datOutPath    = `outputs/systems.dat`
+  , jsonOutPath   = `outputs/systems.json`
   , spaceIsSeparator  = ` `
   , oneWord = 1
 
@@ -23,16 +23,16 @@ const
   , logDat  = false
   , logJSON = false
 
-/*get the existing list of QuickPlay's system types into an array
+/* get the existing list of QuickPlay's system types into an array
  * (we are amending an existing list, not replacing it. MAME doesn't
  * cover modern consoles for instance */
 const currentTypeList = []
 const rl = readline.createInterface({
-    input: fs.createReadStream('inputs/systems.dat')
-});
+  input: fs.createReadStream(datInPath)
+})
 
 rl.on('line', (line) => { currentTypeList.push(line) })
-//rl.on('close', (close) => { console.log(currentTypeList); process.exit() })
+
 
 //program flow
 makeSystems(function(systems){
@@ -465,6 +465,10 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
 /* Now the ini is out, print out a systems list and the json that the softlist maker will use */
 function madeDat(systems){
 
+
+  //rl.on('close', (close) => { console.log(currentTypeList); process.exit() })
+
+
   const lister =  R.pipe(
       R.map( ({call, displayMachine, systemType }) => (`${systemType}`) )
     , R.uniq
@@ -472,20 +476,16 @@ function madeDat(systems){
 
   const ordered = lister.sort( (a, b) => a.localeCompare(b) )
 
-  //console.log(R.difference(currentTypeList, ordered))
-  
+  //rl.on('close', (close) => { 
   //make the union dat of the old quickplay and the new systems dat
   const unionDat = R.union(currentTypeList, ordered)
   const orderedUnionDat = unionDat.sort( (a, b) => a.localeCompare(b) )
   const joinedUnionDat =orderedUnionDat.join(`\n`) 
-  fs.writeFileSync(`unionDat`, joinedUnionDat, `latin1`)
  
-
-  const joined = ordered.join('\n')
   console.log(`Printing systems dat to ${datOutPath}`)
-  logDat? console.log(joined) : ``
-  fs.writeFileSync(datOutPath, joined, `latin1`)  //utf8 isn't possible at this time
-
+  logDat? console.log(joinedUnionDat) : ``
+  fs.writeFileSync(datOutPath, joinedUnionDat, `latin1`)  //utf8 isn't possible at this time
+  //})
   //print out the json we made, romdatamaker.js uses it
   const pretty = JSON.stringify(systems, null, `\t`)
   console.log(`Printing systems JSON to ${jsonOutPath}`)
