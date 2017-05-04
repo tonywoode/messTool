@@ -2,11 +2,14 @@
 
 const 
     fs         = require(`fs`)
+  , readline   = require('readline')
   , XmlStream  = require(`xml-stream`)
   , R          = require(`Ramda`)
 
 const 
-    stream      = fs.createReadStream(`inputs/mame.xml`)
+    datInPath   = `inputs/systems.dat`
+  , mameXMLInPath = `inputs/mame.xml`
+  , stream      = fs.createReadStream(mameXMLInPath)
   , xml         = new XmlStream(stream)
   , iniOutPath  = `outputs/mess.ini`
   , datOutPath  = `outputs/systems.dat`
@@ -19,6 +22,17 @@ const
     logIni  = false
   , logDat  = false
   , logJSON = false
+
+/*get the existing list of QuickPlay's system types into an array
+ * (we are amending an existing list, not replacing it. MAME doesn't
+ * cover modern consoles for instance */
+const currentTypeList = []
+const rl = readline.createInterface({
+    input: fs.createReadStream('inputs/systems.dat')
+});
+
+rl.on('line', (line) => { currentTypeList.push(line) })
+//rl.on('close', (close) => { console.log(currentTypeList); process.exit() })
 
 //program flow
 makeSystems(function(systems){
