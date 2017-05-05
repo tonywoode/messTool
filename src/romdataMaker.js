@@ -53,9 +53,10 @@ function callSheet(systems) {
   // but its unlikely. Some games may exist though (that's why we remove them here but keep them as emulators)
   // Don't process further. Don't make a softlist for them
   const softlistsWithNoGames = [   
-      `ampro`, `mac_flop`, `lisa`, `rx78`, `bw2`, `bw12`, `cbm2_cart`, `cbm2_flop`, `p500_flop`
-    , `comx35_flop`, `px4_cart`, `pencil2`, `ht68k`, `abc80_cass`, `abc80_flop`, `abc800`, `abc806`
-    , `mikro80`, `kayproii`, `vip`, `nimbus`, `ql_cart`, `ql_cass`
+      `abc800`, `abc806`, `abc80_cass`, `abc80_flop`, `ampro`, `atom`, `bw12`, `bw2`, `cbm2_cart` 
+    , `cbm2_flop`, `cbm8096_flop`, `cbm8296_flop`, `comx35_flop`, `ht68k`, `kayproii`, `lisa`
+    , `mac_flop`, `mc1502_flop`, `mikro80`, `nimbus`, `p500_flop`, `pc1640`, `pc8201`,`pencil2` 
+    , `px4_cart`, `ql_cart`, `ql_cass`, `rx78`, `trs80m2`, `trsm100`, `vip` 
   ]
 
  const isThisSoftlistBoring = (list, machine) => {
@@ -667,7 +668,7 @@ CmbIcon=${iconName}.ico
   fs.writeFileSync(`${softlistParams.outTypePath}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
   fs.writeFileSync(`${softlistParams.outRootDir}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
 
-
+  //now print the romdata itself
   fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   
   return softlist
