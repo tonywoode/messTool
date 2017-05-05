@@ -20,8 +20,8 @@ const
   , logGames        = false
   , logChoices      = false
   , logRegions      = false
-  , logExclusions   = true
-  , logPrinter      = true
+  , logExclusions   = false
+  , logPrinter      = false
 
 //program flow at list level
 R.pipe(
@@ -313,12 +313,16 @@ function makeParams(emulator) {
     , thisEmulator   = emulator
     , stream         = fs.createReadStream(`${hashDir}${name}.xml`)
     , xml            = new XmlStream(stream)
-    , outRootDir     = `${outputDir}quickplay_softlists/`
-    , outTypePath    = `${outRootDir}/${systemType}`
-    , outNamePath    = `${outTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
-    , outFullPath    = `${outNamePath}/romdata.dat`
+    , mameOutRootDir     = `${outputDir}mame_softlists/`
+    , mameOutTypePath    = `${mameOutRootDir}/${systemType}`
+    , mameOutNamePath    = `${mameOutTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
+    , mameOutFullPath    = `${mameOutNamePath}/romdata.dat`
+    , retroarchOutRootDir     = `${outputDir}retroarch_softlists/`
+    , retroarchOutTypePath    = `${retroarchOutRootDir}/${systemType}`
+    , retroarchOutNamePath    = `${retroarchOutTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
+    , retroarchOutFullPath    = `${retroarchOutNamePath}/romdata.dat`
        
-  return  ({ systemType, name, thisEmulator, stream, xml, outRootDir, outTypePath, outNamePath, outFullPath })
+  return  ({ systemType, name, thisEmulator, stream, xml, mameOutRootDir, mameOutTypePath, mameOutNamePath, mameOutFullPath,  retroarchOutRootDir, retroarchOutTypePath, retroarchOutNamePath, retroarchOutFullPath  })
 
 }  
 
@@ -394,9 +398,11 @@ function printARomdata(softlist, softlistParams) {
   logPrinter? console.log(`INFO: printing softlist for ${softlistParams.name}`) : ''
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
-  const romdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
+  const mameRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
     ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
+  const retroarchRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
+    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Retroarch ${emu} (MAME)¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
   /*  1)  Display name, 2) _MAMEName, 3) _ParentName, 4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
    *  5) _rom path //the path to the rom, 6) _emulator,7) _Company, 8) _Year, 9) _GameType, 10) _MultiPlayer, 11)  _Language
    * 12)  _Parameters : String, 13)  _Comment, 14)  _ParamMode : TROMParametersMode; //type of parameter mode
@@ -606,7 +612,7 @@ function printARomdata(softlist, softlistParams) {
 
 
   //sets the variables for a line of romdata entry for later injection into a romdata printer
-  const applyRomdata = obj => R.map( obj => {
+  const applyRomdata = (obj, platform)  => R.map( obj => {
 
         const emuWithRegionSet = setRegionalEmu(obj.name, softlistParams.thisEmulator.emulatorName, softlistParams.thisEmulator.regions)
 
@@ -626,14 +632,18 @@ function printARomdata(softlist, softlistParams) {
       
     }
 
-    return romdataLine(romParams) 
+    if (platform==="mame") return mameRomdataLine(romParams)
+    if (platform==="retroarch") return retroarchRomdataLine(romParams)
 
   }, softlist)
 
-  const romdata = applyRomdata(softlist)
-  const romdataToPrint = R.prepend(romdataHeader, romdata) 
+  const mameRomdata = applyRomdata(softlist, "mame")
+  const retroarchRomdata = applyRomdata(softlist, "retroarch")
+  const mameRomdataToPrint = R.prepend(romdataHeader, mameRomdata) 
+  const retroarchRomdataToPrint = R.prepend(romdataHeader, retroarchRomdata) 
 
-  mkdirp.sync(softlistParams.outNamePath)
+  mkdirp.sync(softlistParams.mameOutNamePath)
+  mkdirp.sync(softlistParams.retroarchOutNamePath)
   
   /* I already did work to enable MAME icons in QuickPlay, so just print this folder config with each dat
    *   there are 2 systems which don't have icons in the set i want, so just write an icon file for everything */
@@ -664,12 +674,15 @@ CmbIcon=${iconName}.ico
 `
 
   const machineMameName = softlistParams.thisEmulator.call
-  fs.writeFileSync(`${softlistParams.outNamePath}/folders.ini`, iconTemplate(machineMameName))
-  fs.writeFileSync(`${softlistParams.outTypePath}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
-  fs.writeFileSync(`${softlistParams.outRootDir}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
-
+  fs.writeFileSync(`${softlistParams.mameOutNamePath}/folders.ini`, iconTemplate(machineMameName))
+  fs.writeFileSync(`${softlistParams.mameOutTypePath}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
+  fs.writeFileSync(`${softlistParams.mameOutRootDir}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
+  fs.writeFileSync(`${softlistParams.retroarchOutNamePath}/folders.ini`, iconTemplate(machineMameName))
+  fs.writeFileSync(`${softlistParams.retroarchOutTypePath}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
+  fs.writeFileSync(`${softlistParams.retroarchOutRootDir}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
   //now print the romdata itself
-  fs.writeFileSync(softlistParams.outFullPath, romdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
+  fs.writeFileSync(softlistParams.mameOutFullPath, mameRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
+  fs.writeFileSync(softlistParams.retroarchOutFullPath, retroarchRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   
   return softlist
 
