@@ -7,14 +7,15 @@ const
   , R             = require(`Ramda`)
 
 const 
-    datInPath     = `inputs/systems.dat`
-  , mameXMLInPath = `inputs/mame.xml`
-  , stream        = fs.createReadStream(mameXMLInPath)
-  , xml           = new XmlStream(stream)
-  , iniOutPath    = `outputs/mess.ini`
-  , datOutPath    = `outputs/systems.dat`
-  , jsonOutPath   = `outputs/systems.json`
-  , spaceIsSeparator  = ` `
+    datInPath        = `inputs/systems.dat`
+  , mameXMLInPath    = `inputs/mame.xml`
+  , stream           = fs.createReadStream(mameXMLInPath)
+  , xml              = new XmlStream(stream)
+  , mameIniOutPath   = `outputs/Mess_Mame.ini`
+  , rarchIniOutPath  = `outputs/Mess_Retroarch.ini`
+  , datOutPath       = `outputs/systems.dat`
+  , jsonOutPath      = `outputs/systems.json`
+  , spaceIsSeparator = ` `
   , oneWord = 1
 
 //set simple console logging
@@ -70,7 +71,7 @@ function makeSystems(callback){
   xml.on(`updateElement: machine`, function(machine) {
     if ( //machine.softwarelist // we used to do this when doing retroarch, but it turned out life wasn't that simple after all....
          machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
-      && machine.$.isdevice === `no` //see the mame.exe (internal)  DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no">
+      && machine.$.isdevice === `no` //see the mame.exe (internal)  DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no"> TODO: some home consoles didn't have devices...
       && machine.$.isbios === `no` 
       && machine.$.ismechanical === `no`
       && machine.$.runnable === `yes`
@@ -382,13 +383,31 @@ function removeBoringSystems(systems){
  *   that need re-application, along with some new concerns regarding the output format
  */
 function print(systems){
-  const efindTemplate = ({topLine, systemType, callToMake, info}) =>
-    (`[MESS ${topLine}]
+
+  const mameEfindTemplate = ({topLine, systemType, callToMake, info}) =>
+    (`[MAME ${topLine}]
 Exe Name=mame64.exe
 Config Name=mame
 System=${systemType} 
 HomePage=${info}
 param=${callToMake}
+isWin32=1
+CmdLine=1
+ShellEx=0
+Verify=0
+ShortExe=0
+DisWinKey=1
+DisScrSvr=1
+Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
+`)
+
+  const retroarchEfindTemplate = ({topLine, systemType, callToMake, info}) =>
+    (`[Retroarch ${topLine} (MAME)]
+Exe Name=retroarch.exe
+Config Name=retroarch
+System=${systemType} 
+HomePage=${info}
+param=-L cores/mame_libretro " ${callToMake.replace(/"/g, '\\"')}"
 isWin32=1
 CmdLine=1
 ShellEx=0
@@ -415,7 +434,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
 
   )(systems)
  
-  //create the vars which will populate each instance of the efindTemplate, first for each machine's softlist (if they exist)
+  //create the vars which will populate each instance of the EfindTemplate, first for each machine's softlist (if they exist)
   //topLine here becomes the Emulator name for softlist generation. Save it back into the object while we have it
   const softlistEfinderToPrint = obj => R.map(softlist => {
     const emulatorName = `${obj.displayMachine} -SOFTLIST ${softlist.name}` 
@@ -427,7 +446,8 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
       , callToMake : `${obj.call} %ROMMAME%` //for we are running from a generated soflist romdata.dat
       , info       : `http://mameworld.info` //we don't have anything but a url to tell you about with softlists
     }
-    devices.push(efindTemplate(params))
+    mameDevices.push(mameEfindTemplate(params))
+    retroarchDevices.push(retroarchEfindTemplate(params))
   }, obj.softlist)
  
 
@@ -442,20 +462,25 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
       , info       : `Supports: ${device.extensions}`
     }
      
-    devices.push(efindTemplate(params))
+    mameDevices.push(mameEfindTemplate(params))
+    retroarchDevices.push(retroarchEfindTemplate(params))
   }, obj.device)
    
-  const devices = [] //this is an accumlator, we need to reduce....
+  const mameDevices = [] //this is an accumlator, we need to reduce....
+  const retroarchDevices = [] //this is an accumlator, we need to reduce....
   
   const efinderToPrint = R.map (obj => (
       obj.softlist?  softlistEfinderToPrint(obj) : ``
     , devicesEfinderToPrint(obj) //don't check if devices exist, wouldn't be a mess game system without >0
   ) , efinder)
  
-  const joinedDevices = devices.join(`\n`)
-  console.log(`Printing mess ini to ${iniOutPath}`)
-  logIni? console.log(joinedDevices) : ``
-  fs.writeFileSync(iniOutPath, joinedDevices, `latin1`) //utf8 isn't possible at this time
+  const joinedMameDevices = mameDevices.join(`\n`)
+  const joinedRetroarchDevices = retroarchDevices.join(`\n`)
+  console.log(`Printing inis to ${mameIniOutPath} / ${rarchIniOutPath}`)
+  logIni? console.log(joinedMameDevices) : ``
+  logIni? console.log(joinedRetroarchDevices) : ``
+  fs.writeFileSync(mameIniOutPath, joinedMameDevices, `latin1`) //utf8 isn't possible at this time
+  fs.writeFileSync(rarchIniOutPath, joinedRetroarchDevices, `latin1`) //utf8 isn't possible at this time
   
   madeDat(efinder) 
   
