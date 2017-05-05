@@ -20,6 +20,7 @@ const
   , logGames        = false
   , logChoices      = false
   , logRegions      = false
+  , logExclusions   = true
   , logPrinter      = true
 
 //program flow at list level
@@ -47,10 +48,35 @@ function makeSoftlists(emuSystems) {
 function callSheet(systems) {
   //filter by softlist
   const isSoftlist = obj => !!obj.softlist
-  
+
+  //looking at the softlist, there are some that don't have any games. Doesn't mean to say they might not one day,
+  // but its unlikely. Some games may exist though (that's why we remove them here but keep them as emulators)
+  // Don't process further. Don't make a softlist for them
+  const softlistsWithNoGames = [   
+      `ampro`, `mac_flop`, `lisa`, `rx78`, `bw2`, `bw12`, `cbm2_cart`, `cbm2_flop`, `p500_flop`
+    , `comx35_flop`, `px4_cart`, `pencil2`, `ht68k`, `abc80_cass`, `abc80_flop`, `abc800`, `abc806`
+    , `mikro80`, `kayproii`, `vip`, `nimbus`, `ql_cart`, `ql_cass`
+  ]
+
+ const isThisSoftlistBoring = (list, machine) => {
+   if (softlistsWithNoGames.includes(list.name)) { 
+     logExclusions? console.log(`INFO: Removing  ${list.name} from ${machine} because there are no games in the list`) : ''
+     return softlistsWithNoGames.includes(list.name)
+   }
+  }
+ 
+  //take out of the softlist key, those softlists in the exclusion list above
+  const removeNonGames = obj => R.assoc(`softlist`, 
+    R.reject(
+      softlist => isThisSoftlistBoring(softlist, obj.displayMachine)
+    , obj.softlist)
+  , obj)
+
+
+  //make a softlist subset of json, just those values we need. We'll add to it then
   const filtered = R.pipe (
       R.filter(isSoftlist)
-    //make a softlist subset of json, just those values we need. We'll add to it then
+    , R.map(removeNonGames)
     , R.map(obj => ({
         displayMachine: obj.displayMachine
       , systemType    : obj.systemType
@@ -61,6 +87,7 @@ function callSheet(systems) {
     }) )
   )(systems) 
 
+ 
   //all we need from the device subobject is the shortnames
   const replaceDevice = R.map(
     obj => R.assoc(`device`, R.map(
@@ -360,7 +387,7 @@ function cleanSoftlist(softlist){
 function printARomdata(softlist, softlistParams) {
   //don't make a dat or folder if all of the games for a softlist aren't supported
   if (!softlist.length) { 
-    logPrinter? console.log(`INFO: Not printing soflist for ${softlistParams.name} because there are no working games`) : ''
+    logExclusions? console.log(`INFO: Not printing soflist for ${softlistParams.name} because there are no working games`) : ''
     return softlist
   }
   logPrinter? console.log(`INFO: printing softlist for ${softlistParams.name}`) : ''
