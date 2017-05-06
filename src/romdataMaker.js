@@ -676,10 +676,10 @@ CmbIcon=${iconName}.ico
   const machineMameName = softlistParams.thisEmulator.call
   fs.writeFileSync(`${softlistParams.mameOutNamePath}/folders.ini`, iconTemplate(machineMameName))
   fs.writeFileSync(`${softlistParams.mameOutTypePath}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
-  fs.writeFileSync(`${softlistParams.mameOutRootDir}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
+  fs.writeFileSync(`${softlistParams.mameOutRootDir}/folders.ini`, iconTemplate(`Mess`)) //last wins is fine
   fs.writeFileSync(`${softlistParams.retroarchOutNamePath}/folders.ini`, iconTemplate(machineMameName))
   fs.writeFileSync(`${softlistParams.retroarchOutTypePath}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
-  fs.writeFileSync(`${softlistParams.retroarchOutRootDir}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
+  fs.writeFileSync(`${softlistParams.retroarchOutRootDir}/folders.ini`, iconTemplate(`RetroArch`)) //last wins is fine
   //now print the romdata itself
   fs.writeFileSync(softlistParams.mameOutFullPath, mameRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   fs.writeFileSync(softlistParams.retroarchOutFullPath, retroarchRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
