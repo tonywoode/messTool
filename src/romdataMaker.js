@@ -399,7 +399,7 @@ function printARomdata(softlist, softlistParams) {
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
   const mameRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
-    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MESS ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MAME ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
   const retroarchRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
     ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Retroarch ${emu} (MAME)¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
