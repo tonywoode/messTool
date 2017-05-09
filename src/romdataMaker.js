@@ -661,8 +661,9 @@ TxtDir=
 LstFilter=2A2E7A69700D0A2A2E7261720D0A2A2E6163650D0A2A2E377A0D0A
 
 [RealIcon]
-ChkRealIcons=0
-ChkLargeIcons=0
+ChkRealIcons=1
+ChkLargeIcons=1
+Directory=F:\\MAME\\EXTRAs\\icons
 
 [BkGround]
 ChkBk=0
