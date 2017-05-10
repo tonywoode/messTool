@@ -143,6 +143,8 @@ function filterSoftlists(softlistEmus) {
     , R.map( obj => (obj.deviceTypeFromName === `cpm`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
       //ditto for Timex Sinclair TS-2068
     , R.map( obj => (obj.deviceTypeFromName === `dock`? obj.deviceTypeFromName = `cart`: obj.deviceTypeFromName, obj))
+      //i note some lists called hdd and some softlists called 'hard1`, `hard2`, guess for later (there are no matches atm)
+    , R.map( obj => (obj.deviceTypeFromName === `hdd`? obj.deviceTypeFromName = `hard`: obj.deviceTypeFromName, obj))
       // I suspect all the nes softlist will run on all systems, essentially its postfixes aren't about mess `devices`
       // Note that the same isn't true for Famicom, as there seems to be a genuine problem that Famicoms don't have cass or flops
     , R.map( obj => (obj.systemTypeFromName === `nes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
