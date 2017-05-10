@@ -22,7 +22,6 @@ const
 makeSystems(function(systems){
   R.pipe(
      mungeCompanyAndSystemNames
-   , printEfind
    , removeBoringSystems
    , printARomdata
   )(systems)
@@ -112,71 +111,6 @@ function mungeCompanyAndSystemNames(systems){
 
   return mungedSystems
 }
-
-function printEfind(systems){
-
- const mameEfindTemplate = ({topLine, systemType, callToMake, info}) =>
-    (`[MAME ${topLine}]
-Exe Name=mame64.exe
-Config Name=mame
-System=${systemType} 
-HomePage=${info}
-param=${callToMake}
-isWin32=1
-CmdLine=1
-ShellEx=0
-Verify=0
-ShortExe=0
-DisWinKey=1
-DisScrSvr=1
-Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
-`)
-
-  const retroarchEfindTemplate = ({topLine, systemType, callToMake, info}) =>
-    (`[Retroarch ${topLine} (MAME)]
-Exe Name=retroarch.exe
-Config Name=retroarch
-System=${systemType} 
-HomePage=${info}
-param=-L cores\\mame_libretro.dll " ${callToMake.replace(/"/g, '\\"')}"
-isWin32=1
-CmdLine=1
-ShellEx=0
-Verify=0
-ShortExe=0
-DisWinKey=1
-DisScrSvr=1
-Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
-`)
-
-
-  const systemToPrint = obj => R.map(obj => {
-    const emulatorName = obj.company? `${obj.company} ${obj.system}`: `${obj.system}`
-    const params = {
-        topLine    : emulatorName
-      , systemType : `MESS Embedded Games`
-      , callToMake : `${obj.call}` 
-      , info       : obj.cloneof? `clone of ${obj.cloneof}` : `http://mameworld.info` 
-    }
-     
-    mameDevices.push(mameEfindTemplate(params))
-    retroarchDevices.push(retroarchEfindTemplate(params))
-  }, systems)
-   
-  const mameDevices = [] //this is an accumlator, we need to reduce....
-  const retroarchDevices = [] //this is an accumlator, we need to reduce....
-  
-  const efinderToPrint = systemToPrint(systems)
- 
-  const joinedMameDevices = mameDevices.join(`\n`)
-  const joinedRetroarchDevices = retroarchDevices.join(`\n`)
-  fs.writeFileSync(`outputs/MESS_MAME_embedded.ini`, joinedMameDevices, `latin1`) //utf8 isn't possible at this time
-  fs.writeFileSync(`outputs/MESS_RetroArch_embedded.ini`, joinedRetroarchDevices, `latin1`) //utf8 isn't possible at this time
-  fs.writeFileSync(`outputs/MESSembedded.json`, JSON.stringify(systems, null, '\t')) 
- 
-return systems
-}
-
 function removeBoringSystems(systems){
 
   const boringSystems =[
@@ -218,11 +152,13 @@ function removeBoringSystems(systems){
 function printARomdata(systems) {
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` 
-  const mameRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
-    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MAME ${emu}¬${company}¬${year}¬¬¬¬${MAMEName}¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+  const mameRomdataLine = ({name, MAMEName, parentName, path, company, year, comment}) =>
+    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Mame64 Win32¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
 
-  const retroarchRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
-    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Retroarch ${emu} (MAME)¬${company}¬${year}¬¬¬¬${MAMEName}¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+  //this is the correct invocation for retroarch but it doesn't work, even with softlist automedia off and bios anable on
+  // retroarch_debug shows it even finds the game, but then decides: 'Error: unknown option: sfach'
+  const retroarchRomdataLine = ({name, MAMEName, parentName, path, company, year, comment}) =>
+    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Retroarch Frontend¬${company}¬${year}¬¬¬¬-L cores\\mame_libretro.dll " ${MAMEName.replace(/"/g, '\\"')}"¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
   /*  1)  Display name, 2) _MAMEName, 3) _ParentName, 4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
    *  5) _rom path //the path to the rom, 6) _emulator,7) _Company, 8) _Year, 9) _GameType, 10) _MultiPlayer, 11)  _Language
    * 12)  _Parameters : String, 13)  _Comment, 14)  _ParamMode : TROMParametersMode; //type of parameter mode
@@ -234,7 +170,6 @@ function printARomdata(systems) {
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
       , path : path
-      , emu : `MESS`
       , company : obj.company
       , year : `unknown`
       , comment : obj.cloneof? `clone of ${obj.cloneof}` : `` 
