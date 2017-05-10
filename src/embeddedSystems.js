@@ -188,6 +188,38 @@ function printARomdata(systems) {
   const retroarchOut = `outputs/retroarch_embedded/`
   mkdirp.sync(mameOut)
   mkdirp.sync(retroarchOut)
+
+  const iconTemplate = iconName => `
+[GoodMerge]
+GoodMergeExclamationRoms=0
+GoodMergeCompat=0
+pref1=(U) 
+pref2=(E) 
+pref3=(J) 
+
+[Mirror]
+ChkMirror=0
+TxtDir=
+LstFilter=2A2E7A69700D0A2A2E7261720D0A2A2E6163650D0A2A2E377A0D0A
+
+[RealIcon]
+ChkRealIcons=1
+ChkLargeIcons=1
+Directory=F:\\MAME\\EXTRAs\\icons
+
+[BkGround]
+ChkBk=0
+TxtBKPath=
+
+[Icon]
+ChkIcon=1
+CmbIcon=${iconName}.ico
+`
+
+
+
+  fs.writeFileSync(mameOut + `folders.ini`, iconTemplate(`mess`))
+
   fs.writeFileSync(mameOut + `romdata.dat`, mameRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   fs.writeFileSync(retroarchOut + `romdata.dat`, retroarchRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   
