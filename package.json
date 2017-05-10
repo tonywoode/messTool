@@ -6,6 +6,6 @@
     "xml-stream": "^0.4.5"
   },
   "scripts": {
-    "start": "node src/datAndEfindMaker.js; node src/romdataMaker.js"
+    "start": "node src/datAndEfindMaker.js; node src/romdataMaker.js; node src/embeddedSystems.js"
   }
 }

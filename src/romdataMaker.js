@@ -647,8 +647,7 @@ function printARomdata(softlist, softlistParams) {
   
   /* I already did work to enable MAME icons in QuickPlay, so just print this folder config with each dat
    *   there are 2 systems which don't have icons in the set i want, so just write an icon file for everything */
-  const iconTemplate = iconName => `
-[GoodMerge]
+  const iconTemplate = iconName => `[GoodMerge]
 GoodMergeExclamationRoms=0
 GoodMergeCompat=0
 pref1=(U) 

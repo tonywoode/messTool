@@ -184,13 +184,13 @@ function printARomdata(systems) {
   const retroarchRomdata = applyRomdata("retroarch")
   const mameRomdataToPrint = R.prepend(romdataHeader, mameRomdata) 
   const retroarchRomdataToPrint = R.prepend(romdataHeader, retroarchRomdata) 
-  const mameOut = `outputs/mame_embedded/`
-  const retroarchOut = `outputs/retroarch_embedded/`
+  const mameSoftRoot = `outputs/mame_softlists/`
+  const mameOut = `${mameSoftRoot}/MESS Embedded Systems/`
+  //const retroarchOut = `outputs/retroarch_embedded/` - not working in retroarch at this time
   mkdirp.sync(mameOut)
-  mkdirp.sync(retroarchOut)
+  //mkdirp.sync(retroarchOut)
 
-  const iconTemplate = iconName => `
-[GoodMerge]
+  const iconTemplate = `[GoodMerge]
 GoodMergeExclamationRoms=0
 GoodMergeCompat=0
 pref1=(U) 
@@ -213,15 +213,12 @@ TxtBKPath=
 
 [Icon]
 ChkIcon=1
-CmbIcon=${iconName}.ico
+CmbIcon=mess.ico
 `
 
-
-
-  fs.writeFileSync(mameOut + `folders.ini`, iconTemplate(`mess`))
-
+  fs.writeFileSync(mameOut + `folders.ini`, iconTemplate)
   fs.writeFileSync(mameOut + `romdata.dat`, mameRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
-  fs.writeFileSync(retroarchOut + `romdata.dat`, retroarchRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
+  //fs.writeFileSync(retroarchOut + `romdata.dat`, retroarchRomdataToPrint.join(`\n`), `latin1`) //not working in retroarch
   
   return systems
 
