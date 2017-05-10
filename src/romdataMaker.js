@@ -54,7 +54,7 @@ function callSheet(systems) {
   // Don't process further. Don't make a softlist for them
   const softlistsWithNoGames = [   
       `abc800`, `abc806`, `abc80_cass`, `abc80_flop`, `ampro`, `atom`, `bw12`, `bw2`, `cbm2_cart` 
-    , `cbm2_flop`, `cbm8096_flop`, `cbm8296_flop`, `comx35_flop`, `ht68k`, `kayproii`, `lisa`
+    , `cbm2_flop`, `cbm8096_flop`, `cbm8296_flop`, `comx35_flop`, `ht68k`, `kayproii`, `lisa`, `mac_hdd`
     , `mac_flop`, `mc1502_flop`, `mikro80`, `nimbus`, `p500_flop`, `pc1640`, `pc8201`,`pencil2` 
     , `px4_cart`, `ql_cart`, `ql_cass`, `rx78`, `trs80m2`, `trsm100`, `vip` 
   ]
@@ -663,7 +663,7 @@ LstFilter=2A2E7A69700D0A2A2E7261720D0A2A2E6163650D0A2A2E377A0D0A
 
 [RealIcon]
 ChkRealIcons=1
-ChkLargeIcons=1
+ChkLargeIcons=0
 Directory=F:\\MAME\\EXTRAs\\icons
 
 [BkGround]
