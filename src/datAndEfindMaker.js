@@ -284,6 +284,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Texas Instruments`, /TI-99.*/, 'TI-99')
     , systRep(`Texas Instruments`, `TI Avigo 10 PDA`, 'TI Avigo')
     , systRep(`Thomson`, `MO5 NR`, `MO5`), systRep(`Thomson`, /(TO7.*|TO9.*)/, `TO7/TO9`)
+    , compRep(`VEB Robotron Electronics Riesa`, `VEB Robotron`) //company aftre 
     , compRep(`V. I. Lenin`, `Lenin`), systRep(`Lenin`, `PK-01 Lviv`, `Lviv`)
     , systRep(`Video Technology`, /Laser.*/, `Laser Mk1`)
     , compRep(`Visual Technology Inc` , `Visual`)
@@ -362,7 +363,7 @@ function removeBoringSystems(systems){
     , `Research Machines RM-380Z`, `Rockwell AIM 65`, `Sanyo MBC`, `Signetics Instructor 50`, `Signetics PIPBUG`, `Slicer Computers Slicer`
     , `Small Systems Engineering SoftBox`, `SWTPC S/09 Sbug`, `System 99 Users Group SGCPU`, `Talking Electronics magazine TEC-1A with JMON`
     , `Tandy Radio Shack 200`, `Texas Instruments TI-74 BASICALC`, `Texas Instruments TM 990/189 University Board microcomputer`
-    , `USSR 15IE-00-013`, `UT-88 mini`, `VEB Mikroelektronik Lerncomputer LC 80`, `VEB Polytechnik Poly-Computer 880`, `VEB Robotron Electronics Riesa Z1013`
+    , `USSR 15IE-00-013`, `UT-88 mini`, `VEB Mikroelektronik Lerncomputer LC 80`, `VEB Polytechnik Poly-Computer 880`
     , `Video Technology Vtech IT Unlimited`, `Visual 1050`, `Xerox Alto-II`, `Xor Data Science S-100-12`, `Yamaha FB-01`, `ZPA Novy Bor IQ-151`
   ]
 
