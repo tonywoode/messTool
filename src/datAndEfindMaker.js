@@ -249,7 +249,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Nintendo`, `Game Boy Color`, `Game Boy`)
     , systRep(`Nintendo`, `Super Entertainment System / Super Famicom `, `SNES`)
     , systRep(`Nippon Electronic Company`, `PC Engine`, `PC Engine/TurboGrafx-16`)
-      , systRep(`Nippon Electronic Company`, `PC-8201A`, `PC-8201`), compRep(`Nippon Electronic Company`, `NEC`) //change company after
+      , systRep(`Nippon Electronic Company`, `PC-8201A`, `PC Series`), compRep(`Nippon Electronic Company`, `NEC`) //change company after
     , systRep(`Non Linear Systems`, `Kaypro II - 2/83`, `Kaypro`)
     , compRep(`Nuova Elettronica`, `Nuova`)
     , compRep(`Orbit Electronics`, `Orbit`)
@@ -284,7 +284,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`Texas Instruments`, /TI-99.*/, 'TI-99')
     , systRep(`Texas Instruments`, `TI Avigo 10 PDA`, 'TI Avigo')
     , systRep(`Thomson`, `MO5 NR`, `MO5`), systRep(`Thomson`, /(TO7.*|TO9.*)/, `TO7/TO9`)
-    , compRep(`VEB Robotron Electronics Riesa`, `VEB Robotron`) //company aftre 
+    , systRep(`VEB Robotron Electronics Riesa`, `Z1013`, `KC Series`), compRep(`VEB Robotron Electronics Riesa`, `Robotron`)  //company aftre 
     , compRep(`V. I. Lenin`, `Lenin`), systRep(`Lenin`, `PK-01 Lviv`, `Lviv`)
     , systRep(`Video Technology`, /Laser.*/, `Laser Mk1`)
     , compRep(`Visual Technology Inc` , `Visual`)
