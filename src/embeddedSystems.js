@@ -19,7 +19,7 @@ const
   , oneWord = 1
 
 //program flow
-makeSystems(function(systems){
+makeSystems(systems => {
   R.pipe(
      mungeCompanyAndSystemNames
    , removeBoringSystems
@@ -28,11 +28,11 @@ makeSystems(function(systems){
 })
 
 
-function makeSystems(callback){
+function makeSystems(callback) {
   const systems = []
   
   xml.collect('device')
-  xml.on(`updateElement: machine`, function(machine) {
+  xml.on(`updateElement: machine`, machine => {
     if ( 
          !machine.device 
       && machine.$.isdevice === `no` 
@@ -57,31 +57,30 @@ function makeSystems(callback){
     }
   })
 
-  xml.on(`end`, function(){
+  xml.on(`end`, () => {
     callback(systems)
   })
 
 }
 
-function mungeCompanyAndSystemNames(systems){
+function mungeCompanyAndSystemNames(systems) {
 
   //the first two of these regexs are unique to this script. That's because, to describe a generic 
   //'space invaders' hardware,  it seems you have no option but to get company name in there
   const systemsAugmented = R.pipe(
       R.map(obj => R.assoc(`system`, obj.system.replace(
-          new RegExp(`\\W\\(` + obj.company.split(spaceIsSeparator, oneWord) + `\\)`, `i`), ``
+          new RegExp(`\\W\\(${obj.company.split(spaceIsSeparator, oneWord)}\\)`, `i`), ``
         ), obj //`Casio Game (Casio)` -> `Casio Game` 
       ))
     , R.map(obj => R.assoc(`system`, obj.system.replace(
-          new RegExp(obj.company.split(spaceIsSeparator, oneWord) + `\\W` + `\\s`, `i`), ``
+          new RegExp(`${obj.company.split(spaceIsSeparator, oneWord)}\\W\\s`, `i`), ``
         ), obj  //`Casio Game (Casio, v12)` -> `Casio Game`
       )) 
     , R.map(obj => R.assoc(`system`, obj.system.replace(
-          new RegExp(obj.company.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``
-        ), obj // `Casio Casio Mk3` ->`Casio Mk3g`
+          new RegExp(`${obj.company.split(spaceIsSeparator, oneWord)}\\W`, `i`), ``
+        ), obj // `Casio Casio Mk3` ->`Casio Mk3`
       )) 
   )(systems)
-
 
 
   const compRep = (oldCompany, newCompany) => R.map( 
@@ -111,7 +110,9 @@ function mungeCompanyAndSystemNames(systems){
 
   return mungedSystems
 }
-function removeBoringSystems(systems){
+
+
+function removeBoringSystems(systems) {
 
   const boringSystems =[
      `3Com Palm III`, `A.S.E.L. Amico 2000`, `APF Mathemagician`, `BeeHive DM3270`, `Bergmans & Malcolm Sitcom`, `California Computer Systems CCS Model 2810 CPU card`
@@ -166,11 +167,12 @@ function printARomdata(systems) {
    * 15)  _Rating, 16)  _NumPlay, 17)  IPS start, 18)  IPS end, 19)  _DefaultGoodMerge : String; //The user selected default GoodMerge ROM */
 
   const applyRomdata = platform => R.map( obj => {
+
         const romParams = {
         name : obj.company? `${obj.company} ${obj.system}`: `${obj.system}`
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
-      , path : path
+      , path
       , company : obj.company
       , year : `unknown`
       , comment : obj.cloneof? `clone of ${obj.cloneof}` : `` 
@@ -178,6 +180,7 @@ function printARomdata(systems) {
 
     if (platform==="mame") return mameRomdataLine(romParams)
     if (platform==="retroarch") return retroarchRomdataLine(romParams)
+    return console.error(`unsupported platform: ${platform}`)
 
   }, systems)
 
@@ -218,8 +221,8 @@ ChkIcon=1
 CmbIcon=mess.ico
 `
 
-  fs.writeFileSync(mameOut + `folders.ini`, iconTemplate)
-  fs.writeFileSync(mameOut + `romdata.dat`, mameRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
+  fs.writeFileSync(`${mameOut}folders.ini`, iconTemplate)
+  fs.writeFileSync(`${mameOut}romdata.dat`, mameRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   //fs.writeFileSync(retroarchOut + `romdata.dat`, retroarchRomdataToPrint.join(`\n`), `latin1`) //not working in retroarch
   
   return systems
