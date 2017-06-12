@@ -33,7 +33,7 @@ R.pipe(
 function makeSoftlists(emuSystems) {
   R.map(emu => {
         const softlistParams = makeParams(emu)
-        makeASoftlist(softlistParams.xml, function(softlist) {
+        makeASoftlist(softlistParams.xml, softlist => {
           const cleanedSoftlist = cleanSoftlist(softlist)
           printARomdata(cleanedSoftlist, softlistParams)
         })
@@ -61,7 +61,8 @@ function callSheet(systems) {
    if (softlistsWithNoGames.includes(list.name)) { 
      if (logExclusions) console.log(`INFO: Removing  ${list.name} from ${machine} because there are no games in the list`) 
      return softlistsWithNoGames.includes(list.name)
-   }
+   }  
+   return false
   }
  
   //take out of the softlist key, those softlists in the exclusion list above
@@ -238,8 +239,8 @@ function chooseDefaultEmus(softlistEmus) {
 
     //rate the current object we're on against an accumulated value
     const decide = (rating, accum) => rating > accum? (
-        defaultEmus[emu.name]         = emu
-      , softlistRatings[emu.name]     = emu.rating
+        defaultEmus[emu.name]          = emu
+      , softlistRatings[emu.name]      = emu.rating
       , logDecisions[emu.emulatorName] = `accepted for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}`
     ) 
     : (
@@ -298,25 +299,26 @@ function chooseDefaultEmus(softlistEmus) {
 function makeParams(emulator) {
   
   const //I like forward slashes in system type. System doesn't...
-      systemType     = emulator.systemType?
-      emulator.systemType.replace(/\//g, `-`) : console.log(`TYPE PROBLEM: ${emulator.displayMachine} doesn't have a system type to use as a potential folder name`) 
+      systemType              = emulator.systemType?
+          emulator.systemType.replace(/\//g, `-`) 
+        : console.log(`TYPE PROBLEM: ${emulator.displayMachine} doesn't have a system type to use as a potential folder name`) 
       //I like forward slashes in system names. System doesn't...and bloody apple again
       //(The apple specifics are only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure)
-    , displayMachine1= emulator.displayMachine.replace(/\/\/\//g, `III`)
-    , displayMachine2= displayMachine1.replace(/\/\//g, `II`)
-    , displayMachine = displayMachine2.replace(/\//g, `-`)
-    , name1          = emulator.name.replace(/\/\/\//g, `III`)
-    , name2          = name1.replace(/\/\//g, `II`)
+    , displayMachine1         = emulator.displayMachine.replace(/\/\/\//g, `III`)
+    , displayMachine2         = displayMachine1.replace(/\/\//g, `II`)
+    , displayMachine          = displayMachine2.replace(/\//g, `-`)
+    , name1                   = emulator.name.replace(/\/\/\//g, `III`)
+    , name2                   = name1.replace(/\/\//g, `II`)
 
-    , name           = name2.replace(/\//g, `-`)
+    , name                    = name2.replace(/\//g, `-`)
 
-    , thisEmulator   = emulator
-    , stream         = fs.createReadStream(`${hashDir}${name}.xml`)
-    , xml            = new XmlStream(stream)
-    , mameOutRootDir     = `${outputDir}mame_softlists/`
-    , mameOutTypePath    = `${mameOutRootDir}/${systemType}`
-    , mameOutNamePath    = `${mameOutTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
-    , mameOutFullPath    = `${mameOutNamePath}/romdata.dat`
+    , thisEmulator            = emulator
+    , stream                  = fs.createReadStream(`${hashDir}${name}.xml`)
+    , xml                     = new XmlStream(stream)
+    , mameOutRootDir          = `${outputDir}mame_softlists/`
+    , mameOutTypePath         = `${mameOutRootDir}/${systemType}`
+    , mameOutNamePath         = `${mameOutTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
+    , mameOutFullPath         = `${mameOutNamePath}/romdata.dat`
     , retroarchOutRootDir     = `${outputDir}retroarch_softlists/`
     , retroarchOutTypePath    = `${retroarchOutRootDir}/${systemType}`
     , retroarchOutNamePath    = `${retroarchOutTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
@@ -578,7 +580,7 @@ function printARomdata(softlist, softlistParams) {
     const node = {}
     R.map(emuName => {
       const tagCountry = whichCountryIsThisEmuFor(emuName)
-      tagCountry? node[tagCountry] = emuName : null //we didn't ensure we always had a country in the regional emus, apple2's ROM003 derivatives are giving us a couple of undef
+      if (tagCountry) node[tagCountry] = emuName //we didn't ensure we always had a country in the regional emus, apple2's ROM003 derivatives are giving us a couple of undef
     }, emuRegionalNames)
       
     return node
@@ -591,7 +593,7 @@ function printARomdata(softlist, softlistParams) {
     const keys = R.keys(emusTaggedByCountry) //we encoded the country info as key, so get that out to compare
     R.map(emuCountry => {
       const tagRegion = whichRegionIsThisCountryFor(emuCountry) 
-      tagRegion? node[tagRegion] = emusTaggedByCountry[emuCountry] : null //this time we have to look back at the country key in the passed in array and pick out its emulator
+      if (tagRegion) node[tagRegion] = emusTaggedByCountry[emuCountry] //this time we have to look back at the country key in the passed in array and pick out its emulator
     }, keys)
     if (logRegions) console.log(`     ++++ Made a region keyed emu list ${JSON.stringify(node)}`)
     
@@ -605,7 +607,7 @@ function printARomdata(softlist, softlistParams) {
     const keys = R.keys(emusTaggedByRegion) //we encoded the country info as key, so get that out to compare
     R.map(emuRegion => {
       const tagStandard = whichStandardIsThisRegionFor(emuRegion) 
-      tagStandard? node[tagStandard] = emusTaggedByRegion[emuRegion] : null //this time we have to look back at the country key in the passed in array and pick out its emulator
+      if (tagStandard) node[tagStandard] = emusTaggedByRegion[emuRegion] //this time we have to look back at the country key in the passed in array and pick out its emulator
     }, keys)
     if (logRegions) console.log(`      ++++ Made a standard keyed emu list ${JSON.stringify(node)}`)
     
@@ -617,9 +619,9 @@ function printARomdata(softlist, softlistParams) {
   //sets the variables for a line of romdata entry for later injection into a romdata printer
   const applyRomdata = (obj, platform)  => R.map( obj => {
 
-        const emuWithRegionSet = setRegionalEmu(obj.name, softlistParams.thisEmulator.emulatorName, softlistParams.thisEmulator.regions)
+    const emuWithRegionSet = setRegionalEmu(obj.name, softlistParams.thisEmulator.emulatorName, softlistParams.thisEmulator.regions)
 
-        const romParams = {
+    const romParams = {
         name : obj.name.replace(/[^\x00-\x7F]/g, "") //remove japanese
       , MAMEName : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
@@ -637,7 +639,7 @@ function printARomdata(softlist, softlistParams) {
 
     if (platform === `mame`) return mameRomdataLine(romParams)
     if (platform === `retroarch`) return retroarchRomdataLine(romParams)
-
+    return console.error(`unsupported platform: ${platform}`)
   }, softlist)
 
   const mameRomdata = applyRomdata(softlist, `mame`)
