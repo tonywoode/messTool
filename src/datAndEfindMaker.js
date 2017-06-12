@@ -32,11 +32,11 @@ const rl = readline.createInterface({
   input: fs.createReadStream(datInPath)
 })
 
-rl.on('line', (line) => { currentTypeList.push(line) })
+rl.on( 'line', (line) => currentTypeList.push(line) )
 
 
 //program flow
-makeSystems(function(systems){
+makeSystems( systems => {
 
   R.pipe(
      cleanSoftlists
@@ -51,7 +51,7 @@ makeSystems(function(systems){
 })
 
 
-function mockSystems(callback){
+function mockSystems(callback) {
   const 
       input   = fs.readFileSync(`inputs/systems.json`)
    ,  systems = JSON.parse(input)
@@ -60,7 +60,7 @@ function mockSystems(callback){
 }
 
 //Parse the mame xml pulling out the fields we need but only from systems which actually work
-function makeSystems(callback){
+function makeSystems(callback) {
   const systems = []
   
   //xml stream 'collects' these meaning it deals with repeating xml keys rather than overwriting each time
@@ -68,7 +68,7 @@ function makeSystems(callback){
   xml.collect('softwarelist')
   xml.collect(`extension`) //turns out xml stream is just regexing these keys, so this is deeply-nested
   console.log(`Reading a very large xml file, patience...`) 
-  xml.on(`updateElement: machine`, function(machine) {
+  xml.on(`updateElement: machine`, machine => {
     if ( //machine.softwarelist // we used to do this when doing retroarch, but it turned out life wasn't that simple after all....
          machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
       && machine.$.isdevice === `no` //see the mame.exe (internal)  DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no"> TODO: some home consoles didn't have devices...
@@ -93,7 +93,7 @@ function makeSystems(callback){
     }
   })
 
-  xml.on(`end`, function(){
+  xml.on(`end`, () => {
     //fs.writeFileSync(`inputs/systems.json`, JSON.stringify(systems, null, `\t`)); process.exit()
     callback(systems)
   })
@@ -102,7 +102,7 @@ function makeSystems(callback){
 
 
 //I don't like working with a messy tree, lots of $ and needless repetition...
-function cleanSoftlists(systems){
+function cleanSoftlists(systems) {
 
   //I removed the destructuring elsewhere but here the object isn't going to grow
   const flattenSoftlist = softlist  => 
@@ -118,12 +118,11 @@ function cleanSoftlists(systems){
   return replaceIfSoftlist
 }
 
-function cleanDevices(systems){
+function cleanDevices(systems) {
   //not all devices have media, so we must check for null. Time to introduce maybe
   const flattenExtensions = extensions => {
-   var fixed = null
-   if (extensions){ fixed = R.map(extension => extension.$.name, extensions)}
-   if (fixed) return fixed 
+    if (extensions) return R.map(extension => extension.$.name, extensions)
+    return null
   }
 
   //note applySpec is currying in the device object without. You might want to key these by 'name' - see applySpec doc
@@ -163,7 +162,7 @@ function cleanDevices(systems){
  *  1) we'll track what mame calls it - Sinclair Research Systems Ltd
  *  2) to display something as part of the name for each system - Sinclair ZX Spectrum 48k plus
  *  3) to inlcude (or not) in the system type - MSX */
-function mungeCompanyAndSytemsNames(systems){
+function mungeCompanyAndSytemsNames(systems) {
 
 
   const systemsAugmented = R.pipe(
@@ -173,7 +172,7 @@ function mungeCompanyAndSytemsNames(systems){
    ,  R.map(obj => R.assoc(`mungedSystem`,  obj.system,  obj))
       //take company from system name if they repeat
     , R.map(obj => R.assoc(`mungedSystem`, obj.mungedSystem.replace(
-          new RegExp(obj.mungedCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``
+          new RegExp(`${obj.mungedCompany.split(spaceIsSeparator, oneWord)}\\W`, `i`), ``
       ), obj 
     )) 
   )(systems)
@@ -199,11 +198,11 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(/Amstrad .*/, `Amstrad`), systRep(`Amstrad`, /(CPC|GX4000)/, `CPC`), systRep(`Amstrad`, /^PC([0-9]*).*/, `PC`)
     , compRep(`APF Electronics Inc.`, `APF`), systRep(`APF`, `M-1000`, `Imagination Machine`)
     , compRep(/Apple Computer/, `Apple`), systRep(`Apple`, /(Macintosh LC|Macintosh II.*)/, `Macintosh II (68020/68030)`)
-    , systRep(`Apple`, /Macintosh (Plus|SE|Classic)/, `Macintosh (6800)`), systRep(`Apple`,/(^II.*|\]\[|\/\/c|\/\/e)/,`II`)
-    , systRep(`Apple`,/\/\/\//,`III`)
-    , systRep(`Atari`,/(400|^800.*|XE Game System)/, `400/600/800/1200/XE`) //don't match atari 7800
-    , compRep(`Bally Manufacturing`,`Bally`)
-    , systRep(`Bandai`,`Super Vision 8000`, `Super Vision`) 
+    , systRep(`Apple`, /Macintosh (Plus|SE|Classic)/, `Macintosh (6800)`), systRep(`Apple`, /(^II.*|\]\[|\/\/c|\/\/e)/, `II`)
+    , systRep(`Apple`, /\/\/\//, `III`)
+    , systRep(`Atari`, /(400|^800.*|XE Game System)/, `400/600/800/1200/XE`) //don't match atari 7800
+    , compRep(`Bally Manufacturing`, `Bally`)
+    , systRep(`Bandai`, `Super Vision 8000`, `Super Vision`) 
     , systRep(`Bondwell Holding`, /.*/, `Bondwell`), compRep(`Bondwell Holding`, ``) //change company after
     , systRep(`Casio`, `PV-1000`, `PV`)
     , systRep(`Central Data`, `CD 2650`, `2650`)
@@ -216,9 +215,9 @@ function mungeCompanyAndSytemsNames(systems){
     , compRep(`Dick Smith Electronics`, `Dick Smith`)
     , compRep(`Digital Equipment Corporation`, `DEC`)
     , compRep(`Dragon Data Ltd`, `Dragon`)
-    , systRep(`EACA`,`Colour Genie EG2000`, `Colour Genie`)
+    , systRep(`EACA`, `Colour Genie EG2000`, `Colour Genie`)
     , systRep(`Ei Nis`, `Pecom 32`, `Pecom`) 
-    , systRep(`Elektronika`,`BK 0010`, `BK`)
+    , systRep(`Elektronika`, `BK 0010`, `BK`)
     , systRep(`Emerson`, `Arcadia 2001`, `Arcadia`)
     , systRep(`Epson`, `PX-4`, `PX`)
     , compRep(`Exidy Inc`, `Exidy`)
@@ -258,16 +257,16 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`PEL Varazdin`, `Orao 102`, `Orao`)
     , systRep(`Psion`, /Organiser II.*/, `Organiser II`)
     , compRep(`Data Applications International`, `DAI`), systRep(`DAI`, `DAI Personal Computer`, `Personal Computer`)
-    , compRep(`Elektronika inzenjering` , ``)
+    , compRep(`Elektronika inzenjering`, ``)
     , systRep(`International Business Machines`, `IBM PC 5150`, `PC`), compRep(`International Business Machines`, `IBM`) //change company after
-    , systRep(`Interton`, `Electronic VC 4000` , `VC 4000`)
-    , systRep(``, `Orion128` , `Orion`) //note these assume youve transformed <unknown> already
-    , systRep(``, `PK8020Korvet` , `Korvet PK`)
+    , systRep(`Interton`, `Electronic VC 4000`, `VC 4000`)
+    , systRep(``, `Orion128`, `Orion`) //note these assume youve transformed <unknown> already
+    , systRep(``, `PK8020Korvet`, `Korvet PK`)
     , compRep(`Jungle Soft / KenSingTon / Chintendo / Siatronics`, '')
-    , systRep(/Welback Holdings .*/ , `Mega Duck / Cougar Boy`, `Mega Duck/Cougar Boy`), compRep(/Welback Holdings .*/, ``) //change company after
+    , systRep(/Welback Holdings .*/, `Mega Duck / Cougar Boy`, `Mega Duck/Cougar Boy`), compRep(/Welback Holdings .*/, ``) //change company after
     , compRep(`Miles Gordon Technology plc`, `MGT`)
     , compRep(`Processor Technology Corporation`, `PTC`), systRep(`PTC`, `SOL-20`, `Sol`)
-    , systRep(``, `Radio86RK` , `Radio-86RK`) //seems MESS made the mistake here...
+    , systRep(``, `Radio86RK`, `Radio-86RK`) //seems MESS made the mistake here...
     , systRep(`Sanyo`, `MBC-55x`, `MBC`), systRep(`Sanyo`, `PHC-25`, `PHC`)
     , systRep(`SNK`, /(Neo-Geo$|Neo-Geo AES)/, `Neo Geo`), systRep(`SNK`, `Neo-Geo CDZ`, `Neo Geo CD`) //wikipedia says MESS is wrong
       , systRep(`SNK`, `NeoGeo Pocket`, `Neo Geo Pocket`) //MESS says MESS is wrong....
@@ -287,7 +286,7 @@ function mungeCompanyAndSytemsNames(systems){
     , systRep(`VEB Robotron Electronics Riesa`, `Z1013`, `KC Series`), compRep(`VEB Robotron Electronics Riesa`, `Robotron`)  //company aftre 
     , compRep(`V. I. Lenin`, `Lenin`), systRep(`Lenin`, `PK-01 Lviv`, `Lviv`)
     , systRep(`Video Technology`, /Laser.*/, `Laser Mk1`)
-    , compRep(`Visual Technology Inc` , `Visual`)
+    , compRep(`Visual Technology Inc`, `Visual`)
     , systRep(`Watara`, `Super Vision`, `Supervision`) //again MESS seems to be wrong
 
     )(systemsAugmented)
@@ -297,7 +296,7 @@ function mungeCompanyAndSytemsNames(systems){
 }
 
 
-function mungeCompanyForType(systems){
+function mungeCompanyForType(systems) {
 
   const systemsWithDisplayComp = R.pipe(
 
@@ -318,7 +317,7 @@ function mungeCompanyForType(systems){
 }
 
 
-function makeFinalSystemTypes(systems){
+function makeFinalSystemTypes(systems) {
 
    //before we replace the clone systems with the system type they are cloned from, we need to get our type property together
   const systemsWithType = R.map(obj => 
@@ -349,7 +348,7 @@ function makeFinalSystemTypes(systems){
 
 /* Many systems aren't of interest since they're never going to have enjoyable games
  *  it was easiest to specify the fully munged system types (that's why i'm removing these as a last step) */
-function removeBoringSystems(systems){
+function removeBoringSystems(systems) {
 
   const boringSystems =[
       `Acorn System 1`, `Acorn System 3`, `Ampro Litte Z80 Board`, `Andrew Donald Booth All Purpose Electronic X-ray Computer`
@@ -358,7 +357,7 @@ function removeBoringSystems(systems){
     , `Digital Research Computers Big Board`, `Elwro 800 Junior`, `Frank Heyder Amateurcomputer AC1 Berlin`, `Intel Intellec MDS-II`, `Joachim Czepa C-80` 
     , `Josef Kratochvil BOB-85`, `LCD EPFL Stoppani Dauphin`, `Manchester University Small-Scale Experimental Machine, 'Baby'`, `Michael Bauer Dream 6800` 
     , `Militaerverlag der DDR Ausbaufaehiger Mikrocomputer mit dem U 880`, `MOS Technologies KIM-1`, `Motorola MEK6800D2`, `Mugler/Mathes PC/M`
-    , `Multitech Micro Professor 1`, `Multitech Microkit09`, `National JR-100`,`Netronics Explorer/85`, `Nokia Data MikroMikko 1 M6`, `Osborne 1`
+    , `Multitech Micro Professor 1`, `Multitech Microkit09`, `National JR-100`, `Netronics Explorer/85`, `Nokia Data MikroMikko 1 M6`, `Osborne 1`
     , `Peripheral Technology PT68K2`, `Peripheral Technology PT68K4`, `Pitronics Beta`, `PolyMorphic Systems Poly-88`, `Radio Bulletin Cosmicos`
     , `Research Machines RM-380Z`, `Rockwell AIM 65`, `Sanyo MBC`, `Signetics Instructor 50`, `Signetics PIPBUG`, `Slicer Computers Slicer`
     , `Small Systems Engineering SoftBox`, `SWTPC S/09 Sbug`, `System 99 Users Group SGCPU`, `Talking Electronics magazine TEC-1A with JMON`
@@ -368,7 +367,7 @@ function removeBoringSystems(systems){
   ]
 
   const isItBoring = systemType => { 
-    if (boringSystems.includes(systemType)) { console.log( `removing an emu of type ${systemType} - there will likely never be any games`) }
+    if ( boringSystems.includes(systemType) ) console.log( `removing an emu of type ${systemType} - there will likely never be any games`)
     return boringSystems.includes(systemType) 
   }
   
@@ -383,7 +382,7 @@ function removeBoringSystems(systems){
  *   MESS' original system name to capture what makes each system different. However there are some considerations that also apply to system munging 
  *   that need re-application, along with some new concerns regarding the output format
  */
-function print(systems){
+function print(systems) {
 
   const mameEfindTemplate = ({topLine, systemType, callToMake, info}) =>
     (`[MAME ${topLine}]
@@ -422,15 +421,15 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   const efinder = R.pipe(
     
       //take company from system name if they repeat
-      R.map( obj => R.assoc(`displaySystem`, obj.displayCompany == ``? 
-          obj.system : obj.system.replace(new RegExp(obj.displayCompany.split(spaceIsSeparator, oneWord) + `\\W`, `i`), ``), obj)
+      R.map( obj => R.assoc(`displaySystem`, obj.displayCompany === ``? 
+          obj.system : obj.system.replace(new RegExp(`${obj.displayCompany.split(spaceIsSeparator, oneWord)}\\W`, `i`), ``), obj)
       ) 
 
       //it wasn't very forward thinking to call it the Apple ][ 
     , R.map( obj => R.assoc(`displaySystem`, obj.displaySystem.replace(/\]\[/, `II`), obj) )
 
     //create the display name for this machine
-    , R.map( obj => R.assoc(`displayMachine`, obj.displayCompany == `` ? 
+    , R.map( obj => R.assoc(`displayMachine`, obj.displayCompany === `` ? 
           `${obj.displaySystem}` : `${obj.displayCompany} ${obj.displaySystem}`, obj) )
 
   )(systems)
@@ -470,16 +469,16 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   const mameDevices = [] //this is an accumlator, we need to reduce....
   const retroarchDevices = [] //this is an accumlator, we need to reduce....
   
-  const efinderToPrint = R.map (obj => (
+  const efinderToPrint = R.map(obj => (
       obj.softlist?  softlistEfinderToPrint(obj) : ``
     , devicesEfinderToPrint(obj) //don't check if devices exist, wouldn't be a mess game system without >0
-  ) , efinder)
+  ), efinder)
  
   const joinedMameDevices = mameDevices.join(`\n`)
   const joinedRetroarchDevices = retroarchDevices.join(`\n`)
   console.log(`Printing inis to ${mameIniOutPath} / ${rarchIniOutPath}`)
-  logIni? console.log(joinedMameDevices) : ``
-  logIni? console.log(joinedRetroarchDevices) : ``
+  if (logIni) console.log(joinedMameDevices)
+  if (logIni) console.log(joinedRetroarchDevices)
   fs.writeFileSync(mameIniOutPath, joinedMameDevices, `latin1`) //utf8 isn't possible at this time
   fs.writeFileSync(rarchIniOutPath, joinedRetroarchDevices, `latin1`) //utf8 isn't possible at this time
   
@@ -489,7 +488,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
 
 
 /* Now the ini is out, print out a systems list and the json that the softlist maker will use */
-function madeDat(systems){
+function madeDat(systems) {
 
 
   //rl.on('close', (close) => { console.log(currentTypeList); process.exit() })
@@ -504,19 +503,19 @@ function madeDat(systems){
 
   //rl.on('close', (close) => { 
   //make the union dat of the old quickplay and the new systems dat
-  const unionDat = R.union(currentTypeList, ordered)
+  const unionDat        = R.union(currentTypeList, ordered)
   const orderedUnionDat = unionDat.sort( (a, b) => a.localeCompare(b) )
-  const joinedUnionDat =orderedUnionDat.join(`\n`) 
+  const joinedUnionDat  = orderedUnionDat.join(`\n`) 
  
   console.log(`Printing systems dat to ${datOutPath}`)
-  logDat? console.log(joinedUnionDat) : ``
+  if (logDat) console.log(joinedUnionDat)
   fs.writeFileSync(datOutPath, joinedUnionDat, `latin1`)  //utf8 isn't possible at this time
   //})
 
   //print out the json we made, romdatamaker.js uses it
   const pretty = JSON.stringify(systems, null, `\t`)
   console.log(`Printing systems JSON to ${jsonOutPath}`)
-  logJSON? console.log(pretty) : ``
+  if (logJSON) console.log(pretty)
   fs.writeFileSync(jsonOutPath, pretty)
   console.log(`done`)
   process.exit()
