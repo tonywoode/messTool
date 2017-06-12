@@ -59,7 +59,7 @@ function callSheet(systems) {
 
  const isThisSoftlistBoring = (list, machine) => {
    if (softlistsWithNoGames.includes(list.name)) { 
-     logExclusions? console.log(`INFO: Removing  ${list.name} from ${machine} because there are no games in the list`) : ''
+     if (logExclusions) console.log(`INFO: Removing  ${list.name} from ${machine} because there are no games in the list`) 
      return softlistsWithNoGames.includes(list.name)
    }
   }
@@ -176,7 +176,7 @@ function filterSoftlists(softlistEmus) {
 
   //make a k-v telling us if list exists on disk - is the softlist found in the softlist directory
   const softlistFileExists = R.map( obj => (
-      R.assoc(`doesSoftlistFileExist`, fs.existsSync(`${hashDir}${obj.name}.xml`)? true : false, obj)
+      R.assoc(`doesSoftlistFileExist`, fs.existsSync(`${hashDir}${obj.name}.xml`), obj)
     )
   , removedProblemDevices)
 
@@ -263,7 +263,7 @@ function chooseDefaultEmus(softlistEmus) {
     const regionals = []
     const matchme = defaultEmu.emulatorName.match(/\(.*\)|only/) //actually this list is pretty good as it is ( it should contain all regions instead of that kleene)
       if (matchme) {
-        logChoices? console.log(`${defaultEmu.emulatorName} is a match`) : ''
+        if (logChoices) console.log(`${defaultEmu.emulatorName} is a match`)
         //if it does, then look back in the rejected emus for those named the same except for the ()
         const nesRegex = defaultEmu.emulatorName.replace(/ \/ Famicom /, ``)
         const snesRegex = nesRegex.replace(/ \/ Super Famicom /, ``)
@@ -271,7 +271,7 @@ function chooseDefaultEmus(softlistEmus) {
         const regex1 = megadriveRegex.replace(/PAL|NTSC only/, ``)
         
         const regex = new RegExp(regex1.replace(/\(.*\)/, `(.*)`))//only relace first occurance
-        logChoices? console.log(regex) : ''
+        if (logChoices) console.log(regex)
         R.map(rejected => rejected.emulatorName.match(regex)? (
           logChoices? console.log(`---->>>> matches ${rejected.emulatorName}`) : ''
             //add them to a key "regions", but filter by softlist name otherwise Atari 800 (NTSC) -SOFTLIST a800 matches Atari 800 (PAL) -SOFTLIST a800_flop
@@ -357,7 +357,7 @@ function makeASoftlist(xml, callback) {
       softlist.push(node)
     }
   })
-  xml.on(`end`, function(){
+  xml.on(`end`, () => {
     // console.log(JSON.stringify(softlist, null, '\t')); process.exit()
     callback(softlist)
   })
@@ -368,7 +368,7 @@ function makeASoftlist(xml, callback) {
 /* I don't like working with a messy tree, lots of $ and needless repetition...With softlists it tuned
  *   out that we have three identically keyed objects, so a generic function will clean them all up
  */
-function cleanSoftlist(softlist){
+function cleanSoftlist(softlist) {
   //I removed destructuring elsewhere but here the object isn't going to grow
   const cleanPairs = key  => 
     R.map( ({ $ }) => 
@@ -392,10 +392,10 @@ function cleanSoftlist(softlist){
 function printARomdata(softlist, softlistParams) {
   //don't make a dat or folder if all of the games for a softlist aren't supported
   if (!softlist.length) { 
-    logExclusions? console.log(`INFO: Not printing soflist for ${softlistParams.name} because there are no working games`) : ''
+    if (logExclusions) console.log(`INFO: Not printing soflist for ${softlistParams.name} because there are no working games`)
     return softlist
   }
-  logPrinter? console.log(`INFO: printing softlist for ${softlistParams.name}`) : ''
+  if (logPrinter) console.log(`INFO: printing softlist for ${softlistParams.name}`)
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
   const mameRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
@@ -412,10 +412,12 @@ function printARomdata(softlist, softlistParams) {
   const createComment = (commentCandidates) => {
     const comments = []  
     R.map(commentCandidate => {
-      commentCandidate? R.map( item => {
-        const nonJapItem = item.value.replace(/[^\x00-\x7F]/g, "")
-        comments.push(`${item.name}:${nonJapItem}`)  
-      }, commentCandidate) : ''
+      if (commentCandidate) { 
+        R.map( item => {
+          const nonJapItem = item.value.replace(/[^\x00-\x7F]/g, "")
+          comments.push(`${item.name}:${nonJapItem}`)  
+        }, commentCandidate) 
+      }
     }, commentCandidates)
       
     return comments
@@ -528,14 +530,14 @@ function printARomdata(softlist, softlistParams) {
     const emusTaggedByCountry = tagEmuCountry(emuRegionalNames)
     const emuCountries =  R.keys(emusTaggedByCountry) 
     //so now we have the basics of a decision node: LHS=region code RHS=region code choices
-    logRegions? console.log(`  -> Matching ${gameCountry}, possible emus are ${JSON.stringify(emuCountries)}` ) : ''
+    if (logRegions) console.log(`  -> Matching ${gameCountry}, possible emus are ${JSON.stringify(emuCountries)}` )
    
 
     //first: do we find a match?
     const foundInCountry = R.indexOf(gameCountry, emuCountries) !== -1? gameCountry : null
-    if (foundInCountry){
+    if (foundInCountry) {
       const foundEmu = emusTaggedByCountry[foundInCountry]
-      logRegions? console.log(`    ---->country match: ${foundInCountry} matches ${foundEmu}`) : ''
+      if (logRegions) console.log(`    ---->country match: ${foundInCountry} matches ${foundEmu}`)
       return foundEmu
     }
     
@@ -544,12 +546,12 @@ function printARomdata(softlist, softlistParams) {
     const emusTaggedByRegion = tagEmuRegion(emusTaggedByCountry)
     const emuRegions = R.keys(emusTaggedByRegion)
     const gameRegion = whichRegionIsThisCountryFor(gameCountry)
-    logRegions? console.log(`and the game's region for that country comes out as ${gameRegion}`) : ''
+    if (logRegions) console.log(`and the game's region for that country comes out as ${gameRegion}`)
     //console.log(`so i'm matching ${gameRegion} against ${JSON.stringify(emuRegions)}`)
     const foundInRegion = R.indexOf(gameRegion, emuRegions) !== -1? gameRegion : null
-    if (foundInRegion){
+    if (foundInRegion) {
       const foundEmu = emusTaggedByRegion[foundInRegion]
-      logRegions? console.log(`    ---->region match: ${foundInRegion} matches ${foundEmu}`) : ''
+      if (logRegions) console.log(`    ---->region match: ${foundInRegion} matches ${foundEmu}`)
       return foundEmu
     }
 
@@ -560,14 +562,14 @@ function printARomdata(softlist, softlistParams) {
     const gameStandard = whichStandardIsThisRegionFor(gameRegion)
     //console.log(`so i'm matching ${gameStandard} against ${JSON.stringify(emuRegions)}`)
     const foundInStandard = R.indexOf(gameStandard, emuStandards) !== -1? gameStandard : null
-    if (foundInStandard){
+    if (foundInStandard) {
       const foundEmu = emusTaggedByStandard[foundInStandard]
-      logRegions? console.log(`    ---->standard match: ${foundInStandard} matches ${foundEmu}`) : ''
+      if (logRegions) console.log(`    ---->standard match: ${foundInStandard} matches ${foundEmu}`)
       return foundEmu
     }
     
     //lastly give up and choose default
-    logRegions? console.log(`I found nothing`) : ''
+    if (logRegions) console.log(`I found nothing`)
     return useTheDefaultEmulator
   }
 
@@ -591,7 +593,7 @@ function printARomdata(softlist, softlistParams) {
       const tagRegion = whichRegionIsThisCountryFor(emuCountry) 
       tagRegion? node[tagRegion] = emusTaggedByCountry[emuCountry] : null //this time we have to look back at the country key in the passed in array and pick out its emulator
     }, keys)
-    logRegions? console.log(`     ++++ Made a region keyed emu list ${JSON.stringify(node)}`) : ''
+    if (logRegions) console.log(`     ++++ Made a region keyed emu list ${JSON.stringify(node)}`)
     
     return node
    
@@ -605,7 +607,7 @@ function printARomdata(softlist, softlistParams) {
       const tagStandard = whichStandardIsThisRegionFor(emuRegion) 
       tagStandard? node[tagStandard] = emusTaggedByRegion[emuRegion] : null //this time we have to look back at the country key in the passed in array and pick out its emulator
     }, keys)
-    logRegions? console.log(`      ++++ Made a standard keyed emu list ${JSON.stringify(node)}`) : ''
+    if (logRegions) console.log(`      ++++ Made a standard keyed emu list ${JSON.stringify(node)}`)
     
     return node
    
@@ -633,13 +635,13 @@ function printARomdata(softlist, softlistParams) {
       
     }
 
-    if (platform === "mame") return mameRomdataLine(romParams)
-    if (platform === "retroarch") return retroarchRomdataLine(romParams)
+    if (platform === `mame`) return mameRomdataLine(romParams)
+    if (platform === `retroarch`) return retroarchRomdataLine(romParams)
 
   }, softlist)
 
-  const mameRomdata = applyRomdata(softlist, "mame")
-  const retroarchRomdata = applyRomdata(softlist, "retroarch")
+  const mameRomdata = applyRomdata(softlist, `mame`)
+  const retroarchRomdata = applyRomdata(softlist, `retroarch`)
   const mameRomdataToPrint = R.prepend(romdataHeader, mameRomdata) 
   const retroarchRomdataToPrint = R.prepend(romdataHeader, retroarchRomdata) 
 
