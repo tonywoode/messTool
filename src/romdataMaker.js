@@ -5,7 +5,7 @@ const
   , XmlStream       = require(`xml-stream`)
   , R               = require(`Ramda`)
   , mkdirp          = require('mkdirp')
-  , leven           = require(`Levenshtein`)
+  , Leven           = require(`Levenshtein`)
 
 const
     hashDir         = `inputs/hash/`
@@ -198,7 +198,7 @@ function filterSoftlists(softlistEmus) {
 
   //get the edit distance of every softlist system to the softlist prefix
   const getDistance = (call, namePrefix) => {
-    const l = new leven(call, namePrefix)
+    const l = new Leven(call, namePrefix)
     let round = 0
     if (l.distance === 0) round =  40
     if (l.distance === 1) round =  30
@@ -282,12 +282,12 @@ function chooseDefaultEmus(softlistEmus) {
           ): null
         )
         : null, rejectedEmus)
-        regionals[0]? (
+        if (regionals[0]) {
             //add the original emu name to the list here, it does help the picker logic later, even though NTSC is generally the default
             regionals.push(defaultEmu.emulatorName)
             //put the list in the default emulators object
           , defaultEmu.regions = regionals 
-        ): null
+        }
         return defaultEmu
       }
   }, defaultEmus)
