@@ -495,7 +495,7 @@ function madeDat(systems) {
 
 
   const lister =  R.pipe(
-      R.map( ({call, displayMachine, systemType }) => (`${systemType}`) )
+      R.map( ({ systemType }) => (`${systemType}`) )
     , R.uniq
   )(systems)
 
