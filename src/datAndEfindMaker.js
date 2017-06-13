@@ -4,7 +4,7 @@ const
     fs            = require(`fs`)
   , readline      = require('readline')
   , XmlStream     = require(`xml-stream`)
-  , R             = require(`Ramda`)
+  , R             = require(`ramda`)
 
 const 
     datInPath        = `inputs/systems.dat`

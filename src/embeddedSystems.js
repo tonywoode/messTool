@@ -8,7 +8,7 @@
 const 
     fs            = require(`fs`)
   , XmlStream     = require(`xml-stream`)
-  , R             = require(`Ramda`)
+  , R             = require(`ramda`)
   , mkdirp        = require('mkdirp')
 
 const 

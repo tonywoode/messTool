@@ -3,9 +3,9 @@
 const 
     fs              = require(`fs`)
   , XmlStream       = require(`xml-stream`)
-  , R               = require(`Ramda`)
+  , R               = require(`ramda`)
   , mkdirp          = require('mkdirp')
-  , Leven           = require(`Levenshtein`)
+  , Leven           = require(`levenshtein`)
 
 const
     hashDir         = `inputs/hash/`
