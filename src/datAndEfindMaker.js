@@ -67,24 +67,24 @@ function makeSystems(callback) {
   xml.on(`updateElement: machine`, machine => {
     if ( //machine.softwarelist // we used to do this when doing retroarch, but it turned out life wasn't that simple after all....
          machine.device //this helps to narrow down on MESS machines vs Arcade games (lack of coin slots isn't quite enough, but this isn't enough either as many arcade machines had dvd drives)
-      && machine.$.isdevice === `no` //see the mame.exe (internal)  DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no"> TODO: some home consoles didn't have devices...
-      && machine.$.isbios === `no` 
-      && machine.$.ismechanical === `no`
-      && machine.$.runnable === `yes`
+      && machine.$.isdevice         === `no` //see the mame.exe (internal)  DTD which defaults to no: <!ATTLIST machine isdevice (yes|no) "no"> TODO: some home consoles didn't have devices...
+      && machine.$.isbios           === `no` 
+      && machine.$.ismechanical     === `no`
+      && machine.$.runnable         === `yes`
       && !machine.input.$.coins
-      //&& machine.driver.$.status === `good` //I think this is some kind of intersection of the some or all of the below
+      //&& machine.driver.$.status  === `good` //I think this is some kind of intersection of the some or all of the below
       && machine.driver.$.emulation === `good`
-      //&& machine.driver.$.color === `good`
-      //&& machine.driver.$.sound === `good`
-      //&& machine.driver.$.graphic === `good` //you want nes, don't turn this on....
+      //&& machine.driver.$.color   === `good`
+      //&& machine.driver.$.sound   === `good`
+      //&& machine.driver.$.graphic === `good` //you want nes? don't turn this on....
     ) {
-      const node = {}
-      node.company = machine.manufacturer
-      node.system = machine.description 
-      node.call = machine.$.name
-      node.cloneof = machine.$.cloneof
+      const node    = {}
+      node.company  = machine.manufacturer
+      node.system   = machine.description 
+      node.call     = machine.$.name
+      node.cloneof  = machine.$.cloneof
       node.softlist = machine.softwarelist
-      node.device = machine.device
+      node.device   = machine.device
       systems.push(node)
     }
   })
@@ -106,7 +106,7 @@ function cleanSoftlists(systems) {
      ( ({ name:$.name, status:$.status, filter:$.filter }) )
     , softlist )
 
-  //if the system has a softlist, clear up its object as the thing we scraped wasn't nice
+  //if the system has a softlist, clear up its object: the thing we scraped wasn't nice
   const replaceIfSoftlist = R.map(obj => obj.softlist? 
     obj.softlist = R.assoc(`softlist`, flattenSoftlist(obj.softlist), obj) : obj
   , systems )
@@ -326,7 +326,7 @@ function makeFinalSystemTypes(systems) {
   //a function we'll pass in later that calls the clone system or reports a problem
   const lookupCall = (cloneof, call) =>  {
     const referredSystem = R.find( R.propEq(`call`, cloneof) )(systemsWithType)
-    const originalSystem = R.find( R.propEq(`call`, call) )(systemsWithType)
+    const originalSystem = R.find( R.propEq(`call`, call)    )(systemsWithType)
     
     return referredSystem === undefined ? ( 
         console.log(`PROBLEM: ${call} says its a (working) cloneof ${cloneof} but ${cloneof} is emulated badly. Setting system type to ${originalSystem.systemType}`) 
@@ -418,7 +418,9 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
     
       //take company from system name if they repeat
       R.map( obj => R.assoc(`displaySystem`, obj.displayCompany === ``? 
-          obj.system : obj.system.replace(new RegExp(`${obj.displayCompany.split(spaceIsSeparator, oneWord)}\\W`, `i`), ``), obj)
+          obj.system : obj.system.replace(
+            new RegExp(`${obj.displayCompany.split(spaceIsSeparator, oneWord)}\\W`, `i`), ``)
+          , obj)
       ) 
 
       //it wasn't very forward thinking to call it the Apple ][ 
@@ -462,7 +464,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
     retroarchDevices.push(retroarchEfindTemplate(params))
   }, obj.device)
    
-  const mameDevices = [] //this is an accumlator, we need to reduce....
+  const mameDevices      = [] //this is an accumlator, we need to reduce....
   const retroarchDevices = [] //this is an accumlator, we need to reduce....
   
   const efinderToPrint = R.map(obj => (
@@ -475,7 +477,7 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
   console.log(`Printing inis to ${mameIniOutPath} / ${rarchIniOutPath}`)
   if (logIni) console.log(joinedMameDevices)
   if (logIni) console.log(joinedRetroarchDevices)
-  fs.writeFileSync(mameIniOutPath, joinedMameDevices, `latin1`) //utf8 isn't possible at this time
+  fs.writeFileSync(mameIniOutPath,  joinedMameDevices,      `latin1`) //utf8 isn't possible at this time
   fs.writeFileSync(rarchIniOutPath, joinedRetroarchDevices, `latin1`) //utf8 isn't possible at this time
   
   madeDat(efinder) 
@@ -486,10 +488,6 @@ Compression=2E7A69703D300D0A2E7261723D300D0A2E6163653D300D0A2E377A3D300D0A
 /* Now the ini is out, print out a systems list and the json that the softlist maker will use */
 function madeDat(systems) {
 
-
-  //rl.on('close', (close) => { console.log(currentTypeList); process.exit() })
-
-
   const lister =  R.pipe(
       R.map( ({ systemType }) => (`${systemType}`) )
     , R.uniq
@@ -497,7 +495,6 @@ function madeDat(systems) {
 
   const ordered = lister.sort( (a, b) => a.localeCompare(b) )
 
-  //rl.on('close', (close) => { 
   //make the union dat of the old quickplay and the new systems dat
   const unionDat        = R.union(currentTypeList, ordered)
   const orderedUnionDat = unionDat.sort( (a, b) => a.localeCompare(b) )

@@ -37,24 +37,24 @@ function makeSystems(callback) {
   xml.on(`updateElement: machine`, machine => {
     if ( 
          !machine.device 
-      && machine.$.isdevice === `no` 
-      && machine.$.isbios === `no` 
-      && machine.$.ismechanical === `no`
-      && machine.$.runnable === `yes`
+      && machine.$.isdevice         === `no` 
+      && machine.$.isbios           === `no` 
+      && machine.$.ismechanical     === `no`
+      && machine.$.runnable         === `yes`
       && !machine.input.$.coins
-      //&& machine.driver.$.status === `good` //I think this is some kind of intersection of the some or all of the below
+      //&& machine.driver.$.status  === `good` //I think this is some kind of intersection of the some or all of the below
       && machine.driver.$.emulation === `good`
-      //&& machine.driver.$.color === `good`
-      //&& machine.driver.$.sound === `good`
+      //&& machine.driver.$.color   === `good`
+      //&& machine.driver.$.sound   === `good`
       //&& machine.driver.$.graphic === `good` 
     ) {
-      const node = {}
-      node.company = machine.manufacturer
-      node.system = machine.description 
-      node.call = machine.$.name
-      node.cloneof = machine.$.cloneof
+      const node    = {}
+      node.company  = machine.manufacturer
+      node.system   = machine.description 
+      node.call     = machine.$.name
+      node.cloneof  = machine.$.cloneof
       node.softlist = machine.softwarelist
-      node.device = machine.device
+      node.device   = machine.device
       systems.push(node)
     }
   })
@@ -161,8 +161,11 @@ function printARomdata(systems) {
   /* this is the correct invocation for retroarch but it doesn't work, even with softlist automedia off and bios enable on
    * retroarch_debug shows it even finds the game, but then decides: 'Error: unknown option: sfach'. I've left it in in case
    * it might be related to a mismatch in MAME versions between my fileset and retroarch */
-  const retroarchRomdataLine = ({name, MAMEName, parentName, path, company, year, comment}) =>
-    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Retroarch Frontend¬${company}¬${year}¬¬¬¬-L cores\\mame_libretro.dll " ${MAMEName.replace(/"/g, '\\"')}"¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+  const retroarchRomdataLine = ({name, MAMEName, parentName, path, company, year, comment}) => (
+      `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Retroarch Frontend¬${company}¬${year}`
+    + `¬¬¬¬-L cores\\mame_libretro.dll " ${MAMEName.replace(/"/g, '\\"')}"¬${comment}`
+    + `¬0¬1¬<IPS>¬</IPS>¬¬¬`
+  )
   /*  1)  Display name, 2) _MAMEName, 3) _ParentName, 4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
    *  5) _rom path //the path to the rom, 6) _emulator,7) _Company, 8) _Year, 9) _GameType, 10) _MultiPlayer, 11)  _Language
    * 12)  _Parameters : String, 13)  _Comment, 14)  _ParamMode : TROMParametersMode; //type of parameter mode
@@ -180,20 +183,21 @@ function printARomdata(systems) {
       , comment    : obj.cloneof? `clone of ${obj.cloneof}` : `` 
     }
 
-    if (platform === "mame") return mameRomdataLine(romParams)
+    if (platform === "mame")      return mameRomdataLine(romParams)
     if (platform === "retroarch") return retroarchRomdataLine(romParams)
     return console.error(`unsupported platform: ${platform}`)
 
   }, systems)
 
-  const mameRomdata = applyRomdata("mame")
-  //const retroarchRomdata = applyRomdata("retroarch")
-  const mameRomdataToPrint = R.prepend(romdataHeader, mameRomdata) 
+  //TODO: why doesn't retroarch work?
+  const mameRomdata         = applyRomdata("mame")
+  //const retroarchRomdata  = applyRomdata("retroarch")
+  const mameRomdataToPrint  = R.prepend(romdataHeader, mameRomdata) 
   //const retroarchRomdataToPrint = R.prepend(romdataHeader, retroarchRomdata) 
-  const mameSoftRoot = `outputs/mame_softlists/`
-  const mameOut = `${mameSoftRoot}/MESS Embedded Systems/`
+  const mameSoftRoot        = `outputs/mame_softlists/`
+  const mameOut             = `${mameSoftRoot}/MESS Embedded Systems/`
   //const retroarchSoftRoot = `outputs/retroarch_softlists/`
-  //const retroarchOut = `${retroarchSoftRoot}/MESS Embedded Systems/`
+  //const retroarchOut      = `${retroarchSoftRoot}/MESS Embedded Systems/`
   mkdirp.sync(mameOut)
   //mkdirp.sync(retroarchOut)
 

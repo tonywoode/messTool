@@ -38,7 +38,6 @@ function makeSoftlists(emuSystems) {
           printARomdata(cleanedSoftlist, softlistParams)
         })
       }, emuSystems)
-
 }
 
 
@@ -138,14 +137,14 @@ function filterSoftlists(softlistEmus) {
       //FM7's disk softlist breaks the  rule and is called 'disk'. They are just floppy images, they work fine
     , R.map( obj => (obj.deviceTypeFromName === `disk`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
       //ditto epson_cpm, some of which really are games
-    , R.map( obj => (obj.deviceTypeFromName === `cpm`? obj.deviceTypeFromName = `flop`: obj.deviceTypeFromName, obj))
+    , R.map( obj => (obj.deviceTypeFromName === `cpm`? obj.deviceTypeFromName  = `flop`: obj.deviceTypeFromName, obj))
       //ditto for Timex Sinclair TS-2068
     , R.map( obj => (obj.deviceTypeFromName === `dock`? obj.deviceTypeFromName = `cart`: obj.deviceTypeFromName, obj))
       //i note some lists called hdd and some softlists called 'hard1`, `hard2`, guess for later (there are no matches atm)
-    , R.map( obj => (obj.deviceTypeFromName === `hdd`? obj.deviceTypeFromName = `hard`: obj.deviceTypeFromName, obj))
+    , R.map( obj => (obj.deviceTypeFromName === `hdd`? obj.deviceTypeFromName  = `hard`: obj.deviceTypeFromName, obj))
       // I suspect all the nes softlist will run on all systems, essentially its postfixes aren't about mess `devices`
       // Note that the same isn't true for Famicom, as there seems to be a genuine problem that Famicoms don't have cass or flops
-    , R.map( obj => (obj.systemTypeFromName === `nes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
+    , R.map( obj => (obj.systemTypeFromName === `nes`? obj.deviceTypeFromName  = `no_postfix` : obj.deviceTypeFromName, obj))
       //I suspect the same is true of the superfamicom devices bspack and strom, these aren't device names in the same way as flop or cass
     , R.map( obj => (obj.systemTypeFromName === `snes`? obj.deviceTypeFromName = `no_postfix` : obj.deviceTypeFromName, obj))
   )(softlistEmus)
@@ -266,10 +265,10 @@ function chooseDefaultEmus(softlistEmus) {
       if (matchme) {
         if (logChoices) console.log(`${defaultEmu.emulatorName} is a match`)
         //if it does, then look back in the rejected emus for those named the same except for the ()
-        const nesRegex = defaultEmu.emulatorName.replace(/ \/ Famicom /, ``)
-        const snesRegex = nesRegex.replace(/ \/ Super Famicom /, ``)
+        const nesRegex       = defaultEmu.emulatorName.replace(/ \/ Famicom /, ``)
+        const snesRegex      = nesRegex.replace(/ \/ Super Famicom /, ``)
         const megadriveRegex = snesRegex.replace(/Genesis/, `Mega Drive`)
-        const regex1 = megadriveRegex.replace(/PAL|NTSC only/, ``)
+        const regex1         = megadriveRegex.replace(/PAL|NTSC only/, ``)
         
         const regex = new RegExp(regex1.replace(/\(.*\)/, `(.*)`))//only relace first occurance
         if (logChoices) console.log(regex)
@@ -350,15 +349,15 @@ function makeASoftlist(xml, callback) {
    // &&  software.part.diskarea.disk.$.status !== `nodump`
     ) {
       const node = {}
-      node.call = software.$.name
-      node.cloneof = software.$.cloneof
-      node.name = software.description
-      node.year = software.year
-      node.company = software.publisher
-      node.info = software.info
+      node.call          = software.$.name
+      node.cloneof       = software.$.cloneof
+      node.name          = software.description
+      node.year          = software.year
+      node.company       = software.publisher
+      node.info          = software.info
       node.sharedfeature = software.sharedfeat
-      node.feature = software.part.feature
-      node.loadsWith = software.part.$.interface //reserved js word
+      node.feature       = software.part.feature
+      node.loadsWith     = software.part.$.interface //reserved js word
       softlist.push(node)
     }
   })
@@ -386,8 +385,8 @@ function cleanSoftlist(softlist) {
   , list )
 
   //TODO: good case for pipe, but the function takes the whole softlist
-  const replacedFeature = replaceIfKey(`feature`, softlist)
-  const replacedInfo    = replaceIfKey(`info`, replacedFeature)
+  const replacedFeature    = replaceIfKey(`feature`, softlist)
+  const replacedInfo       = replaceIfKey(`info`, replacedFeature)
   const replacedSharedFeat = replaceIfKey(`sharedFeat`, replacedInfo)
 
   return replacedSharedFeat
@@ -397,17 +396,23 @@ function cleanSoftlist(softlist) {
 function printARomdata(softlist, softlistParams) {
   //don't make a dat or folder if all of the games for a softlist aren't supported
   if (!softlist.length) { 
-    if (logExclusions) console.log(`INFO: Not printing soflist for ${softlistParams.name} because there are no working games`)
+    if (logExclusions) console.log(
+      `INFO: Not printing soflist for ${softlistParams.name} because there are no working games`
+    )
     return softlist
   }
   if (logPrinter) console.log(`INFO: printing softlist for ${softlistParams.name}`)
   const romdataHeader = `ROM DataFile Version : 1.1`
   const path = `./qp.exe` //we don't need a path for softlist romdatas, they don't use it, we just need to point to a valid file
-  const mameRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
-    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MAME ${emu}¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+  const mameRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) => ( 
+      `${name}¬${MAMEName}¬${parentName}¬¬${path}¬MAME ${emu}`
+    + `¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬`
+  )
 
-  const retroarchRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) =>
-    ( `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Retroarch ${emu} (MAME)¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` )
+  const retroarchRomdataLine = ({name, MAMEName, parentName, path, emu, company, year, comment}) => ( 
+      `${name}¬${MAMEName}¬${parentName}¬¬${path}¬Retroarch ${emu} (MAME)`
+    + `¬${company}¬${year}¬¬¬¬¬${comment}¬0¬1¬<IPS>¬</IPS>¬¬¬` 
+  )
   /*  1)  Display name, 2) _MAMEName, 3) _ParentName, 4) _ZipName, //Used Internally to store which file inside a zip file is the ROM
    *  5) _rom path //the path to the rom, 6) _emulator,7) _Company, 8) _Year, 9) _GameType, 10) _MultiPlayer, 11)  _Language
    * 12)  _Parameters : String, 13)  _Comment, 14)  _ParamMode : TROMParametersMode; //type of parameter mode
@@ -428,7 +433,7 @@ function printARomdata(softlist, softlistParams) {
     return comments
   }
  
-  /*because we often need the right regional machine for a game,  
+  /* Because we often need the right regional machine for a game,  
    * MAME usually considers NTSC as the default, so we do too 
    * The logic for Euro and PAL are converse - Euro wants to come before all of its regions else one of those will get chosen at random? If there's no
    * Euro machine THEN look for regions. PAL however is always trumped by any region, its the last check */
@@ -496,15 +501,15 @@ function printARomdata(softlist, softlistParams) {
 
   const whichRegionIsThisCountryFor = R.cond([
       [ country => country.match(/^US|World$/), region => `US` ] //MESS implies NTSC/US as default, so we do too 
-    , [ country => country===`Arabian`, region => `Arabian` ] //regrettable
-    , [ country => country===`PAL`, region => `PAL` ] //regrettable
-    , [ country => country===`NTSC`, region => `NTSC` ] //regrettable
-    , [ country => country===`Brazilian`, region => `Brazilian` ] //regrettable
-    , [ country => country===`Australian`, region => `Australian` ] //regrettable
+    , [ country => country === `Arabian`,       region => `Arabian` ] //regrettable
+    , [ country => country === `PAL`,           region => `PAL` ] //regrettable
+    , [ country => country === `NTSC`,          region => `NTSC` ] //regrettable
+    , [ country => country === `Brazilian`,     region => `Brazilian` ] //regrettable
+    , [ country => country === `Australian`,    region => `Australian` ] //regrettable
     , [ country => country.match(
-        /^(European|UK|French|Spanish|German|Spanish|Greek|Danish|Polish|Swedish|Finish|Danish|Polish|Hungarian|Norweigian|Netherlandic|Italian)$/
+        /^(Danish|European|Finish|French|German|Greek|Italian|Hungarian|Norweigian|Netherlandic|Polish|Swedish|Spanish|UK)$/
       ), region => `European` ]
-    , [ country => country.match(/^(Asiatic|Japanese|Korean|Taiwanese)$/), region => `Asiatic` ]
+    , [ country => country.match(/^(Asiatic|Korean|Japanese|Taiwanese)$/), region => `Asiatic` ]
   ])
 
   const whichStandardIsThisRegionFor = R.cond([
@@ -552,7 +557,7 @@ function printARomdata(softlist, softlistParams) {
     const emuRegions = R.keys(emusTaggedByRegion)
     const gameRegion = whichRegionIsThisCountryFor(gameCountry)
     if (logRegions) console.log(`and the game's region for that country comes out as ${gameRegion}`)
-    //console.log(`so i'm matching ${gameRegion} against ${JSON.stringify(emuRegions)}`)
+    //match gameRegion against emuRegions
     const foundInRegion = R.indexOf(gameRegion, emuRegions) !== -1? gameRegion : null
     if (foundInRegion) {
       const foundEmu = emusTaggedByRegion[foundInRegion]
@@ -565,7 +570,7 @@ function printARomdata(softlist, softlistParams) {
     const emusTaggedByStandard = tagEmuStandard(emusTaggedByRegion)
     const emuStandards = R.keys(emusTaggedByStandard)
     const gameStandard = whichStandardIsThisRegionFor(gameRegion)
-    //console.log(`so i'm matching ${gameStandard} against ${JSON.stringify(emuRegions)}`)
+    //match gameStandard against emuRegions
     const foundInStandard = R.indexOf(gameStandard, emuStandards) !== -1? gameStandard : null
     if (foundInStandard) {
       const foundEmu = emusTaggedByStandard[foundInStandard]
@@ -607,10 +612,10 @@ function printARomdata(softlist, softlistParams) {
   //and again...sigh
   const tagEmuStandard = emusTaggedByRegion => {
     const node = {}
-    const keys = R.keys(emusTaggedByRegion) //we encoded the country info as key, so get that out to compare
+    const keys = R.keys(emusTaggedByRegion) //we encoded the region info as key, so get that out to compare
     R.map(emuRegion => {
       const tagStandard = whichStandardIsThisRegionFor(emuRegion) 
-      if (tagStandard) node[tagStandard] = emusTaggedByRegion[emuRegion] //this time we have to look back at the country key in the passed in array and pick out its emulator
+      if (tagStandard) node[tagStandard] = emusTaggedByRegion[emuRegion] //this time we have to look back at the region key in the passed in array and pick out its emulator
     }, keys)
     if (logRegions) console.log(`      ++++ Made a standard keyed emu list ${JSON.stringify(node)}`)
     
@@ -625,16 +630,16 @@ function printARomdata(softlist, softlistParams) {
     const emuWithRegionSet = setRegionalEmu(obj.name, softlistParams.thisEmulator.emulatorName, softlistParams.thisEmulator.regions)
 
     const romParams = {
-        name : obj.name.replace(/[^\x00-\x7F]/g, "") //remove japanese
-      , MAMEName : obj.call
-      , parentName : obj.cloneof?  obj.cloneof : ``
+        name        : obj.name.replace(/[^\x00-\x7F]/g, "") //remove japanese
+      , MAMEName    : obj.call
+      , parentName  : obj.cloneof?  obj.cloneof : ``
       , path
-      , emu : emuWithRegionSet //we can't just use the default emu as many system's games are region locked. Hence all the regional code!
-      , company : obj.company.replace(/[^\x00-\x7F]/g, "")
-      , year : obj.year
-      , comment : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
-          feature : obj.feature
-        , info : obj.info
+      , emu         : emuWithRegionSet //we can't just use the default emu as many system's games are region locked. Hence all the regional code!
+      , company     : obj.company.replace(/[^\x00-\x7F]/g, "")
+      , year        : obj.year
+      , comment     : createComment({ //need to loop through all three of feaures, info and shared feat to make comments, see the DTD    
+          feature   : obj.feature
+        , info      : obj.info
         , sharedFeat: obj.sharedFeat
       })
       
@@ -645,9 +650,9 @@ function printARomdata(softlist, softlistParams) {
     return console.error(`unsupported platform: ${platform}`)
   }, softlist)
 
-  const mameRomdata = applyRomdata(softlist, `mame`)
-  const retroarchRomdata = applyRomdata(softlist, `retroarch`)
-  const mameRomdataToPrint = R.prepend(romdataHeader, mameRomdata) 
+  const mameRomdata             = applyRomdata(softlist,  `mame`)
+  const retroarchRomdata        = applyRomdata(softlist,  `retroarch`)
+  const mameRomdataToPrint      = R.prepend(romdataHeader, mameRomdata) 
   const retroarchRomdataToPrint = R.prepend(romdataHeader, retroarchRomdata) 
 
   mkdirp.sync(softlistParams.mameOutNamePath)
@@ -682,14 +687,14 @@ CmbIcon=${iconName}.ico
 `
 
   const machineMameName = softlistParams.thisEmulator.call
-  fs.writeFileSync(`${softlistParams.mameOutNamePath}/folders.ini`, iconTemplate(machineMameName))
-  fs.writeFileSync(`${softlistParams.mameOutTypePath}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
-  fs.writeFileSync(`${softlistParams.mameOutRootDir}/folders.ini`, iconTemplate(`Mess`)) //last wins is fine
+  fs.writeFileSync(`${softlistParams.mameOutNamePath}/folders.ini`,      iconTemplate(machineMameName))
+  fs.writeFileSync(`${softlistParams.mameOutTypePath}/folders.ini`,      iconTemplate(machineMameName)) //last wins is fine
+  fs.writeFileSync(`${softlistParams.mameOutRootDir}/folders.ini`,       iconTemplate(`Mess`)) //last wins is fine
   fs.writeFileSync(`${softlistParams.retroarchOutNamePath}/folders.ini`, iconTemplate(machineMameName))
   fs.writeFileSync(`${softlistParams.retroarchOutTypePath}/folders.ini`, iconTemplate(machineMameName)) //last wins is fine
-  fs.writeFileSync(`${softlistParams.retroarchOutRootDir}/folders.ini`, iconTemplate(`RetroArch`)) //last wins is fine
+  fs.writeFileSync(`${softlistParams.retroarchOutRootDir}/folders.ini`,  iconTemplate(`RetroArch`)) //last wins is fine
   //now print the romdata itself
-  fs.writeFileSync(softlistParams.mameOutFullPath, mameRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
+  fs.writeFileSync(softlistParams.mameOutFullPath,      mameRomdataToPrint.join(`\n`),      `latin1`) //utf8 isn't possible at this time
   fs.writeFileSync(softlistParams.retroarchOutFullPath, retroarchRomdataToPrint.join(`\n`), `latin1`) //utf8 isn't possible at this time
   
   return softlist
