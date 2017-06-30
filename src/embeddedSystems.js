@@ -1,10 +1,12 @@
 "use strict"
 
 
-//here we pair down the imp elsewhere to print us a set of embedded systems in mess
-//its important to note that this is only possible atm because there is still a standalone
-//mess executable you can ask to --listdevices. The mess team say that there won't be
-//this standalone exe in the future. If that comes to pass, they need a 'isMess' key
+/* here we pair down the imp elsewhere to print us a set of embedded systems in mess
+ * its important to note that this is only possible atm because there is still a standalone
+ * mess executable you can ask to --listdevices. The mess team say that there won't be
+ * this standalone exe in the future. If that comes to pass, they need a 'isMess' key. 
+ * This class uses the mecahanics of the other classes in this module, but has a far
+ * narrower scope, its an afterthought */
 const 
     fs            = require(`fs`)
   , XmlStream     = require(`xml-stream`)
@@ -169,17 +171,17 @@ function printARomdata(systems) {
   const applyRomdata = platform => R.map( obj => {
 
         const romParams = {
-        name : obj.company? `${obj.company} ${obj.system}`: `${obj.system}`
-      , MAMEName : obj.call
+        name       : obj.company? `${obj.company} ${obj.system}`: `${obj.system}`
+      , MAMEName   : obj.call
       , parentName : obj.cloneof?  obj.cloneof : ``
       , path
-      , company : obj.company
-      , year : `unknown`
-      , comment : obj.cloneof? `clone of ${obj.cloneof}` : `` 
+      , company    : obj.company
+      , year       : `unknown`
+      , comment    : obj.cloneof? `clone of ${obj.cloneof}` : `` 
     }
 
-    if (platform==="mame") return mameRomdataLine(romParams)
-    if (platform==="retroarch") return retroarchRomdataLine(romParams)
+    if (platform === "mame") return mameRomdataLine(romParams)
+    if (platform === "retroarch") return retroarchRomdataLine(romParams)
     return console.error(`unsupported platform: ${platform}`)
 
   }, systems)

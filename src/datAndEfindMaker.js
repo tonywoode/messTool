@@ -16,7 +16,7 @@ const
   , datOutPath       = `outputs/systems.dat`
   , jsonOutPath      = `outputs/systems.json`
   , spaceIsSeparator = ` `
-  , oneWord = 1
+  , oneWord          = 1
 
 //set simple console logging
 const
@@ -28,12 +28,8 @@ const
  * (we are amending an existing list, not replacing it. MAME doesn't
  * cover modern consoles for instance */
 const currentTypeList = []
-const rl = readline.createInterface({
-  input: fs.createReadStream(datInPath)
-})
-
+const rl = readline.createInterface({ input: fs.createReadStream(datInPath) })
 rl.on( 'line', (line) => currentTypeList.push(line) )
-
 
 //program flow
 makeSystems( systems => {
@@ -127,11 +123,11 @@ function cleanDevices(systems) {
 
   //note applySpec is currying in the device object without. You might want to key these by 'name' - see applySpec doc
   const template = R.applySpec({
-    type: R.path(['$', 'type']),
-    tag: R.path(['$', 'tag']),
-    name: R.path(['instance', '$', 'name']),
-    briefname: R.path(['instance', '$', 'briefname']),
-    extensions: R.pipe(R.prop('extension'), flattenExtensions )
+    type       : R.path(['$', 'type']),
+    tag        : R.path(['$', 'tag']),
+    name       : R.path(['instance', '$', 'name']),
+    briefname  : R.path(['instance', '$', 'briefname']),
+    extensions : R.pipe(R.prop('extension'), flattenExtensions )
   })
 
   //Note that we fundamentally scrape the MAME xml for things that have devices so we don't need to check if they have a device element again

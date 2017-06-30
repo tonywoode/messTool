@@ -44,12 +44,11 @@ function makeSoftlists(emuSystems) {
 
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 function callSheet(systems) {
-  //filter by softlist
-  const isSoftlist = obj => !!obj.softlist
+  const isSoftlist = obj => !!obj.softlist //filter by softlist
 
-  //looking at the softlist, there are some that don't have any games. Doesn't mean to say they might not one day,
-  // but its unlikely. Some games may exist though (that's why we remove them here but keep them as emulators)
-  // Don't process further. Don't make a softlist for them
+  /* looking at the softlist, there are some that don't have any games. Doesn't mean to say they might not one day,
+   * but its unlikely. Some games may exist though (that's why we remove them here but keep them as emulators)
+   * Don't process further. Don't make a softlist for them */
   const softlistsWithNoGames = [   
       `abc800`, `abc806`, `abc80_cass`, `abc80_flop`, `ampro`, `atom`, `bw12`, `bw2`, `cbm2_cart` 
     , `cbm2_flop`, `cbm8096_flop`, `cbm8296_flop`, `comx35_flop`, `ht68k`, `kayproii`, `lisa`, `mac_hdd`
@@ -57,12 +56,12 @@ function callSheet(systems) {
     , `px4_cart`, `ql_cart`, `ql_cass`, `rx78`, `trs80m2`, `trsm100`, `vip` 
   ]
 
- const isThisSoftlistBoring = (list, machine) => {
-   if (softlistsWithNoGames.includes(list.name)) { 
-     if (logExclusions) console.log(`INFO: Removing  ${list.name} from ${machine} because there are no games in the list`) 
-     return softlistsWithNoGames.includes(list.name)
-   }  
-   return false
+  const isThisSoftlistBoring = (list, machine) => {
+    if (softlistsWithNoGames.includes(list.name)) { 
+      if (logExclusions) console.log(`INFO: Removing  ${list.name} from ${machine} because there are no games in the list`) 
+      return softlistsWithNoGames.includes(list.name)
+    }   
+    return false
   }
  
   //take out of the softlist key, those softlists in the exclusion list above
@@ -154,15 +153,14 @@ function filterSoftlists(softlistEmus) {
   
   //return a list of devices without the number in their briefname, so we can tell if the machine for a 'cart' softlist actually has a working 'cart' device
   const supportedDevices = deviceList => R.map(
-    device => (
-      R.head(device.split(/[0-9].*/))
-    )
+    device => R.head(device.split(/[0-9].*/))
   , deviceList)
 
   //make a k-v in the object to tell us if the softlist we've made can actually run. If the softlist has no postfix, we assume it will run
   // (an example is a2600.xml as the softlist name, which if you read the text description says its for 'cart')
   const deviceExists = R.map( obj => (
-        R.assoc(`doesSoftlistExist`, obj.deviceTypeFromName === `no_postfix`? true : R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)), obj)
+        R.assoc(`doesSoftlistExist`, obj.deviceTypeFromName === `no_postfix`? 
+          true : R.contains(obj.deviceTypeFromName, supportedDevices(obj.device)), obj)
   ), addDeviceType)
 
   //make exception or remove those softlists that say that the softlist device deosn't actually exist
@@ -214,7 +212,9 @@ function filterSoftlists(softlistEmus) {
   }
 
   // two things at once - we start a rating for each object at 50, but then use the Levenshtein distance to immediately make it useful
-  const addedRatings =  R.map( obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), removedNonExistingLists)
+  const addedRatings =  R.map( 
+    obj => (R.assoc(`rating`, 50 + getDistance(obj.call, obj.systemTypeFromName), obj)), removedNonExistingLists
+  )
 
   //now any emu that is a clone gets reduced in rating by 40 (problem here is we lose accuracy if there are clone trees, i'm not sure if there are)
     const deRateClones = R.map( obj => obj.cloneof? ( 
@@ -256,10 +256,10 @@ function chooseDefaultEmus(softlistEmus) {
     
   }, softlistEmus)
 
-  // add regional variant defaults - for each defaultEmu, check if it matches a regional regex
-  // a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
-  // i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
-  // but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)
+/* add regional variant defaults - for each defaultEmu, check if it matches a regional regex
+ * a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
+ * i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
+ * but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)a */
   const regionality = R.map(defaultEmu => { 
     const regionals = []
     const matchme = defaultEmu.emulatorName.match(/\(.*\)|only/) //actually this list is pretty good as it is ( it should contain all regions instead of that kleene)
@@ -324,7 +324,10 @@ function makeParams(emulator) {
     , retroarchOutNamePath    = `${retroarchOutTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
     , retroarchOutFullPath    = `${retroarchOutNamePath}/romdata.dat`
        
-  return  ({ systemType, name, thisEmulator, stream, xml, mameOutRootDir, mameOutTypePath, mameOutNamePath, mameOutFullPath,  retroarchOutRootDir, retroarchOutTypePath, retroarchOutNamePath, retroarchOutFullPath })
+  return  ({ 
+      systemType, name, thisEmulator, stream, xml, mameOutRootDir, mameOutTypePath, mameOutNamePath
+    , mameOutFullPath, retroarchOutRootDir, retroarchOutTypePath, retroarchOutNamePath, retroarchOutFullPath
+  })
 
 }  
 
