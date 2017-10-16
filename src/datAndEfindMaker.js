@@ -2,7 +2,7 @@
 
 const 
     fs            = require(`fs`)
-  , readline      = require('readline')
+  , readline      = require(`readline`)
   , XmlStream     = require(`xml-stream`)
   , R             = require(`ramda`)
 
@@ -48,9 +48,8 @@ makeSystems( systems => {
 
 
 function mockSystems(callback) {
-  const 
-      input   = fs.readFileSync(`inputs/systems.json`)
-   ,  systems = JSON.parse(input)
+  const input   = fs.readFileSync(`inputs/systems.json`)
+      , systems = JSON.parse(input)
   
   callback(systems, callback)
 }
