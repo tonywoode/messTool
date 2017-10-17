@@ -4,8 +4,9 @@ const
     fs            = require('fs')
   , readline      = require('readline')
   , R             = require('ramda')
-const XmlStream     = require(`xml-stream`)
-const makeSystems= require('./readMameXML.js')
+const XmlStream      = require(`xml-stream`)
+const makeSystems    = require('./readMameXML.js')
+const cleanSoftlists = require('./cleanSoftlists.js')
 
 const 
     datInPath        = `inputs/systems.dat`
@@ -56,23 +57,6 @@ function mockSystems(callback) {
 }
 
 
-
-//I don't like working with a messy tree, lots of $ and needless repetition...
-function cleanSoftlists(systems) {
-
-  //I removed the destructuring elsewhere but here the object isn't going to grow
-  const flattenSoftlist = softlist  => 
-    R.map( ({ $ }) => 
-     ( ({ name:$.name, status:$.status, filter:$.filter }) )
-    , softlist )
-
-  //if the system has a softlist, clear up its object: the thing we scraped wasn't nice
-  const replaceIfSoftlist = R.map(obj => obj.softlist? 
-    obj.softlist = R.assoc(`softlist`, flattenSoftlist(obj.softlist), obj) : obj
-  , systems )
-
-  return replaceIfSoftlist
-}
 
 function cleanDevices(systems) {
   //not all devices have media, so we must check for null. Time to introduce maybe
