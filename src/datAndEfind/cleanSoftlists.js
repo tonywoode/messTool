@@ -1,6 +1,6 @@
 'use strict'
 
-const R              = require('ramda')
+const R = require('ramda')
 
 //I don't like working with a messy tree, lots of $ and needless repetition...
 module.exports = function cleanSoftlists(systems) {

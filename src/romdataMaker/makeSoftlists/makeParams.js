@@ -1,7 +1,7 @@
 'use strict'
 
-const fs = require('fs')
-const XmlStream         = require('xml-stream')
+const fs        = require('fs')
+const XmlStream = require('xml-stream')
 
 module.exports = (hashDir, outputDir, emulator) => {
   

@@ -1,6 +1,6 @@
 'use strict'
 
-const R              = require('ramda')
+const R = require('ramda')
 
 module.exports = systems => {
   //not all devices have media, so we must check for null. Time to introduce maybe

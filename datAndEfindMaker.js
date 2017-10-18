@@ -1,9 +1,8 @@
 "use strict"
 
 const fs             = require('fs')
-const readline       = require('readline')
 const R              = require('ramda')
-const XmlStream      = require(`xml-stream`)
+const XmlStream      = require('xml-stream')
 const makeSystems    = require('./src/datAndEfind/readMameXML.js')
 const cleanSoftlists = require('./src/datAndEfind/cleanSoftlists.js')
 const cleanDevices   = require('./src/datAndEfind/cleanDevices.js')

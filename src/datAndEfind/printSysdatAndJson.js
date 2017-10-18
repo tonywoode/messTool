@@ -2,7 +2,6 @@
 
 const fs             = require('fs')
 const readline       = require('readline')
-
 const R              = require('ramda')
 
 /* Now the ini is out, print out a systems list and the json that the softlist maker will use */

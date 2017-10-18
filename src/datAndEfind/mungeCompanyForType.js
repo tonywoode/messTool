@@ -1,6 +1,6 @@
 'use strict'
 
-const R              = require('ramda')
+const R = require('ramda')
 
 module.exports = systems => {
 

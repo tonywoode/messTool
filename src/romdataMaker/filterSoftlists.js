@@ -1,8 +1,8 @@
 'use strict'
 
-const fs       = require('fs')
-const R        = require('ramda')
-const Leven    = require('levenshtein')
+const fs    = require('fs')
+const R     = require('ramda')
+const Leven = require('levenshtein')
 
 module.exports = hashDir => softlistEmus => {
 
