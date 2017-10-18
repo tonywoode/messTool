@@ -1,17 +1,20 @@
 "use strict"
 
-const fs              = require('fs')
-const XmlStream       = require('xml-stream')
-const R               = require('ramda')
-const mkdirp          = require('mkdirp')
+const fs                = require('fs')
+const R                 = require('ramda')
+const mkdirp            = require('mkdirp')
 
-const callSheet       = require('./src/romdataMaker/callsheet.js')
-const filterSoftlists = require('./src/romdataMaker/filterSoftlists.js')
+const callSheet         = require('./src/romdataMaker/callsheet.js')
+const filterSoftlists   = require('./src/romdataMaker/filterSoftlists.js')
+const chooseDefaultEmus = require('./src/romdataMaker/chooseDefaultEmus.js')
+const makeParams        = require('./src/romdataMaker/makeSoftlists/makeParams.js')
+const readSoftlistXML   = require('./src/romdataMaker/makeSoftlists/readSoftlistXML.js')
+const cleanSoftlist     = require('./src/romdataMaker/makeSoftlists/cleanSoftlist.js')
 
-const hashDir         = `inputs/hash/`
-  , outputDir         = `outputs/`
-  , systemsJsonFile   = fs.readFileSync(`${outputDir}systems.json`)
-  , systems           = JSON.parse(systemsJsonFile)
+const hashDir           = `inputs/hash/`
+  , outputDir           = `outputs/`
+  , systemsJsonFile     = fs.readFileSync(`${outputDir}systems.json`)
+  , systems             = JSON.parse(systemsJsonFile)
   //TODO - you can append the DTD at the top of the file if it isn't being read correctly
 
   //decide what we want to print to console
@@ -25,187 +28,23 @@ const hashDir         = `inputs/hash/`
 R.pipe(
     callSheet(logExclusions)
   , filterSoftlists(hashDir)
-  , chooseDefaultEmus
+  , chooseDefaultEmus(logChoices)
   , makeSoftlists 
 )(systems)
 
 //program flow at emu level
 function makeSoftlists(emuSystems) {
   R.map(emu => {
-        const softlistParams = makeParams(emu)
-        makeASoftlist(softlistParams.xml, softlist => {
+        const softlistParams = makeParams(hashDir, outputDir, emu)
+        readSoftlistXML(softlistParams.xml, softlist => {
           const cleanedSoftlist = cleanSoftlist(softlist)
           printARomdata(cleanedSoftlist, softlistParams)
         })
       }, emuSystems)
 }
 
-/* We need to say 'before you write, check if you've already written a softlist with an emu
- *  that had a higher rating. if so don't write. We can achieve this by writing a `written` key in the object
- *  but that's not good enough we can't just have a bool because we need to know what the previous rating was for the softlist
- *  so we need to store an object structure liks "a2600" : "80" to know that for each softlist) */
-function chooseDefaultEmus(softlistEmus) {
- 
-  //TODO: this whole function is very impure, yet isn't using anything outside what's passed in....
-  const softlistRatings = {}, defaultEmus = {}, logDecisions = {}, rejectedEmus = []
-  
-  const decideWhetherToMakeMeOne = R.map( emu => {
-
-    //rate the current object we're on against an accumulated value
-    const decide = (rating, accum) => rating > accum? (
-        defaultEmus[emu.name]          = emu
-      , softlistRatings[emu.name]      = emu.rating
-      , logDecisions[emu.emulatorName] = `accepted for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}`
-    ) 
-    : (
-        logDecisions[emu.emulatorName] = `rejected for ${emu.name} as its rating is: ${rating} and the accumulator is ${accum}` 
-      , rejectedEmus.push(emu)
-    )
-    //if the emu has a rating for the softlist it runs, compare it against the total, if it doesn't set it as the default
-    softlistRatings[emu.name]? 
-      decide(emu.rating, softlistRatings[emu.name]) : (
-          defaultEmus[emu.name] = emu
-        , softlistRatings[emu.name] = emu.rating
-      )
-    
-  }, softlistEmus)
-
-/* add regional variant defaults - for each defaultEmu, check if it matches a regional regex
- * a problem we now have is some machines encode useful info Atari 2600 (NTSC) where some encode none Casio MX-10 (MSX1)
- * i think all those that do have a FILTER key...nope, turns out the filter key can't be relied on, atari 400 doen't have it
- * but clearly has a (NTSC) variant, let's just parse the emu or display name for (NTSC)a */
-  const regionality = R.map(defaultEmu => { 
-    const regionals = []
-    const matchme = defaultEmu.emulatorName.match(/\(.*\)|only/) //actually this list is pretty good as it is ( it should contain all regions instead of that kleene)
-      if (matchme) {
-        if (logChoices) console.log(`${defaultEmu.emulatorName} is a match`)
-        //if it does, then look back in the rejected emus for those named the same except for the ()
-        const nesRegex       = defaultEmu.emulatorName.replace(/ \/ Famicom /, ``)
-        const snesRegex      = nesRegex.replace(/ \/ Super Famicom /, ``)
-        const megadriveRegex = snesRegex.replace(/Genesis/, `Mega Drive`)
-        const regex1         = megadriveRegex.replace(/PAL|NTSC only/, ``)
-        
-        const regex = new RegExp(regex1.replace(/\(.*\)/, `(.*)`))//only relace first occurance
-        if (logChoices) console.log(regex)
-        R.map(rejected => rejected.emulatorName.match(regex)? (
-          logChoices? console.log(`---->>>> matches ${rejected.emulatorName}`) : ''
-            //add them to a key "regions", but filter by softlist name otherwise Atari 800 (NTSC) -SOFTLIST a800 matches Atari 800 (PAL) -SOFTLIST a800_flop
-          , defaultEmu.name === rejected.name ? (  
-                regionals.push(rejected.emulatorName) 
-              , logChoices? console.log(regionals) : ''
-          ): null
-        )
-        : null, rejectedEmus)
-        if (regionals[0]) {
-            //add the original emu name to the list here, it does help the picker logic later, even though NTSC is generally the default
-            regionals.push(defaultEmu.emulatorName)
-            //put the list in the default emulators object
-          , defaultEmu.regions = regionals 
-        }
-        return defaultEmu
-      }
-  }, defaultEmus)
-
-  return defaultEmus //note this now keyed by softlist name, but it functions just the same.
-}
 
 
-function makeParams(emulator) {
-  
-  const //I like forward slashes in system type. System doesn't...
-      systemType              = emulator.systemType?
-          emulator.systemType.replace(/\//g, `-`) 
-        : console.log(`TYPE PROBLEM: ${emulator.displayMachine} doesn't have a system type to use as a potential folder name`) 
-      //I like forward slashes in system names. System doesn't...and bloody apple again
-      //(The apple specifics are only needed if the machine name is in any way going to be part of the filepath, so a temporary mesaure)
-    , displayMachine1         = emulator.displayMachine.replace(/\/\/\//g, `III`)
-    , displayMachine2         = displayMachine1.replace(/\/\//g, `II`)
-    , displayMachine          = displayMachine2.replace(/\//g, `-`)
-    , name1                   = emulator.name.replace(/\/\/\//g, `III`)
-    , name2                   = name1.replace(/\/\//g, `II`)
-
-    , name                    = name2.replace(/\//g, `-`)
-
-    , thisEmulator            = emulator
-    , stream                  = fs.createReadStream(`${hashDir}${name}.xml`)
-    , xml                     = new XmlStream(stream)
-    , mameOutRootDir          = `${outputDir}mame_softlists/`
-    , mameOutTypePath         = `${mameOutRootDir}/${systemType}`
-    , mameOutNamePath         = `${mameOutTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
-    , mameOutFullPath         = `${mameOutNamePath}/romdata.dat`
-    , retroarchOutRootDir     = `${outputDir}retroarch_softlists/`
-    , retroarchOutTypePath    = `${retroarchOutRootDir}/${systemType}`
-    , retroarchOutNamePath    = `${retroarchOutTypePath}/${name}` //to print out all systems you'd do ${displayMachine}/${name}`/
-    , retroarchOutFullPath    = `${retroarchOutNamePath}/romdata.dat`
-       
-  return  ({ 
-      systemType, name, thisEmulator, stream, xml, mameOutRootDir, mameOutTypePath, mameOutNamePath
-    , mameOutFullPath, retroarchOutRootDir, retroarchOutTypePath, retroarchOutNamePath, retroarchOutFullPath
-  })
-
-}  
-
-
-function makeASoftlist(xml, callback) {
-
-  const softlist = []
-
-  xml.collect(`info`)
-  xml.collect(`sharedfeat`)
-  xml.collect(`feature`)
-  xml.on(`updateElement: software`, software => {
-    if (
-          software.$.supported !== `no` 
-      //these crap the list out after the dollar. perhaps path length + key may not exist...
-      //the softlist i'm testing with atm doesn't use these
-   // &&  software.part.dataarea.rom.$.status  !== `baddump`
-   // &&  software.part.dataarea.rom.$.status  !== `nodump`
-   // &&  software.part.diskarea.disk.$.status !== `baddump`
-   // &&  software.part.diskarea.disk.$.status !== `nodump`
-    ) {
-      const node = {}
-      node.call          = software.$.name
-      node.cloneof       = software.$.cloneof
-      node.name          = software.description
-      node.year          = software.year
-      node.company       = software.publisher
-      node.info          = software.info
-      node.sharedfeature = software.sharedfeat
-      node.feature       = software.part.feature
-      node.loadsWith     = software.part.$.interface //reserved js word
-      softlist.push(node)
-    }
-  })
-  xml.on(`end`, () => {
-    // console.log(JSON.stringify(softlist, null, '\t')); process.exit()
-    callback(softlist)
-  })
-
-}
-
-
-/* I don't like working with a messy tree, lots of $ and needless repetition...With softlists it tuned
- *   out that we have three identically keyed objects, so a generic function will clean them all up
- */
-function cleanSoftlist(softlist) {
-  //I removed destructuring elsewhere but here the object isn't going to grow
-  const cleanPairs = key  => 
-    R.map( ({ $ }) => 
-     ( ({ name:$.name, value:$.value }) )
-    , key )
-  
-  //if the softlist contains some subobject named 'key', clear up that subobject, as the thing we scraped wasn't nice
-  const replaceIfKey = (key, list) => R.map(obj => obj[key]? 
-    obj[key] = R.assoc(key, cleanPairs(obj[key]), obj) : obj
-  , list )
-
-  //TODO: good case for pipe, but the function takes the whole softlist
-  const replacedFeature    = replaceIfKey(`feature`, softlist)
-  const replacedInfo       = replaceIfKey(`info`, replacedFeature)
-  const replacedSharedFeat = replaceIfKey(`sharedFeat`, replacedInfo)
-
-  return replacedSharedFeat
-}
 
  
 function printARomdata(softlist, softlistParams) {
