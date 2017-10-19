@@ -192,4 +192,4 @@ const tagEmuStandard = (logRegions, emusTaggedByRegion) => {
  
 }
 
-module.exports = {setRegionalEmu}
+module.exports = setRegionalEmu
