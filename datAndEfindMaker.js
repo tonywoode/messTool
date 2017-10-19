@@ -3,16 +3,17 @@
 const fs             = require('fs')
 const R              = require('ramda')
 const XmlStream      = require('xml-stream')
-const makeSystems    = require('./src/datAndEfind/readMameXML.js')
-const cleanSoftlists = require('./src/datAndEfind/cleanSoftlists.js')
-const cleanDevices   = require('./src/datAndEfind/cleanDevices.js')
-const mungeCompanyAndSytemsNames = require('./src/datAndEfind/mungeCompanyAndSystemNames.js')
-const mungeCompanyForType  = require('./src/datAndEfind/mungeCompanyForType.js')
-const makeFinalSystemTypes = require('./src/datAndEfind/makeFinalSystemType.js')
-const removeBoringSystems  = require('./src/datAndEfind/removeBoringSystems.js')
-const print                = require('./src/datAndEfind/print.js')
-const printSysdatAndJson   = require('./src/datAndEfind/printSysdatAndJson.js')
-
+const {
+    readMameXML
+  , cleanSoftlists
+  , cleanDevices
+  , mungeCompanyAndSystemNames
+  , mungeCompanyForType
+  , makeFinalSystemTypes
+  , removeBoringSystems
+  , print
+  , printSysdatAndJson
+}                    = require('./src/datAndEfind')
 
 const 
     datInPath        = `inputs/systems.dat`
@@ -32,12 +33,12 @@ const
   , logJSON = false
 
 //program flow
-makeSystems( xml, systems => {
+readMameXML( xml, systems => {
 
   R.pipe(
      cleanSoftlists
   ,  cleanDevices
-  ,  mungeCompanyAndSytemsNames
+  ,  mungeCompanyAndSystemNames
   ,  mungeCompanyForType
   ,  makeFinalSystemTypes
   ,  removeBoringSystems

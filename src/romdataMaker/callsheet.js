@@ -1,6 +1,6 @@
 'use strict'
 
-const R = require(`ramda`)
+const R = require('ramda')
 //read the json for softlists and make a list of those xmls to find. Need to grab emu name also and pass it all the way down our pipeline
 module.exports = logExclusions => systems => {
   const isSoftlist = obj => !!obj.softlist //filter by softlist
