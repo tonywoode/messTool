@@ -1,6 +1,6 @@
 module.exports = {
-    readMameXML                : require('./readMameXML.js')
-  , mungeCompanyAndSystemNames : require('./mungeCompanyAndSystemNames.js')
-  , removeBoringSystems        : require('./removeBoringSystems.js')
-  , printRomdata               : require('./printRomdata.js')
+    readMameXMLembedded                : require('./readMameXML.js')
+  , mungeCompanyAndSystemNamesEmbedded : require('./mungeCompanyAndSystemNames.js')
+  , removeBoringSystemsEmbedded        : require('./removeBoringSystems.js')
+  , printRomdata                       : require('./printRomdata.js')
 }

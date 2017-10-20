@@ -1,11 +1,12 @@
 {
   "dependencies": {
+    "commander": "^2.11.0",
     "levenshtein": "^1.0.5",
     "mkdirp": "^0.5.1",
     "ramda": "^0.21.0",
     "xml-stream": "^0.4.5"
   },
   "scripts": {
-    "start": "node ./datAndEfindMaker.js; node ./romdataMaker.js; node ./embeddedSystems.js"
+    "start": "node QPNode-mess --scan; node QPNode-mess --softlists; node QPNode-mess --embedded"
   }
 }
