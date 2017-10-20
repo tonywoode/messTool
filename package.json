@@ -7,6 +7,6 @@
     "xml-stream": "^0.4.5"
   },
   "scripts": {
-    "start": "node QPNode-mess --scan; node QPNode-mess --softlists; node QPNode-mess --embedded"
+    "start": "node src/QPNode-mess --scan; node src/QPNode-mess --softlists; node src/QPNode-mess --embedded"
   }
 }

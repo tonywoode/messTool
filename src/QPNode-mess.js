@@ -37,7 +37,7 @@ const scan = () => {
     , removeBoringSystems
     , print
     , printSysdatAndJson
-  }                    = require('./src/datAndEfind')
+  }                    = require('./datAndEfind')
   
   const 
       datInPath        = `inputs/systems.dat`
@@ -94,7 +94,7 @@ const softlists = () => {
     , cleanSoftlist
     , setRegionalEmu
     , printSoftlistRomdata
-  }                   = require('./src/romdataMaker')
+  }                   = require('./romdataMaker')
   
   const hashDir       = `inputs/hash/`
     , outputDir       = `outputs/`
@@ -145,7 +145,7 @@ const embedded = () => {
     , mungeCompanyAndSystemNamesEmbedded
     , removeBoringSystemsEmbedded
     , printRomdata 
-  }                 = require('./src/embeddedSystems')
+  }                 = require('./embeddedSystems')
   
   const 
       mameXMLInPathEmbedded = `inputs/mess.xml`
