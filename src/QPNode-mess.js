@@ -94,7 +94,7 @@ const softlists = () => {
     , cleanSoftlist
     , setRegionalEmu
     , printSoftlistRomdata
-  }                   = require('./romdataMaker')
+  }                   = require('./softlists')
   
   const hashDir       = `inputs/hash/`
     , outputDir       = `outputs/`
