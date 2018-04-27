@@ -1,6 +1,8 @@
 # messTool
 create frontend configuration files for the MAME emulator's non-arcade sets, running from RetroArch or standalone
 
+******** MESSTOOL WAS MERGED INTO [MAMETOOL](https://github.com/tonywoode/mameTool) IN OCTOBER 2017, AND SIGNIFICANTLY ADDED TO *******
+
 ## Inputs
 
 in an inputs folder in project root you'll need:
